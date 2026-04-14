@@ -403,7 +403,7 @@ test('no regression vs golden master', () => {
 
       <div class="bg-amber-500/10 border border-amber-500/30 rounded-lg p-4">
         <div class="text-sm font-bold text-amber-300 mb-2">Lo que tu padre quiere que sepas</div>
-        <p class="text-sm text-slate-300">Después de más de 20 años escribiendo software, te confirmo: <strong class="text-white">yo también me siento impostor a veces</strong>. La diferencia es que ahora sé que es normal, que le pasa a todo el mundo, y que no significa que no seas bueno. Significa que te importa hacerlo bien. Y eso, hijo, es exactamente lo que necesita un buen ingeniero.</p>
+        <p class="text-sm text-slate-300">Después de más de 35 años escribiendo software, te confirmo: <strong class="text-white">yo también me siento impostor a veces</strong>. La diferencia es que ahora sé que es normal, que le pasa a todo el mundo, y que no significa que no seas bueno. Significa que te importa hacerlo bien. Y eso, hijo, es exactamente lo que necesita un buen ingeniero.</p>
       </div>
     `,
   },
@@ -422,7 +422,7 @@ test('no regression vs golden master', () => {
 
   <div class="space-y-4" id="faq-list">
     {faqs.map(faq => (
-      <div class="border border-slate-700 rounded-xl overflow-hidden" data-faq={faq.id}>
+      <div class="border border-slate-700 rounded-xl overflow-hidden" id={faq.id} data-faq={faq.id}>
         <button
           class="faq-toggle w-full flex items-center justify-between px-6 py-5 bg-slate-800/50 hover:bg-slate-800 transition-colors text-left"
           aria-expanded="false"
@@ -462,4 +462,19 @@ test('no regression vs golden master', () => {
     content?.classList.toggle('hidden');
     chevron?.classList.toggle('rotate-180');
   });
+
+  // Deep link: open FAQ from URL hash
+  function openFromHash() {
+    var hash = window.location.hash.replace('#', '');
+    if (!hash) return;
+    var target = document.querySelector('[data-faq="' + hash + '"]') as HTMLElement;
+    if (!target) return;
+    var btn = target.querySelector('.faq-toggle') as HTMLElement;
+    if (btn && btn.getAttribute('aria-expanded') !== 'true') {
+      btn.click();
+    }
+    setTimeout(function() { target.scrollIntoView({ behavior: 'smooth', block: 'start' }); }, 100);
+  }
+  openFromHash();
+  window.addEventListener('hashchange', openFromHash);
 </script>
