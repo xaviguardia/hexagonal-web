@@ -182,6 +182,155 @@ const metadataCode = [
     </p>
   </div>
 
+  <!-- Dual Hexagon Diagram -->
+  <div class="mb-16">
+    <h3 class="text-xl font-bold text-purple-400 mb-6 text-center">Dos hexágonos, un solo dominio de negocio</h3>
+    <p class="text-slate-400 text-sm text-center max-w-3xl mx-auto mb-8">
+      El backend posee las reglas de negocio. El frontend tiene su propio hexágono pero <strong class="text-white">no duplica el dominio</strong>:
+      modela comportamiento UI (qué campos mostrar, cómo renderizarlos, estado del formulario).
+      La metadata-driven UI es el puente — el backend <strong class="text-white">dice qué</strong>, el frontend <strong class="text-white">decide cómo</strong>.
+    </p>
+
+    <div class="bg-slate-900 border border-slate-700 rounded-xl p-6 md:p-8 overflow-x-auto">
+      <svg viewBox="0 0 900 480" class="w-full" style="min-width: 700px; max-height: 480px;">
+        <!-- ═══ BACKEND HEXAGON (left) ═══ -->
+        <!-- Infra layer -->
+        <polygon points="200,30 350,115 350,285 200,370 50,285 50,115"
+          fill="#1e1b4b" stroke="#8b5cf6" stroke-width="1.5" opacity="0.6"/>
+        <!-- App layer -->
+        <polygon points="200,65 320,135 320,265 200,335 80,265 80,135"
+          fill="#0f1f3d" stroke="#3b82f6" stroke-width="1.5" opacity="0.6"/>
+        <!-- Domain layer -->
+        <polygon points="200,105 280,155 280,245 200,295 120,245 120,155"
+          fill="#1c1408" stroke="#f59e0b" stroke-width="2"/>
+
+        <!-- Backend labels -->
+        <text x="200" y="185" text-anchor="middle" fill="#fbbf24" font-size="11" font-weight="700">DOMINIO</text>
+        <text x="200" y="200" text-anchor="middle" fill="#fbbf24" font-size="11" font-weight="700">DE NEGOCIO</text>
+        <text x="200" y="218" text-anchor="middle" fill="#fbbf2480" font-size="8">Pedido, Cliente, Stock</text>
+        <text x="200" y="232" text-anchor="middle" fill="#fbbf2480" font-size="8">Invariantes, Domain Events</text>
+
+        <text x="200" y="320" text-anchor="middle" fill="#93c5fd" font-size="9" font-weight="600">APLICACIÓN</text>
+        <text x="200" y="333" text-anchor="middle" fill="#93c5fd80" font-size="7">CreatePedidoUseCase</text>
+        <text x="200" y="345" text-anchor="middle" fill="#93c5fd80" font-size="7">GetPedidoSchemaUseCase</text>
+
+        <text x="200" y="363" text-anchor="middle" fill="#c4b5fd" font-size="8" font-weight="600">INFRAESTRUCTURA</text>
+        <text x="108" y="130" text-anchor="middle" fill="#c4b5fd80" font-size="7">PostgreSQL</text>
+        <text x="292" y="130" text-anchor="middle" fill="#c4b5fd80" font-size="7">HTTP API</text>
+
+        <text x="200" y="20" text-anchor="middle" fill="#8b5cf6" font-size="12" font-weight="700">BACKEND</text>
+
+        <!-- Star on domain = source of truth -->
+        <text x="200" y="253" text-anchor="middle" fill="#fbbf24" font-size="9">★ Fuente de verdad</text>
+
+        <!-- ═══ FRONTEND HEXAGON (right) ═══ -->
+        <!-- Infra layer -->
+        <polygon points="700,30 850,115 850,285 700,370 550,285 550,115"
+          fill="#1e1b4b" stroke="#a855f7" stroke-width="1.5" opacity="0.6"/>
+        <!-- App layer -->
+        <polygon points="700,65 820,135 820,265 700,335 580,265 580,135"
+          fill="#1a0f2e" stroke="#c084fc" stroke-width="1.5" opacity="0.6"/>
+        <!-- UI Domain layer -->
+        <polygon points="700,105 780,155 780,245 700,295 620,245 620,155"
+          fill="#1a0a2e" stroke="#e879f9" stroke-width="2"/>
+
+        <!-- Frontend labels -->
+        <text x="700" y="185" text-anchor="middle" fill="#e879f9" font-size="11" font-weight="700">DOMINIO UI</text>
+        <text x="700" y="200" text-anchor="middle" fill="#e879f9" font-size="11" font-weight="700">(no negocio)</text>
+        <text x="700" y="218" text-anchor="middle" fill="#e879f980" font-size="8">FormSchema, FieldMeta</text>
+        <text x="700" y="232" text-anchor="middle" fill="#e879f980" font-size="8">State machines, UI rules</text>
+
+        <text x="700" y="320" text-anchor="middle" fill="#c084fc" font-size="9" font-weight="600">APLICACIÓN</text>
+        <text x="700" y="333" text-anchor="middle" fill="#c084fc80" font-size="7">LoadPedidoFormUseCase</text>
+        <text x="700" y="345" text-anchor="middle" fill="#c084fc80" font-size="7">SavePedidoUseCase</text>
+
+        <text x="700" y="363" text-anchor="middle" fill="#a855f780" font-size="8" font-weight="600">ADAPTADORES UI</text>
+        <text x="608" y="130" text-anchor="middle" fill="#a855f780" font-size="7">React/Vue</text>
+        <text x="792" y="130" text-anchor="middle" fill="#a855f780" font-size="7">fetch / WS</text>
+
+        <text x="700" y="20" text-anchor="middle" fill="#a855f7" font-size="12" font-weight="700">FRONTEND</text>
+
+        <!-- No business rules indicator -->
+        <text x="700" y="253" text-anchor="middle" fill="#e879f9" font-size="9">✗ Sin reglas de negocio</text>
+
+        <!-- ═══ CONNECTION: API + FormSchema ═══ -->
+        <!-- Main arrow: HTTP API -->
+        <line x1="350" y1="175" x2="550" y2="175" stroke="#22c55e" stroke-width="2" marker-end="url(#arr-conn)"/>
+        <rect x="385" y="158" width="130" height="18" rx="4" fill="#0f172a" stroke="#22c55e" stroke-width="1"/>
+        <text x="450" y="171" text-anchor="middle" fill="#4ade80" font-size="8" font-weight="600">HTTP API (datos)</text>
+
+        <!-- Metadata arrow: FormSchema -->
+        <line x1="350" y1="225" x2="550" y2="225" stroke="#f59e0b" stroke-width="2" stroke-dasharray="6,3" marker-end="url(#arr-meta)"/>
+        <rect x="375" y="208" width="150" height="18" rx="4" fill="#1c1408" stroke="#f59e0b" stroke-width="1"/>
+        <text x="450" y="221" text-anchor="middle" fill="#fbbf24" font-size="8" font-weight="600">FormSchema (metadata)</text>
+
+        <!-- Validation error arrow back -->
+        <line x1="550" y1="260" x2="350" y2="260" stroke="#ef4444" stroke-width="1.5" stroke-dasharray="4,3" marker-end="url(#arr-err)"/>
+        <rect x="390" y="248" width="120" height="15" rx="3" fill="#450a0a" stroke="#ef4444" stroke-width="0.5"/>
+        <text x="450" y="259" text-anchor="middle" fill="#ef4444" font-size="7">DomainError (422)</text>
+
+        <!-- ═══ BOTTOM: Key insight boxes ═══ -->
+        <!-- Backend domain box -->
+        <rect x="30" y="400" width="340" height="65" rx="10" fill="#1c1408" stroke="#f59e0b" stroke-width="1.5"/>
+        <text x="200" y="420" text-anchor="middle" fill="#fbbf24" font-size="10" font-weight="700">El backend POSEE el dominio</text>
+        <text x="200" y="436" text-anchor="middle" fill="#fbbf2480" font-size="8">Reglas de negocio, invariantes, validaciones</text>
+        <text x="200" y="450" text-anchor="middle" fill="#fbbf2480" font-size="8">de dominio. Solo existen aquí. Una sola vez.</text>
+
+        <!-- Frontend domain box -->
+        <rect x="530" y="400" width="340" height="65" rx="10" fill="#1a0a2e" stroke="#e879f9" stroke-width="1.5"/>
+        <text x="700" y="420" text-anchor="middle" fill="#e879f9" font-size="10" font-weight="700">El frontend CONSUME metadata</text>
+        <text x="700" y="436" text-anchor="middle" fill="#e879f980" font-size="8">FormSchema dice qué campos, qué tipos, qué</text>
+        <text x="700" y="450" text-anchor="middle" fill="#e879f980" font-size="8">relaciones. El renderer genérico decide cómo.</text>
+
+        <defs>
+          <marker id="arr-conn" markerWidth="8" markerHeight="8" refX="4" refY="4" orient="auto">
+            <path d="M0,1 L8,4 L0,7 Z" fill="#22c55e"/>
+          </marker>
+          <marker id="arr-meta" markerWidth="8" markerHeight="8" refX="4" refY="4" orient="auto">
+            <path d="M0,1 L8,4 L0,7 Z" fill="#f59e0b"/>
+          </marker>
+          <marker id="arr-err" markerWidth="8" markerHeight="8" refX="4" refY="4" orient="auto">
+            <path d="M0,1 L8,4 L0,7 Z" fill="#ef4444"/>
+          </marker>
+        </defs>
+      </svg>
+    </div>
+
+    <!-- Anti-pattern vs pattern -->
+    <div class="grid md:grid-cols-2 gap-6 mt-8">
+      <div class="bg-red-950/30 border border-red-500/30 rounded-xl p-6">
+        <h4 class="font-bold text-red-400 mb-3">Anti-patrón: Sparsed Domain</h4>
+        <ul class="space-y-2 text-sm text-slate-300">
+          <li class="flex items-start gap-2"><span class="text-red-400 mt-0.5">✗</span> Reglas de negocio duplicadas en frontend y backend</li>
+          <li class="flex items-start gap-2"><span class="text-red-400 mt-0.5">✗</span> El frontend valida "crédito superado" con su propia lógica</li>
+          <li class="flex items-start gap-2"><span class="text-red-400 mt-0.5">✗</span> Cambiar una regla requiere tocar dos repositorios</li>
+          <li class="flex items-start gap-2"><span class="text-red-400 mt-0.5">✗</span> Discrepancias inevitables entre FE y BE</li>
+        </ul>
+      </div>
+      <div class="bg-green-950/30 border border-green-500/30 rounded-xl p-6">
+        <h4 class="font-bold text-green-400 mb-3">Patrón: Metadata-Driven UI</h4>
+        <ul class="space-y-2 text-sm text-slate-300">
+          <li class="flex items-start gap-2"><span class="text-green-400 mt-0.5">✓</span> Reglas de negocio solo en el dominio backend</li>
+          <li class="flex items-start gap-2"><span class="text-green-400 mt-0.5">✓</span> El backend envía FormSchema con la estructura de campos</li>
+          <li class="flex items-start gap-2"><span class="text-green-400 mt-0.5">✓</span> El frontend es un renderer genérico que interpreta metadata</li>
+          <li class="flex items-start gap-2"><span class="text-green-400 mt-0.5">✓</span> Errores de dominio vuelven como DomainError estructurado (422)</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="mt-6 bg-slate-800/50 border border-purple-400/30 rounded-xl p-6">
+      <h4 class="font-bold text-white mb-2">El flujo completo</h4>
+      <ol class="space-y-2 text-sm text-slate-300 list-decimal list-inside">
+        <li><strong class="text-amber-300">Backend</strong> define FormSchema en el Use Case: campos, tipos, relaciones, permisos</li>
+        <li><strong class="text-purple-300">Frontend</strong> pide schema + datos via API → recibe metadata + data</li>
+        <li><strong class="text-purple-300">Renderer genérico</strong> interpreta FieldMeta → lookup, grid, multiselect, etc.</li>
+        <li>Usuario edita → frontend valida <strong class="text-slate-400">solo formato</strong> (Zod) → envía al backend</li>
+        <li><strong class="text-amber-300">Dominio</strong> aplica invariantes → si falla, devuelve DomainError con code + field</li>
+        <li><strong class="text-purple-300">Frontend</strong> muestra el error en el campo correcto — sin conocer la regla</li>
+      </ol>
+    </div>
+  </div>
+
   <!-- Tabs -->
   <div class="flex gap-2 mb-8 flex-wrap" id="fe-tabs">
     {tabs.map((t, i) => (
