@@ -589,6 +589,79 @@ const questions = [
     correct: 1,
     explanation: 'Traces (flujo de requests), Metrics (contadores/histogramas), Logs (eventos estructurados). Cada pilar tiene su puerto y adaptadores: OTEL para prod, fakes para tests, console para dev local.',
   },
+  // ── CARRERAS TECH ──────────────────────────────────────────────
+  {
+    topic: 'Carreras Tech', difficulty: 'easy',
+    q: 'Cuál de estos roles construye pipelines ETL y data warehouses?',
+    options: [
+      'Data Analyst',
+      'Data Engineer',
+      'AI/ML Engineer',
+      'Business Analyst',
+    ],
+    correct: 1,
+    explanation: 'El Data Engineer construye la infraestructura de datos: pipelines ETL/ELT (dbt, Airflow), data warehouses (Snowflake, BigQuery) y data lakes. El Data Analyst consume esa infraestructura para generar insights.',
+  },
+  {
+    topic: 'Carreras Tech', difficulty: 'medium',
+    q: 'Qué diferencia principal hay entre un Scrum Master y un Project Manager?',
+    options: [
+      'El SM cobra más que el PM',
+      'El SM facilita y protege al equipo; el PM planifica, coordina y controla alcance/tiempo/presupuesto',
+      'El PM solo trabaja en Waterfall y el SM solo en Agile',
+      'No hay diferencia, son el mismo rol con distinto nombre',
+    ],
+    correct: 1,
+    explanation: 'El Scrum Master es un facilitador: modera ceremonias, elimina impedimentos, protege al equipo de interrupciones. El Project Manager es un coordinador: gestiona alcance, tiempo, presupuesto y riesgos. Ambos pueden trabajar en entornos ágiles.',
+  },
+  {
+    topic: 'Carreras Tech', difficulty: 'medium',
+    q: 'Desde qué roles se puede llegar a Arquitecto de Software?',
+    options: [
+      'Solo desde Backend Senior',
+      'Solo desde Frontend Senior o Backend Senior',
+      'Desde cualquier track senior: Backend, Frontend, DevOps, QA',
+      'Solo si empiezas como Junior Architect',
+    ],
+    correct: 2,
+    explanation: 'No hay un solo camino. Un Frontend Senior que domina micro-frontends, un Backend Senior experto en sistemas distribuidos, o un SRE Senior que entiende infraestructura a fondo pueden evolucionar a arquitecto. La clave es visión de sistema y capacidad de evaluar trade-offs.',
+  },
+  {
+    topic: 'Carreras Tech', difficulty: 'easy',
+    q: 'Qué herramienta es esencial para un Data Analyst?',
+    options: [
+      'Kubernetes',
+      'Docker',
+      'SQL + Power BI/Tableau',
+      'Terraform',
+    ],
+    correct: 2,
+    explanation: 'SQL para extraer y transformar datos, y una herramienta de visualización (Power BI, Tableau, Looker) para crear dashboards e informes. Kubernetes y Terraform son de DevOps/SRE.',
+  },
+  {
+    topic: 'Carreras Tech', difficulty: 'hard',
+    q: 'Cuál es la diferencia entre la carrera de IC (Individual Contributor) y la de management?',
+    options: [
+      'IC es para juniors, management es para seniors',
+      'IC sigue escribiendo código y tomando decisiones técnicas; management gestiona personas y estrategia',
+      'IC cobra menos que management',
+      'IC no puede llegar a niveles senior',
+    ],
+    correct: 1,
+    explanation: 'IC: Junior → Mid → Senior → Staff → Principal. Sigues resolviendo problemas técnicos complejos. Management: Tech Lead → EM → VP Eng → CTO. Gestionas personas, procesos y estrategia. Ambas son igual de válidas y pueden tener el mismo salario en niveles equivalentes.',
+  },
+  {
+    topic: 'Carreras Tech', difficulty: 'medium',
+    q: 'Qué hace un Business Analyst que NO hace un Developer?',
+    options: [
+      'Escribir código',
+      'Traducir necesidades de negocio a requisitos técnicos y modelar procesos (BPMN)',
+      'Desplegar aplicaciones en producción',
+      'Diseñar bases de datos',
+    ],
+    correct: 1,
+    explanation: 'El Business Analyst es el puente entre negocio y desarrollo. Levanta requisitos, modela procesos con BPMN, define historias de usuario con criterios de aceptación, y valida que la solución técnica resuelve el problema real del negocio.',
+  },
 ];
 
 const topics = [...new Set(questions.map(q => q.topic))];

@@ -1,0 +1,433 @@
+---
+interface Role {
+  id: string;
+  title: string;
+  level: 'junior' | 'mid' | 'senior' | 'lead' | 'cross';
+  track: string;
+  color: string;
+  borderColor: string;
+  description: string;
+  skills: string[];
+  tools: string[];
+  salaryRange: string;
+  nextSteps: string[];
+}
+
+const tracks = [
+  { id: 'frontend', label: 'Frontend', color: 'text-cyan-400', dot: 'bg-cyan-400' },
+  { id: 'backend', label: 'Backend', color: 'text-amber-400', dot: 'bg-amber-400' },
+  { id: 'devops', label: 'DevOps / SRE', color: 'text-green-400', dot: 'bg-green-400' },
+  { id: 'data', label: 'Data / IA', color: 'text-purple-400', dot: 'bg-purple-400' },
+  { id: 'quality', label: 'QA / Testing', color: 'text-rose-400', dot: 'bg-rose-400' },
+  { id: 'management', label: 'Gestión / Proceso', color: 'text-blue-400', dot: 'bg-blue-400' },
+  { id: 'architecture', label: 'Arquitectura', color: 'text-orange-400', dot: 'bg-orange-400' },
+];
+
+const roles: Role[] = [
+  // ── FRONTEND ──
+  {
+    id: 'fe-junior', title: 'Frontend Junior', level: 'junior', track: 'frontend',
+    color: 'bg-cyan-500/10', borderColor: 'border-cyan-500/30',
+    description: 'Construye interfaces de usuario con HTML, CSS y JavaScript. Trabaja con componentes, aprende un framework y empieza a entender accesibilidad.',
+    skills: ['HTML semántico', 'CSS / Flexbox / Grid', 'JavaScript ES6+', 'Un framework (React, Vue, Angular)', 'Git básico', 'Responsive design'],
+    tools: ['VS Code', 'Chrome DevTools', 'npm', 'Figma (lectura)'],
+    salaryRange: '20k - 30k €',
+    nextSteps: ['Frontend Mid', 'Fullstack'],
+  },
+  {
+    id: 'fe-mid', title: 'Frontend Mid', level: 'mid', track: 'frontend',
+    color: 'bg-cyan-500/10', borderColor: 'border-cyan-500/40',
+    description: 'Diseña componentes reutilizables, gestiona estado complejo, optimiza rendimiento. Empieza a tomar decisiones de arquitectura frontend.',
+    skills: ['TypeScript', 'State management (Redux, Zustand, Pinia)', 'Testing (Jest, Playwright)', 'Performance (Core Web Vitals)', 'CI/CD para frontend', 'Design Systems'],
+    tools: ['Storybook', 'Webpack/Vite', 'Lighthouse', 'Sentry'],
+    salaryRange: '30k - 45k €',
+    nextSteps: ['Frontend Senior', 'Fullstack Senior'],
+  },
+  {
+    id: 'fe-senior', title: 'Frontend Senior', level: 'senior', track: 'frontend',
+    color: 'bg-cyan-500/10', borderColor: 'border-cyan-500/50',
+    description: 'Define la arquitectura frontend del equipo. Mentoriza juniors, toma decisiones técnicas, optimiza DX y pipeline. Puede liderar la migración de frameworks.',
+    skills: ['Arquitectura frontend (hexagonal, micro-frontends)', 'Monorepos (Nx, Turborepo)', 'SSR / SSG / ISR', 'Observabilidad frontend', 'Mentoría y code review', 'Comunicación con producto'],
+    tools: ['Nx / Turborepo', 'Grafana RUM', 'Chromatic', 'Architecture Decision Records'],
+    salaryRange: '45k - 65k €',
+    nextSteps: ['Tech Lead', 'Arquitecto de Software', 'Engineering Manager'],
+  },
+  // ── BACKEND ──
+  {
+    id: 'be-junior', title: 'Backend Junior', level: 'junior', track: 'backend',
+    color: 'bg-amber-500/10', borderColor: 'border-amber-500/30',
+    description: 'Construye APIs REST, interactúa con bases de datos, aprende patrones básicos. Escribe tests unitarios y entiende el ciclo request-response.',
+    skills: ['Un lenguaje (TypeScript, Java, C#, Python, Go)', 'SQL + un ORM', 'APIs REST', 'Git + branching', 'Tests unitarios', 'HTTP, JSON, autenticación básica'],
+    tools: ['Postman / Thunder Client', 'Docker (uso básico)', 'PostgreSQL / MySQL', 'Terminal'],
+    salaryRange: '22k - 32k €',
+    nextSteps: ['Backend Mid', 'Fullstack'],
+  },
+  {
+    id: 'be-mid', title: 'Backend Mid', level: 'mid', track: 'backend',
+    color: 'bg-amber-500/10', borderColor: 'border-amber-500/40',
+    description: 'Diseña servicios con patrones de dominio, gestiona transacciones, mensajería asíncrona. Entiende arquitectura hexagonal y sabe cuándo aplicarla.',
+    skills: ['DDD básico (entidades, value objects, aggregates)', 'Arquitectura hexagonal', 'Mensajería (RabbitMQ, Kafka)', 'Caching (Redis)', 'Tests de integración', 'Seguridad (OWASP Top 10)'],
+    tools: ['Docker Compose', 'RabbitMQ / Kafka', 'Redis', 'SonarQube'],
+    salaryRange: '32k - 48k €',
+    nextSteps: ['Backend Senior', 'Arquitecto de Software'],
+  },
+  {
+    id: 'be-senior', title: 'Backend Senior', level: 'senior', track: 'backend',
+    color: 'bg-amber-500/10', borderColor: 'border-amber-500/50',
+    description: 'Diseña sistemas distribuidos, define estándares del equipo, resuelve problemas de escalabilidad. Lidera decisiones de arquitectura y mentoriza.',
+    skills: ['Sistemas distribuidos', 'Event sourcing / CQRS', 'Observabilidad (OTEL, Grafana)', 'Performance tuning (queries, pools, profiling)', 'Mentoría técnica', 'Decisiones build vs buy'],
+    tools: ['Kubernetes', 'Terraform', 'Jaeger / Tempo', 'Load testing (k6, Gatling)'],
+    salaryRange: '48k - 70k €',
+    nextSteps: ['Staff Engineer', 'Arquitecto de Software', 'Engineering Manager'],
+  },
+  // ── DEVOPS ──
+  {
+    id: 'devops-junior', title: 'DevOps Junior', level: 'junior', track: 'devops',
+    color: 'bg-green-500/10', borderColor: 'border-green-500/30',
+    description: 'Automatiza despliegues, gestiona pipelines CI/CD, aprende infraestructura como código. Mantiene entornos de desarrollo y staging.',
+    skills: ['Linux administration', 'Docker', 'CI/CD (GitHub Actions, GitLab CI)', 'Scripting (Bash, Python)', 'Networking básico', 'Git avanzado'],
+    tools: ['Docker', 'GitHub Actions', 'Ansible', 'Nginx'],
+    salaryRange: '24k - 35k €',
+    nextSteps: ['DevOps Mid', 'SRE'],
+  },
+  {
+    id: 'devops-senior', title: 'DevOps / SRE Senior', level: 'senior', track: 'devops',
+    color: 'bg-green-500/10', borderColor: 'border-green-500/50',
+    description: 'Diseña plataformas internas, define SLOs/SLIs, gestiona incidencias y postmortems. Automatiza todo lo repetitivo y construye herramientas para los equipos.',
+    skills: ['Kubernetes en producción', 'IaC (Terraform, Pulumi)', 'Observabilidad (métricas, logs, trazas)', 'SLOs / Error budgets', 'Seguridad en infraestructura', 'Platform engineering'],
+    tools: ['Kubernetes', 'Terraform', 'Prometheus + Grafana', 'ArgoCD / FluxCD', 'Vault'],
+    salaryRange: '45k - 70k €',
+    nextSteps: ['Staff SRE', 'Platform Architect', 'CTO (startups)'],
+  },
+  // ── DATA / IA ──
+  {
+    id: 'data-analyst', title: 'Data Analyst', level: 'junior', track: 'data',
+    color: 'bg-purple-500/10', borderColor: 'border-purple-500/30',
+    description: 'Extrae insights de los datos para ayudar a tomar decisiones de negocio. Crea dashboards, informes y análisis ad-hoc. Traduce datos en historias comprensibles.',
+    skills: ['SQL avanzado', 'Excel / Google Sheets avanzado', 'Visualización (Power BI, Tableau, Looker)', 'Estadística descriptiva', 'Python o R básico', 'Storytelling con datos'],
+    tools: ['Power BI / Tableau', 'SQL (BigQuery, Postgres)', 'Excel', 'Jupyter / Google Colab'],
+    salaryRange: '22k - 35k €',
+    nextSteps: ['Data Analyst Senior', 'Data Engineer', 'Business Analyst'],
+  },
+  {
+    id: 'data-engineer', title: 'Data Engineer', level: 'mid', track: 'data',
+    color: 'bg-purple-500/10', borderColor: 'border-purple-500/40',
+    description: 'Construye y mantiene la infraestructura de datos. Diseña pipelines ETL/ELT, data warehouses y data lakes. Asegura que los datos lleguen limpios y a tiempo.',
+    skills: ['Python + SQL avanzado', 'ETL/ELT (dbt, Airflow, Spark)', 'Data warehousing (Snowflake, BigQuery, Redshift)', 'Arquitectura Medallion (Bronze/Silver/Gold)', 'Streaming (Kafka, Flink)', 'Modelado dimensional (star schema)'],
+    tools: ['dbt', 'Airflow / Dagster', 'Spark', 'Snowflake / BigQuery', 'Kafka'],
+    salaryRange: '35k - 55k €',
+    nextSteps: ['Senior Data Engineer', 'AI/ML Engineer', 'Data Architect'],
+  },
+  {
+    id: 'ia-engineer', title: 'AI / ML Engineer', level: 'mid', track: 'data',
+    color: 'bg-purple-500/10', borderColor: 'border-purple-500/40',
+    description: 'Integra modelos de IA en aplicaciones productivas. Construye pipelines de datos, fine-tunea modelos, diseña RAG y agentes. Puente entre data science y backend.',
+    skills: ['Python + ML frameworks (PyTorch, scikit-learn)', 'LLMs y prompt engineering', 'RAG (Retrieval Augmented Generation)', 'Pipelines de datos (Airflow, dbt)', 'MLOps (MLflow, Weights & Biases)', 'Vectorstores (Pinecone, pgvector)'],
+    tools: ['Jupyter', 'LangChain / Claude SDK', 'Docker', 'dbt', 'Airflow'],
+    salaryRange: '40k - 70k €',
+    nextSteps: ['Senior AI Engineer', 'ML Architect', 'Head of AI'],
+  },
+  // ── QA / TESTING ──
+  {
+    id: 'qa-junior', title: 'QA / Tester', level: 'junior', track: 'quality',
+    color: 'bg-rose-500/10', borderColor: 'border-rose-500/30',
+    description: 'Diseña casos de prueba, ejecuta tests manuales y automatizados. Asegura que el software cumple los requisitos y reporta bugs de forma estructurada.',
+    skills: ['Diseño de casos de prueba', 'Testing manual (exploratorio, regresión)', 'Un framework de test (Playwright, Cypress)', 'SQL básico para verificar datos', 'Reporte de bugs (steps to reproduce)', 'APIs testing (Postman)'],
+    tools: ['Playwright / Cypress', 'Postman', 'Jira', 'TestRail / Zephyr'],
+    salaryRange: '20k - 30k €',
+    nextSteps: ['QA Automation Engineer', 'QA Lead'],
+  },
+  {
+    id: 'qa-senior', title: 'QA Automation Lead', level: 'senior', track: 'quality',
+    color: 'bg-rose-500/10', borderColor: 'border-rose-500/50',
+    description: 'Define la estrategia de calidad del equipo. Construye frameworks de test, integra testing en CI/CD, mide cobertura y métricas de calidad.',
+    skills: ['Estrategia de testing (pirámide, testing trophy)', 'Frameworks de automatización', 'Performance testing', 'Contract testing (Pact)', 'Shift-left testing', 'Métricas de calidad'],
+    tools: ['Playwright', 'k6 / Gatling', 'Pact', 'Allure Reports', 'SonarQube'],
+    salaryRange: '38k - 55k €',
+    nextSteps: ['Head of QA', 'Engineering Manager', 'Arquitecto de Software'],
+  },
+  // ── GESTIÓN / PROCESO ──
+  {
+    id: 'scrum-master', title: 'Scrum Master', level: 'cross', track: 'management',
+    color: 'bg-blue-500/10', borderColor: 'border-blue-500/40',
+    description: 'Facilita el proceso ágil del equipo. Elimina impedimentos, modera ceremonias (daily, retro, planning), protege al equipo de interrupciones externas.',
+    skills: ['Scrum / Kanban', 'Facilitación de reuniones', 'Gestión de conflictos', 'Métricas ágiles (velocity, cycle time)', 'Coaching de equipos', 'Gestión de stakeholders'],
+    tools: ['Jira / Linear', 'Miro / FigJam', 'Confluence', 'Slack'],
+    salaryRange: '35k - 55k €',
+    nextSteps: ['Agile Coach', 'Engineering Manager', 'Product Owner'],
+  },
+  {
+    id: 'project-manager', title: 'Project Manager', level: 'cross', track: 'management',
+    color: 'bg-blue-500/10', borderColor: 'border-blue-500/40',
+    description: 'Planifica, coordina y controla proyectos de software. Gestiona alcance, tiempo, presupuesto y riesgos. Comunica progreso a stakeholders.',
+    skills: ['Planificación y estimación', 'Gestión de riesgos', 'Comunicación ejecutiva', 'Presupuestos y recursos', 'Metodologías (Agile, Waterfall, híbrido)', 'Negociación de alcance'],
+    tools: ['MS Project / Monday', 'Jira', 'Excel / Sheets', 'PowerPoint / Slides'],
+    salaryRange: '38k - 60k €',
+    nextSteps: ['Program Manager', 'Head of Delivery', 'CTO'],
+  },
+  {
+    id: 'business-analyst', title: 'Business Analyst', level: 'cross', track: 'management',
+    color: 'bg-blue-500/10', borderColor: 'border-blue-500/50',
+    description: 'Traduce necesidades de negocio a requisitos técnicos. Modela procesos, define historias de usuario, valida que la solución resuelve el problema real.',
+    skills: ['Levantamiento de requisitos', 'Modelado de procesos (BPMN)', 'User stories + criterios de aceptación', 'Análisis de datos (SQL, Excel avanzado)', 'Prototipado (wireframes)', 'Domain-Driven Design (colaboración)'],
+    tools: ['Jira / Confluence', 'Miro', 'Figma (wireframes)', 'SQL', 'Camunda Modeler'],
+    salaryRange: '30k - 50k €',
+    nextSteps: ['Product Owner', 'Product Manager', 'Arquitecto de Negocio'],
+  },
+  // ── ARQUITECTURA ──
+  {
+    id: 'arquitecto', title: 'Arquitecto de Software', level: 'lead', track: 'architecture',
+    color: 'bg-orange-500/10', borderColor: 'border-orange-500/50',
+    description: 'Define la estructura de los sistemas. Toma decisiones técnicas de alto impacto (monolito vs microservicios, patrones, tecnologías). Balancea pragmatismo con visión a largo plazo.',
+    skills: ['Patrones arquitectónicos (hexagonal, CQRS, event-driven)', 'Evaluación de trade-offs', 'ADRs (Architecture Decision Records)', 'Comunicación técnica a todas las capas', 'Sistemas distribuidos', 'Seguridad y compliance'],
+    tools: ['C4 Model / Structurizr', 'Mermaid / PlantUML', 'ADRs', 'Radar tecnológico'],
+    salaryRange: '55k - 85k €',
+    nextSteps: ['Principal Architect', 'VP Engineering', 'CTO'],
+  },
+];
+
+const levels = [
+  { id: 'junior', label: 'Junior', color: 'text-green-400' },
+  { id: 'mid', label: 'Mid', color: 'text-blue-400' },
+  { id: 'senior', label: 'Senior', color: 'text-purple-400' },
+  { id: 'lead', label: 'Lead / Architect', color: 'text-orange-400' },
+  { id: 'cross', label: 'Transversal', color: 'text-slate-400' },
+];
+---
+
+<section id="carreras" class="max-w-6xl mx-auto px-6 py-24 reveal">
+  <div class="text-center mb-16">
+    <span class="text-xs font-mono text-sky-400 uppercase tracking-widest">Orientación profesional</span>
+    <h2 class="text-3xl font-bold text-white mt-3 mb-2">Carreras en desarrollo de software</h2>
+    <p class="text-slate-400 max-w-2xl mx-auto">
+      No hay un solo camino. Estos son los tracks profesionales más comunes,
+      qué se espera en cada nivel, y cómo se conectan entre sí.
+    </p>
+  </div>
+
+  <!-- Career Map SVG -->
+  <div class="mb-16">
+    <h3 class="text-lg font-bold text-white mb-6 text-center">Mapa de carreras</h3>
+    <div class="bg-slate-900 border border-slate-700 rounded-xl p-6 md:p-8 overflow-x-auto">
+      <svg viewBox="0 0 960 520" class="w-full" style="min-width: 750px; max-height: 520px;">
+        <!-- Column headers -->
+        <text x="150" y="30" text-anchor="middle" fill="#4ade80" font-size="11" font-weight="700">JUNIOR</text>
+        <text x="370" y="30" text-anchor="middle" fill="#60a5fa" font-size="11" font-weight="700">MID</text>
+        <text x="590" y="30" text-anchor="middle" fill="#c084fc" font-size="11" font-weight="700">SENIOR</text>
+        <text x="820" y="30" text-anchor="middle" fill="#fb923c" font-size="11" font-weight="700">LEAD / STAFF</text>
+
+        <!-- ── FRONTEND TRACK ── -->
+        <rect x="60" y="50" width="180" height="50" rx="8" fill="#083344" stroke="#22d3ee" stroke-width="1.5" class="cursor-pointer hover:fill-[#0c4a5e]" data-role="fe-junior"/>
+        <text x="150" y="72" text-anchor="middle" fill="#22d3ee" font-size="10" font-weight="600">Frontend Junior</text>
+        <text x="150" y="88" text-anchor="middle" fill="#22d3ee80" font-size="8">HTML, CSS, JS, React</text>
+
+        <rect x="280" y="50" width="180" height="50" rx="8" fill="#083344" stroke="#22d3ee" stroke-width="1.5" class="cursor-pointer hover:fill-[#0c4a5e]" data-role="fe-mid"/>
+        <text x="370" y="72" text-anchor="middle" fill="#22d3ee" font-size="10" font-weight="600">Frontend Mid</text>
+        <text x="370" y="88" text-anchor="middle" fill="#22d3ee80" font-size="8">TypeScript, Testing, Perf</text>
+
+        <rect x="500" y="50" width="180" height="50" rx="8" fill="#083344" stroke="#22d3ee" stroke-width="1.5" class="cursor-pointer hover:fill-[#0c4a5e]" data-role="fe-senior"/>
+        <text x="590" y="72" text-anchor="middle" fill="#22d3ee" font-size="10" font-weight="600">Frontend Senior</text>
+        <text x="590" y="88" text-anchor="middle" fill="#22d3ee80" font-size="8">Arquitectura, Mentoría</text>
+
+        <line x1="240" y1="75" x2="280" y2="75" stroke="#22d3ee" stroke-width="1.5" marker-end="url(#arr-career)"/>
+        <line x1="460" y1="75" x2="500" y2="75" stroke="#22d3ee" stroke-width="1.5" marker-end="url(#arr-career)"/>
+
+        <!-- ── BACKEND TRACK ── -->
+        <rect x="60" y="120" width="180" height="50" rx="8" fill="#1c1408" stroke="#f59e0b" stroke-width="1.5" class="cursor-pointer hover:fill-[#2a1e0a]" data-role="be-junior"/>
+        <text x="150" y="142" text-anchor="middle" fill="#fbbf24" font-size="10" font-weight="600">Backend Junior</text>
+        <text x="150" y="158" text-anchor="middle" fill="#fbbf2480" font-size="8">APIs, SQL, un lenguaje</text>
+
+        <rect x="280" y="120" width="180" height="50" rx="8" fill="#1c1408" stroke="#f59e0b" stroke-width="1.5" class="cursor-pointer hover:fill-[#2a1e0a]" data-role="be-mid"/>
+        <text x="370" y="142" text-anchor="middle" fill="#fbbf24" font-size="10" font-weight="600">Backend Mid</text>
+        <text x="370" y="158" text-anchor="middle" fill="#fbbf2480" font-size="8">DDD, Hexagonal, Mensajería</text>
+
+        <rect x="500" y="120" width="180" height="50" rx="8" fill="#1c1408" stroke="#f59e0b" stroke-width="1.5" class="cursor-pointer hover:fill-[#2a1e0a]" data-role="be-senior"/>
+        <text x="590" y="142" text-anchor="middle" fill="#fbbf24" font-size="10" font-weight="600">Backend Senior</text>
+        <text x="590" y="158" text-anchor="middle" fill="#fbbf2480" font-size="8">Distribuidos, CQRS, OTEL</text>
+
+        <line x1="240" y1="145" x2="280" y2="145" stroke="#f59e0b" stroke-width="1.5" marker-end="url(#arr-career)"/>
+        <line x1="460" y1="145" x2="500" y2="145" stroke="#f59e0b" stroke-width="1.5" marker-end="url(#arr-career)"/>
+
+        <!-- ── DEVOPS TRACK ── -->
+        <rect x="60" y="190" width="180" height="50" rx="8" fill="#052e16" stroke="#22c55e" stroke-width="1.5" class="cursor-pointer hover:fill-[#0a3d1f]" data-role="devops-junior"/>
+        <text x="150" y="212" text-anchor="middle" fill="#4ade80" font-size="10" font-weight="600">DevOps Junior</text>
+        <text x="150" y="228" text-anchor="middle" fill="#4ade8080" font-size="8">Docker, CI/CD, Linux</text>
+
+        <rect x="500" y="190" width="180" height="50" rx="8" fill="#052e16" stroke="#22c55e" stroke-width="1.5" class="cursor-pointer hover:fill-[#0a3d1f]" data-role="devops-senior"/>
+        <text x="590" y="212" text-anchor="middle" fill="#4ade80" font-size="10" font-weight="600">DevOps / SRE Senior</text>
+        <text x="590" y="228" text-anchor="middle" fill="#4ade8080" font-size="8">K8s, Terraform, SLOs</text>
+
+        <line x1="240" y1="215" x2="500" y2="215" stroke="#22c55e" stroke-width="1.5" stroke-dasharray="6,3" marker-end="url(#arr-career)"/>
+
+        <!-- ── DATA / IA ── -->
+        <rect x="60" y="260" width="180" height="50" rx="8" fill="#1a0a2e" stroke="#a855f7" stroke-width="1.5" class="cursor-pointer hover:fill-[#2a1040]" data-role="data-analyst"/>
+        <text x="150" y="282" text-anchor="middle" fill="#c084fc" font-size="10" font-weight="600">Data Analyst</text>
+        <text x="150" y="298" text-anchor="middle" fill="#c084fc80" font-size="8">SQL, Power BI, Dashboards</text>
+
+        <rect x="280" y="260" width="180" height="50" rx="8" fill="#1a0a2e" stroke="#a855f7" stroke-width="1.5" class="cursor-pointer hover:fill-[#2a1040]" data-role="data-engineer"/>
+        <text x="370" y="282" text-anchor="middle" fill="#c084fc" font-size="10" font-weight="600">Data Engineer</text>
+        <text x="370" y="298" text-anchor="middle" fill="#c084fc80" font-size="8">ETL, dbt, Warehouse</text>
+
+        <rect x="500" y="260" width="180" height="50" rx="8" fill="#1a0a2e" stroke="#a855f7" stroke-width="1.5" class="cursor-pointer hover:fill-[#2a1040]" data-role="ia-engineer"/>
+        <text x="590" y="282" text-anchor="middle" fill="#c084fc" font-size="10" font-weight="600">AI / ML Engineer</text>
+        <text x="590" y="298" text-anchor="middle" fill="#c084fc80" font-size="8">LLMs, RAG, MLOps</text>
+
+        <line x1="240" y1="285" x2="280" y2="285" stroke="#a855f7" stroke-width="1.5" marker-end="url(#arr-career)"/>
+        <line x1="460" y1="285" x2="500" y2="285" stroke="#a855f7" stroke-width="1.5" marker-end="url(#arr-career)"/>
+
+        <!-- ── QA ── -->
+        <rect x="60" y="330" width="180" height="50" rx="8" fill="#1a0a0a" stroke="#f43f5e" stroke-width="1.5" class="cursor-pointer hover:fill-[#2a1010]" data-role="qa-junior"/>
+        <text x="150" y="352" text-anchor="middle" fill="#fb7185" font-size="10" font-weight="600">QA / Tester</text>
+        <text x="150" y="368" text-anchor="middle" fill="#fb718580" font-size="8">Manual, Playwright, APIs</text>
+
+        <rect x="500" y="330" width="180" height="50" rx="8" fill="#1a0a0a" stroke="#f43f5e" stroke-width="1.5" class="cursor-pointer hover:fill-[#2a1010]" data-role="qa-senior"/>
+        <text x="590" y="352" text-anchor="middle" fill="#fb7185" font-size="10" font-weight="600">QA Automation Lead</text>
+        <text x="590" y="368" text-anchor="middle" fill="#fb718580" font-size="8">Estrategia, Perf, Contract</text>
+
+        <line x1="240" y1="355" x2="500" y2="355" stroke="#f43f5e" stroke-width="1.5" stroke-dasharray="6,3" marker-end="url(#arr-career)"/>
+
+        <!-- ── MANAGEMENT (bottom) ── -->
+        <rect x="60" y="410" width="140" height="50" rx="8" fill="#0c1929" stroke="#3b82f6" stroke-width="1.5" class="cursor-pointer hover:fill-[#152540]" data-role="scrum-master"/>
+        <text x="130" y="432" text-anchor="middle" fill="#60a5fa" font-size="10" font-weight="600">Scrum Master</text>
+        <text x="130" y="448" text-anchor="middle" fill="#60a5fa80" font-size="8">Facilitación, Agile</text>
+
+        <rect x="220" y="410" width="140" height="50" rx="8" fill="#0c1929" stroke="#3b82f6" stroke-width="1.5" class="cursor-pointer hover:fill-[#152540]" data-role="project-manager"/>
+        <text x="290" y="432" text-anchor="middle" fill="#60a5fa" font-size="10" font-weight="600">Project Manager</text>
+        <text x="290" y="448" text-anchor="middle" fill="#60a5fa80" font-size="8">Planificación, Riesgos</text>
+
+        <rect x="380" y="410" width="140" height="50" rx="8" fill="#0c1929" stroke="#3b82f6" stroke-width="1.5" class="cursor-pointer hover:fill-[#152540]" data-role="business-analyst"/>
+        <text x="450" y="432" text-anchor="middle" fill="#60a5fa" font-size="10" font-weight="600">Business Analyst</text>
+        <text x="450" y="448" text-anchor="middle" fill="#60a5fa80" font-size="8">Requisitos, BPMN</text>
+
+        <!-- ── ARCHITECT (convergence) ── -->
+        <rect x="720" y="120" width="200" height="60" rx="10" fill="#1c1006" stroke="#f97316" stroke-width="2" class="cursor-pointer hover:fill-[#2a1a0a]" data-role="arquitecto"/>
+        <text x="820" y="145" text-anchor="middle" fill="#fb923c" font-size="11" font-weight="700">Arquitecto de Software</text>
+        <text x="820" y="162" text-anchor="middle" fill="#fb923c80" font-size="8">Decisiones, trade-offs, ADRs</text>
+
+        <!-- Convergence arrows to Architect -->
+        <line x1="680" y1="75" x2="720" y2="135" stroke="#22d3ee" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arr-career)"/>
+        <line x1="680" y1="145" x2="720" y2="145" stroke="#f59e0b" stroke-width="1.5" marker-end="url(#arr-career)"/>
+        <line x1="680" y1="215" x2="720" y2="155" stroke="#22c55e" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arr-career)"/>
+
+        <!-- Label: multiple paths -->
+        <text x="820" y="200" text-anchor="middle" fill="#fb923c60" font-size="8" font-style="italic">Se llega desde cualquier track senior</text>
+
+        <!-- Years indicator -->
+        <line x1="60" y1="490" x2="920" y2="490" stroke="#334155" stroke-width="1"/>
+        <text x="150" y="510" text-anchor="middle" fill="#475569" font-size="9">0 - 2 años</text>
+        <text x="370" y="510" text-anchor="middle" fill="#475569" font-size="9">2 - 5 años</text>
+        <text x="590" y="510" text-anchor="middle" fill="#475569" font-size="9">5 - 8 años</text>
+        <text x="820" y="510" text-anchor="middle" fill="#475569" font-size="9">8+ años</text>
+
+        <defs>
+          <marker id="arr-career" markerWidth="8" markerHeight="8" refX="4" refY="4" orient="auto">
+            <path d="M0,1 L8,4 L0,7 Z" fill="#94a3b8"/>
+          </marker>
+        </defs>
+      </svg>
+    </div>
+  </div>
+
+  <!-- Track filter -->
+  <div class="mb-8">
+    <h3 class="text-lg font-bold text-white mb-4">Detalle por rol</h3>
+    <div class="flex gap-2 flex-wrap" id="track-filters">
+      <button class="track-filter px-3 py-1.5 rounded-full text-xs font-mono bg-slate-700 text-white" data-track="all">Todos</button>
+      {tracks.map(t => (
+        <button class={`track-filter px-3 py-1.5 rounded-full text-xs font-mono bg-slate-800 ${t.color} hover:bg-slate-700 transition-colors`} data-track={t.id}>
+          {t.label}
+        </button>
+      ))}
+    </div>
+  </div>
+
+  <!-- Role cards -->
+  <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-4" id="role-cards">
+    {roles.map(role => (
+      <div class={`role-card ${role.color} border ${role.borderColor} rounded-xl p-5 transition-all`} data-track={role.track} data-role-card={role.id}>
+        <div class="flex items-center justify-between mb-3">
+          <h4 class="font-bold text-white text-sm">{role.title}</h4>
+          <span class="text-xs px-2 py-0.5 rounded-full bg-slate-800 text-slate-400">{role.salaryRange}</span>
+        </div>
+        <p class="text-xs text-slate-300 mb-4">{role.description}</p>
+
+        <div class="mb-3">
+          <div class="text-xs font-mono text-slate-500 mb-1.5">Skills clave</div>
+          <div class="flex flex-wrap gap-1">
+            {role.skills.map(s => (
+              <span class="text-xs bg-slate-800/80 text-slate-300 px-2 py-0.5 rounded">{s}</span>
+            ))}
+          </div>
+        </div>
+
+        <div class="mb-3">
+          <div class="text-xs font-mono text-slate-500 mb-1.5">Herramientas</div>
+          <div class="flex flex-wrap gap-1">
+            {role.tools.map(t => (
+              <span class="text-xs bg-slate-900 text-slate-400 px-2 py-0.5 rounded">{t}</span>
+            ))}
+          </div>
+        </div>
+
+        <div>
+          <div class="text-xs font-mono text-slate-500 mb-1.5">Siguiente paso</div>
+          <div class="flex flex-wrap gap-1">
+            {role.nextSteps.map(n => (
+              <span class="text-xs text-amber-400/80">→ {n}</span>
+            ))}
+          </div>
+        </div>
+      </div>
+    ))}
+  </div>
+</section>
+
+<script>
+  // Track filter
+  document.getElementById('track-filters')?.addEventListener('click', function(e) {
+    var btn = (e.target as HTMLElement).closest('.track-filter') as HTMLElement;
+    if (!btn) return;
+    var track = btn.dataset.track;
+
+    // Update button styles
+    document.querySelectorAll('.track-filter').forEach(function(b) {
+      b.classList.remove('bg-slate-700', 'text-white');
+      b.classList.add('bg-slate-800');
+    });
+    btn.classList.add('bg-slate-700', 'text-white');
+    btn.classList.remove('bg-slate-800');
+
+    // Filter cards
+    document.querySelectorAll('.role-card').forEach(function(card) {
+      if (track === 'all' || (card as HTMLElement).dataset.track === track) {
+        (card as HTMLElement).style.display = '';
+      } else {
+        (card as HTMLElement).style.display = 'none';
+      }
+    });
+  });
+
+  // SVG role hover -> highlight card
+  document.querySelectorAll('[data-role]').forEach(function(el) {
+    el.addEventListener('click', function() {
+      var roleId = (el as HTMLElement).dataset.role;
+      var card = document.querySelector('[data-role-card="' + roleId + '"]') as HTMLElement;
+      if (card) {
+        // Show all cards first
+        document.querySelectorAll('.role-card').forEach(function(c) {
+          (c as HTMLElement).style.display = '';
+        });
+        // Reset filter buttons
+        document.querySelectorAll('.track-filter').forEach(function(b) {
+          b.classList.remove('bg-slate-700', 'text-white');
+          b.classList.add('bg-slate-800');
+        });
+        (document.querySelector('.track-filter[data-track="all"]') as HTMLElement)?.classList.add('bg-slate-700', 'text-white');
+
+        card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        card.classList.add('ring-2', 'ring-white/50');
+        setTimeout(function() { card.classList.remove('ring-2', 'ring-white/50'); }, 2000);
+      }
+    });
+  });
+</script>
