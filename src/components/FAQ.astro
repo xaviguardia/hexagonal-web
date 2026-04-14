@@ -186,6 +186,128 @@ const faqs: FAQItem[] = [
       </div>
     `,
   },
+  {
+    id: 'golden-master',
+    question: '¿Qué es el Golden Master testing?',
+    answer: `
+      <p class="mb-4">El <strong class="text-white">Golden Master</strong> (también llamado <strong class="text-white">Approval Testing</strong> o <strong class="text-white">Snapshot Testing</strong>) es una técnica para poner bajo test código legacy <strong class="text-white">sin entender cómo funciona</strong>. Capturas la salida actual del sistema como "referencia dorada" y cualquier cambio futuro se compara contra ella.</p>
+
+      <div class="bg-slate-900 border border-slate-700 rounded-lg p-4 mb-6">
+        <div class="text-sm font-bold text-white mb-3">La analogía</div>
+        <div class="grid md:grid-cols-2 gap-4">
+          <div class="bg-slate-800/50 border border-blue-500/30 rounded-lg p-3">
+            <div class="text-xs font-bold text-blue-400 mb-1">Test clásico</div>
+            <p class="text-xs text-slate-300">Tú escribes lo que esperas: <code class="text-blue-300">expect(total).toBe(150)</code>. Necesitas entender la lógica para saber que 150 es correcto.</p>
+          </div>
+          <div class="bg-slate-800/50 border border-amber-500/30 rounded-lg p-3">
+            <div class="text-xs font-bold text-amber-400 mb-1">Golden Master</div>
+            <p class="text-xs text-slate-300">Ejecutas el código, guardas el resultado (150), y dices: "a partir de ahora, si cambia, avísame". No necesitas saber si 150 es correcto — solo que no cambie sin querer.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="mb-6">
+        <div class="text-sm font-bold text-white mb-3">Cómo funciona paso a paso</div>
+        <div class="space-y-3">
+          <div class="flex gap-3 items-start">
+            <span class="shrink-0 w-7 h-7 rounded-full bg-amber-500/20 text-amber-400 text-xs font-bold flex items-center justify-center">1</span>
+            <div>
+              <div class="text-sm font-bold text-white">Captura</div>
+              <p class="text-xs text-slate-300">Ejecutas el código legacy con un conjunto de inputs y guardas TODA la salida: respuestas HTTP, JSONs, CSVs, HTML renderizado, lo que sea. Esta salida es tu Golden Master.</p>
+            </div>
+          </div>
+          <div class="flex gap-3 items-start">
+            <span class="shrink-0 w-7 h-7 rounded-full bg-amber-500/20 text-amber-400 text-xs font-bold flex items-center justify-center">2</span>
+            <div>
+              <div class="text-sm font-bold text-white">Refactoriza</div>
+              <p class="text-xs text-slate-300">Haces tus cambios en el código: extraes clases, renombras variables, mueves lógica a puertos. Lo que necesites.</p>
+            </div>
+          </div>
+          <div class="flex gap-3 items-start">
+            <span class="shrink-0 w-7 h-7 rounded-full bg-amber-500/20 text-amber-400 text-xs font-bold flex items-center justify-center">3</span>
+            <div>
+              <div class="text-sm font-bold text-white">Compara</div>
+              <p class="text-xs text-slate-300">Ejecutas los mismos inputs sobre el código modificado y comparas la salida con el Golden Master. Si son iguales → no rompiste nada. Si difieren → algo cambió y tienes que investigar.</p>
+            </div>
+          </div>
+          <div class="flex gap-3 items-start">
+            <span class="shrink-0 w-7 h-7 rounded-full bg-green-500/20 text-green-400 text-xs font-bold flex items-center justify-center">4</span>
+            <div>
+              <div class="text-sm font-bold text-white">Itera</div>
+              <p class="text-xs text-slate-300">Cuando un cambio es intencionado (bug fix, nueva feature), actualizas el Golden Master. Tu nueva "referencia dorada" refleja el comportamiento correcto actualizado.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="bg-slate-900 border border-slate-700 rounded-lg p-4 mb-6">
+        <div class="text-sm font-bold text-white mb-3">Ejemplo práctico</div>
+        <pre class="text-xs bg-slate-950 rounded-lg p-3 overflow-x-auto mb-3"><code class="text-green-300">// 1. Generar el Golden Master (solo una vez)
+const inputs = loadTestCases('legacy_inputs.json');  // 500 casos
+const results = inputs.map(i => legacyCalculatePrice(i));
+writeFile('golden_master.json', JSON.stringify(results));
+
+// 2. Test: comparar contra el master
+test('no regression vs golden master', () => {
+  const inputs = loadTestCases('legacy_inputs.json');
+  const expected = JSON.parse(readFile('golden_master.json'));
+  const actual = inputs.map(i => legacyCalculatePrice(i));
+  expect(actual).toEqual(expected);  // diff exacto
+});</code></pre>
+        <p class="text-xs text-slate-400">Con 500 inputs y una comparación exacta, tienes una cobertura brutal sin haber entendido una sola línea del código legacy.</p>
+      </div>
+
+      <div class="grid md:grid-cols-2 gap-4 mb-6">
+        <div class="bg-green-950/30 border border-green-500/30 rounded-lg p-4">
+          <div class="text-sm font-bold text-green-400 mb-2">Cuándo usarlo</div>
+          <ul class="text-xs space-y-1.5 text-slate-300">
+            <li>✓ Código legacy sin tests que necesitas refactorizar</li>
+            <li>✓ Lógica de cálculo compleja que nadie entiende al 100%</li>
+            <li>✓ Migración de sistema: verificar que el nuevo produce lo mismo</li>
+            <li>✓ Antes de extraer dominio de un monolito</li>
+            <li>✓ Generación de informes, PDFs, exports</li>
+          </ul>
+        </div>
+        <div class="bg-red-950/30 border border-red-500/30 rounded-lg p-4">
+          <div class="text-sm font-bold text-red-400 mb-2">Limitaciones</div>
+          <ul class="text-xs space-y-1.5 text-slate-300">
+            <li>✗ Si el código actual tiene bugs, el Golden Master los "bendice"</li>
+            <li>✗ No sirve para outputs no deterministas (fechas, random, UUIDs)</li>
+            <li>✗ Outputs muy grandes pueden hacer el diff lento</li>
+            <li>✗ No reemplaza tests unitarios — es un puente para llegar a ellos</li>
+            <li>✗ Cambios cosméticos (espacios, orden de keys) dan falsos positivos</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="bg-slate-800/50 border border-slate-700 rounded-lg p-4 mb-6">
+        <div class="text-sm font-bold text-white mb-2">Herramientas</div>
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-2">
+          <div class="bg-slate-900 rounded p-2 text-center">
+            <div class="text-xs font-mono text-amber-400">Approval Tests</div>
+            <div class="text-xs text-slate-500">Java, C#, JS</div>
+          </div>
+          <div class="bg-slate-900 rounded p-2 text-center">
+            <div class="text-xs font-mono text-amber-400">Jest Snapshots</div>
+            <div class="text-xs text-slate-500">JavaScript</div>
+          </div>
+          <div class="bg-slate-900 rounded p-2 text-center">
+            <div class="text-xs font-mono text-amber-400">TextTest</div>
+            <div class="text-xs text-slate-500">Python, Java</div>
+          </div>
+          <div class="bg-slate-900 rounded p-2 text-center">
+            <div class="text-xs font-mono text-amber-400">Verify</div>
+            <div class="text-xs text-slate-500">.NET</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="bg-amber-500/10 border border-amber-500/30 rounded-lg p-4">
+        <div class="text-sm font-bold text-amber-300 mb-2">Golden Master + Hexagonal = modernización segura</div>
+        <p class="text-sm text-slate-300">El flujo ideal para atacar legacy: <strong class="text-white">1)</strong> Golden Master sobre el sistema actual → <strong class="text-white">2)</strong> Extraer dominio puro con puertos → <strong class="text-white">3)</strong> Escribir tests unitarios sobre el dominio nuevo → <strong class="text-white">4)</strong> Retirar el Golden Master cuando los tests unitarios cubran la lógica. El Golden Master es el andamio; los tests de dominio son el edificio.</p>
+      </div>
+    `,
+  },
 ];
 ---
 
