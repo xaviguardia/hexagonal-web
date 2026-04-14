@@ -24,7 +24,7 @@ const patterns = [
       `    ${kw('const')} ${nm('order')} = ${kw('await')} ${kw('this')}.${nm('orderRepo')}.${fn('findById')}(${nm('orderId')});`,
       `    ${nm('order')}.${fn('confirm')}();`,
       `    ${kw('await')} ${kw('this')}.${nm('orderRepo')}.${fn('save')}(${nm('order')});`,
-      er('    // Si esto falla: orden confirmada pero stock no reducido'),
+      er('    // Si esto falla: pedido confirmado pero stock no reducido'),
       `    ${kw('await')} ${kw('this')}.${nm('stockRepo')}.${fn('reduce')}(${nm('order')}.items);`,
       `  }`,
       `}`,
@@ -71,7 +71,7 @@ const patterns = [
     title: 'Outbox Pattern',
     badge: 'Eventos + BD atómicos',
     scope: 'BD + Message Broker',
-    description: 'Guardar la orden en BD y publicar el evento en Kafka/RabbitMQ en la misma operación atómica. El Outbox evita el "doble write" donde la orden se guarda pero el evento no se publica (o viceversa).',
+    description: 'Guardar el pedido en BD y publicar el evento en Kafka/RabbitMQ en la misma operación atómica. El Outbox evita el "doble write" donde el pedido se guarda pero el evento no se publica (o viceversa).',
     problem: [
       er('// PROBLEMA: doble write no atómico'),
       cm('// Si falla la publicación del evento: inconsistencia'),
@@ -89,7 +89,7 @@ const patterns = [
     solution: [
       ok('// SOLUCION: Outbox — evento guardado en la misma BD'),
       '',
-      cm('// La orden y el evento se guardan en la misma transacción'),
+      cm('// El pedido y el evento se guardan en la misma transacción'),
       `${kw('class')} ${tp('CreateOrderService')} {`,
       `  ${kw('async')} ${fn('execute')}(${nm('cmd')}) {`,
       `    ${kw('const')} ${nm('order')} = ${tp('Order')}.${fn('create')}(${nm('cmd')});`,

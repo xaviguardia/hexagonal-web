@@ -64,7 +64,7 @@ const patterns = [
     description: 'El cache no contamina el dominio. Se implementa como un adaptador que decora el repositorio original, respetando el puerto definido.',
     problem: [
       er('// PROBLEMA: GetOrderService llama al repo en cada request'),
-      cm('// Misma orden leida 100 veces por segundo en producción'),
+      cm('// Mismo pedido leído 100 veces por segundo en producción'),
       '',
       `${kw('class')} ${tp('GetOrderService')} {`,
       `  ${kw('async')} ${fn('execute')}(${nm('orderId')}: ${tp('string')}) {`,
@@ -113,12 +113,12 @@ const patterns = [
     description: 'Cada entidad del dominio lanzando una query individual dentro de un bucle. El repositorio resuelve esto con una query batch sin que el dominio lo sepa.',
     problem: [
       er('// PROBLEMA: N+1 queries'),
-      cm('// Listar 50 órdenes y para cada una cargar el cliente'),
+      cm('// Listar 50 pedidos y para cada una cargar el cliente'),
       '',
       `${kw('class')} ${tp('ListOrdersService')} {`,
       `  ${kw('async')} ${fn('execute')}() {`,
       `    ${kw('const')} ${nm('orders')} = ${kw('await')} ${kw('this')}.${nm('orderRepo')}.${fn('findAll')}();`,
-      er('    // 50 órdenes = 50 queries al repo de clientes'),
+      er('    // 50 pedidos = 50 queries al repo de clientes'),
       `    ${kw('for')} (${kw('const')} ${nm('order')} ${kw('of')} ${nm('orders')}) {`,
       `      ${nm('order')}.customer = ${kw('await')} ${kw('this')}.${nm('customerRepo')}.${fn('findById')}(${nm('order')}.customerId);`,
       `    }`,

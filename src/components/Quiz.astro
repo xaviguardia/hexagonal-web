@@ -121,7 +121,7 @@ const questions = [
       'No hay diferencia, son sinónimos',
     ],
     correct: 2,
-    explanation: 'Order.create() es para nuevas órdenes: emite OrderCreatedEvent, aplica invariantes de creación. Order.reconstitute() es para el repositorio: recarga el estado desde BD sin efectos secundarios.',
+    explanation: 'Order.create() es para nuevos pedidos: emite OrderCreatedEvent, aplica invariantes de creación. Order.reconstitute() es para el repositorio: recarga el estado desde BD sin efectos secundarios.',
   },
   // ── APLICACION ────────────────────────────────────────────────
   {
@@ -470,7 +470,7 @@ const questions = [
   },
   {
     topic: 'Data Lake', difficulty: 'hard',
-    q: 'En SCD Type 2, como sabe Power BI que segmento tenía un cliente cuando creó una orden en enero?',
+    q: 'En SCD Type 2, como sabe Power BI que segmento tenía un cliente cuando creó un pedido en enero?',
     options: [
       'Consulta un log de cambios separado',
       'El fact apunta a laversión de DimCustomer que era current en ese momento (via customer_key con version)',

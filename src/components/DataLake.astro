@@ -30,7 +30,7 @@
         <ul class="space-y-2 text-sm text-slate-300">
           <li class="flex items-start gap-2"><span class="text-amber-400 mt-0.5">--</span> Optimizado para leer millones de registros</li>
           <li class="flex items-start gap-2"><span class="text-amber-400 mt-0.5">--</span> Estructura desnormalizada (pre-joined)</li>
-          <li class="flex items-start gap-2"><span class="text-amber-400 mt-0.5">--</span> Histórico: "Cuántas órdenes se crearon este mes?"</li>
+          <li class="flex items-start gap-2"><span class="text-amber-400 mt-0.5">--</span> Histórico: "Cuántos pedidos se crearon este mes?"</li>
           <li class="flex items-start gap-2"><span class="text-amber-400 mt-0.5">--</span> Inmutable: los hechos son permanentes</li>
           <li class="flex items-start gap-2"><span class="text-amber-400 mt-0.5">--</span> Conjunto-centrico: agrega por dimensiones</li>
         </ul>
@@ -188,7 +188,7 @@
         <text x="350" y="198" text-anchor="middle" fill="#fde04780" font-size="9">date_key (FK) | customer_key (FK)</text>
         <text x="350" y="214" text-anchor="middle" fill="#fde04780" font-size="9">total_amount | item_count | order_count</text>
         <text x="350" y="234" text-anchor="middle" fill="#fde04780" font-size="9">tenant_id (RLS) | source_event_id</text>
-        <text x="350" y="250" text-anchor="middle" fill="#fde04760" font-size="8">Grain: una fila = una orden creada</text>
+        <text x="350" y="250" text-anchor="middle" fill="#fde04760" font-size="8">Grain: una fila = un pedido creado</text>
 
         <!-- FactStatusChange (bottom) -->
         <rect x="230" y="310" width="240" height="80" rx="10" fill="#0f172a" stroke="#eab308" stroke-width="1.5"/>
@@ -222,7 +222,7 @@
       <h4 class="font-bold text-white mb-3">SCD Type 2 -- Historial de dimensiones</h4>
       <p class="text-sm text-slate-300 mb-4">
         Si un cliente cambia de segmento ("Startup" a "Enterprise"), necesitas saber que segmento
-        tenía cuando creo cada orden. SCD Type 2 mantiene una fila por version:
+        tenía cuando creo cada pedido. SCD Type 2 mantiene una fila por version:
       </p>
       <div class="overflow-x-auto">
         <table class="text-xs w-full">
