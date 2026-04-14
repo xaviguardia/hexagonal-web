@@ -927,10 +927,10 @@ const allFiles = groups.flatMap(g => g.files.map(f => ({ ...f, groupId: g.id }))
     Cada archivo está vinculado al concepto que ilustra. Selecciona un archivo en el árbol para ver su rol dentro de la arquitectura.
   </p>
 
-  <div class="flex flex-col md:flex-row bg-slate-900 border border-slate-700 rounded-xl overflow-hidden" style="min-height: 560px;">
+  <div class="flex min-h-[28rem] flex-col md:min-h-[35rem] md:flex-row bg-slate-900 border border-slate-700 rounded-xl overflow-hidden">
 
     <!-- Left: file tree -->
-    <div class="md:w-52 lg:w-60 xl:w-64 shrink-0 border-b md:border-b-0 md:border-r border-slate-700 bg-slate-950/60 overflow-y-auto">
+    <div class="max-h-72 overflow-auto md:max-h-none md:w-52 lg:w-60 xl:w-64 shrink-0 border-b md:border-b-0 md:border-r border-slate-700 bg-slate-950/60">
       <div class="px-4 py-3 border-b border-slate-700/50">
         <span class="text-xs font-semibold text-slate-500 uppercase tracking-widest">Archivos</span>
       </div>
@@ -958,16 +958,16 @@ const allFiles = groups.flatMap(g => g.files.map(f => ({ ...f, groupId: g.id }))
         <div class={`code-panel flex flex-col flex-1 ${i === 0 ? '' : 'hidden'}`} data-panel={f.id}>
           <!-- Top bar: path + concept link -->
           <div class="flex flex-wrap items-center gap-3 px-5 py-3 border-b border-slate-700/60 bg-slate-900/80 shrink-0">
-            <span class="font-mono text-xs text-slate-500 truncate mr-auto">{f.path}</span>
+            <span class="min-w-0 flex-1 font-mono text-xs text-slate-500 truncate">{f.path}</span>
             <a
               href={f.concept.href}
-              class="text-xs font-semibold px-3 py-1 rounded-full bg-slate-700 hover:bg-slate-600 text-slate-200 transition-colors whitespace-nowrap shrink-0"
+              class="text-xs font-semibold px-3 py-1 rounded-full bg-slate-700 hover:bg-slate-600 text-slate-200 transition-colors text-center whitespace-normal sm:whitespace-nowrap shrink-0"
             >
               Ver concepto: {f.concept.label} &rarr;
             </a>
           </div>
           <!-- Code -->
-          <pre class="p-5 overflow-auto text-xs leading-loose flex-1 m-0"><code set:html={f.code} /></pre>
+          <pre class="p-4 sm:p-5 overflow-auto text-[11px] sm:text-xs leading-loose flex-1 m-0"><code set:html={f.code} /></pre>
         </div>
       ))}
     </div>

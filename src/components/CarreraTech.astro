@@ -9,7 +9,6 @@ interface Role {
   description: string;
   skills: string[];
   tools: string[];
-  salaryRange: string;
   nextSteps: string[];
 }
 
@@ -31,7 +30,6 @@ const roles: Role[] = [
     description: 'Construye interfaces de usuario con HTML, CSS y JavaScript. Trabaja con componentes, aprende un framework y empieza a entender accesibilidad.',
     skills: ['HTML semántico', 'CSS / Flexbox / Grid', 'JavaScript ES6+', 'Un framework (React, Vue, Angular)', 'Git básico', 'Responsive design'],
     tools: ['VS Code', 'Chrome DevTools', 'npm', 'Figma (lectura)'],
-    salaryRange: '20k - 30k €',
     nextSteps: ['Frontend Mid', 'Fullstack'],
   },
   {
@@ -40,7 +38,6 @@ const roles: Role[] = [
     description: 'Diseña componentes reutilizables, gestiona estado complejo, optimiza rendimiento. Empieza a tomar decisiones de arquitectura frontend.',
     skills: ['TypeScript', 'State management (Redux, Zustand, Pinia)', 'Testing (Jest, Playwright)', 'Performance (Core Web Vitals)', 'CI/CD para frontend', 'Design Systems'],
     tools: ['Storybook', 'Webpack/Vite', 'Lighthouse', 'Sentry'],
-    salaryRange: '30k - 45k €',
     nextSteps: ['Frontend Senior', 'Fullstack Senior'],
   },
   {
@@ -49,7 +46,6 @@ const roles: Role[] = [
     description: 'Define la arquitectura frontend del equipo. Mentoriza juniors, toma decisiones técnicas, optimiza DX y pipeline. Puede liderar la migración de frameworks.',
     skills: ['Arquitectura frontend (hexagonal, micro-frontends)', 'Monorepos (Nx, Turborepo)', 'SSR / SSG / ISR', 'Observabilidad frontend', 'Mentoría y code review', 'Comunicación con producto'],
     tools: ['Nx / Turborepo', 'Grafana RUM', 'Chromatic', 'Architecture Decision Records'],
-    salaryRange: '45k - 65k €',
     nextSteps: ['Tech Lead', 'Arquitecto de Software', 'Engineering Manager'],
   },
   // ── BACKEND ──
@@ -59,7 +55,6 @@ const roles: Role[] = [
     description: 'Construye APIs REST, interactúa con bases de datos, aprende patrones básicos. Escribe tests unitarios y entiende el ciclo request-response.',
     skills: ['Un lenguaje (TypeScript, Java, C#, Python, Go)', 'SQL + un ORM', 'APIs REST', 'Git + branching', 'Tests unitarios', 'HTTP, JSON, autenticación básica'],
     tools: ['Postman / Thunder Client', 'Docker (uso básico)', 'PostgreSQL / MySQL', 'Terminal'],
-    salaryRange: '22k - 32k €',
     nextSteps: ['Backend Mid', 'Fullstack'],
   },
   {
@@ -68,7 +63,6 @@ const roles: Role[] = [
     description: 'Diseña servicios con patrones de dominio, gestiona transacciones, mensajería asíncrona. Entiende arquitectura hexagonal y sabe cuándo aplicarla.',
     skills: ['DDD básico (entidades, value objects, aggregates)', 'Arquitectura hexagonal', 'Mensajería (RabbitMQ, Kafka)', 'Caching (Redis)', 'Tests de integración', 'Seguridad (OWASP Top 10)'],
     tools: ['Docker Compose', 'RabbitMQ / Kafka', 'Redis', 'SonarQube'],
-    salaryRange: '32k - 48k €',
     nextSteps: ['Backend Senior', 'Arquitecto de Software'],
   },
   {
@@ -77,7 +71,6 @@ const roles: Role[] = [
     description: 'Diseña sistemas distribuidos, define estándares del equipo, resuelve problemas de escalabilidad. Lidera decisiones de arquitectura y mentoriza.',
     skills: ['Sistemas distribuidos', 'Event sourcing / CQRS', 'Observabilidad (OTEL, Grafana)', 'Performance tuning (queries, pools, profiling)', 'Mentoría técnica', 'Decisiones build vs buy'],
     tools: ['Kubernetes', 'Terraform', 'Jaeger / Tempo', 'Load testing (k6, Gatling)'],
-    salaryRange: '48k - 70k €',
     nextSteps: ['Staff Engineer', 'Arquitecto de Software', 'Engineering Manager'],
   },
   // ── DEVOPS ──
@@ -87,7 +80,6 @@ const roles: Role[] = [
     description: 'Automatiza despliegues, gestiona pipelines CI/CD, aprende infraestructura como código. Mantiene entornos de desarrollo y staging.',
     skills: ['Linux administration', 'Docker', 'CI/CD (GitHub Actions, GitLab CI)', 'Scripting (Bash, Python)', 'Networking básico', 'Git avanzado'],
     tools: ['Docker', 'GitHub Actions', 'Ansible', 'Nginx'],
-    salaryRange: '24k - 35k €',
     nextSteps: ['DevOps Mid', 'SRE'],
   },
   {
@@ -96,7 +88,6 @@ const roles: Role[] = [
     description: 'Diseña plataformas internas, define SLOs/SLIs, gestiona incidencias y postmortems. Automatiza todo lo repetitivo y construye herramientas para los equipos.',
     skills: ['Kubernetes en producción', 'IaC (Terraform, Pulumi)', 'Observabilidad (métricas, logs, trazas)', 'SLOs / Error budgets', 'Seguridad en infraestructura', 'Platform engineering'],
     tools: ['Kubernetes', 'Terraform', 'Prometheus + Grafana', 'ArgoCD / FluxCD', 'Vault'],
-    salaryRange: '45k - 70k €',
     nextSteps: ['Staff SRE', 'Platform Architect', 'CTO (startups)'],
   },
   // ── DATA / IA ──
@@ -106,7 +97,6 @@ const roles: Role[] = [
     description: 'Extrae insights de los datos para ayudar a tomar decisiones de negocio. Crea dashboards, informes y análisis ad-hoc. Traduce datos en historias comprensibles.',
     skills: ['SQL avanzado', 'Excel / Google Sheets avanzado', 'Visualización (Power BI, Tableau, Looker)', 'Estadística descriptiva', 'Python o R básico', 'Storytelling con datos'],
     tools: ['Power BI / Tableau', 'SQL (BigQuery, Postgres)', 'Excel', 'Jupyter / Google Colab'],
-    salaryRange: '22k - 35k €',
     nextSteps: ['Data Analyst Senior', 'Data Engineer', 'Business Analyst'],
   },
   {
@@ -115,7 +105,6 @@ const roles: Role[] = [
     description: 'Construye y mantiene la infraestructura de datos. Diseña pipelines ETL/ELT, data warehouses y data lakes. Asegura que los datos lleguen limpios y a tiempo.',
     skills: ['Python + SQL avanzado', 'ETL/ELT (dbt, Airflow, Spark)', 'Data warehousing (Snowflake, BigQuery, Redshift)', 'Arquitectura Medallion (Bronze/Silver/Gold)', 'Streaming (Kafka, Flink)', 'Modelado dimensional (star schema)'],
     tools: ['dbt', 'Airflow / Dagster', 'Spark', 'Snowflake / BigQuery', 'Kafka'],
-    salaryRange: '35k - 55k €',
     nextSteps: ['Senior Data Engineer', 'AI/ML Engineer', 'Data Architect'],
   },
   {
@@ -124,7 +113,6 @@ const roles: Role[] = [
     description: 'Integra modelos de IA en aplicaciones productivas. Diseña y programa agentes autónomos, sistemas RAG, y orquestaciones multi-modelo. Puente entre los modelos y el producto final.',
     skills: ['Diseño y programación de agentes (Claude Agent SDK, LangGraph)', 'Prompt engineering avanzado', 'RAG (Retrieval Augmented Generation)', 'Orquestación multi-agente (tool use, planificación, memoria)', 'Evaluación y testing de LLMs (evals, benchmarks)', 'Integración con APIs y herramientas externas (MCP, function calling)'],
     tools: ['Claude SDK / Anthropic API', 'LangChain / LangGraph', 'Vectorstores (Pinecone, pgvector)', 'Jupyter', 'Docker'],
-    salaryRange: '40k - 70k €',
     nextSteps: ['Senior AI Engineer', 'AI Architect', 'Head of AI'],
   },
   {
@@ -133,7 +121,6 @@ const roles: Role[] = [
     description: 'Entrena, fine-tunea y despliega modelos de machine learning en producción. Construye pipelines de entrenamiento, gestiona el ciclo de vida del modelo y monitoriza drift.',
     skills: ['Python + ML frameworks (PyTorch, TensorFlow)', 'Fine-tuning de modelos (LoRA, RLHF)', 'MLOps (MLflow, Weights & Biases, Kubeflow)', 'Feature stores y pipelines de datos', 'Monitorización de modelos (data drift, performance)', 'Infraestructura GPU (CUDA, distribución)'],
     tools: ['MLflow / W&B', 'Kubeflow / SageMaker', 'PyTorch', 'Airflow', 'GPU clusters'],
-    salaryRange: '50k - 80k €',
     nextSteps: ['ML Architect', 'Head of AI', 'Research Scientist'],
   },
   // ── QA / TESTING ──
@@ -143,7 +130,6 @@ const roles: Role[] = [
     description: 'Diseña casos de prueba, ejecuta tests manuales y automatizados. Asegura que el software cumple los requisitos y reporta bugs de forma estructurada.',
     skills: ['Diseño de casos de prueba', 'Testing manual (exploratorio, regresión)', 'Un framework de test (Playwright, Cypress)', 'SQL básico para verificar datos', 'Reporte de bugs (steps to reproduce)', 'APIs testing (Postman)'],
     tools: ['Playwright / Cypress', 'Postman', 'Jira', 'TestRail / Zephyr'],
-    salaryRange: '20k - 30k €',
     nextSteps: ['QA Automation Engineer', 'QA Lead'],
   },
   {
@@ -152,7 +138,6 @@ const roles: Role[] = [
     description: 'Define la estrategia de calidad del equipo. Construye frameworks de test, integra testing en CI/CD, mide cobertura y métricas de calidad.',
     skills: ['Estrategia de testing (pirámide, testing trophy)', 'Frameworks de automatización', 'Performance testing', 'Contract testing (Pact)', 'Shift-left testing', 'Métricas de calidad'],
     tools: ['Playwright', 'k6 / Gatling', 'Pact', 'Allure Reports', 'SonarQube'],
-    salaryRange: '38k - 55k €',
     nextSteps: ['Head of QA', 'Engineering Manager', 'Arquitecto de Software'],
   },
   // ── GESTIÓN / PROCESO ──
@@ -162,7 +147,6 @@ const roles: Role[] = [
     description: 'Facilita el proceso ágil del equipo. Elimina impedimentos, modera ceremonias (daily, retro, planning), protege al equipo de interrupciones externas.',
     skills: ['Scrum / Kanban', 'Facilitación de reuniones', 'Gestión de conflictos', 'Métricas ágiles (velocity, cycle time)', 'Coaching de equipos', 'Gestión de stakeholders'],
     tools: ['Jira / Linear', 'Miro / FigJam', 'Confluence', 'Slack'],
-    salaryRange: '35k - 55k €',
     nextSteps: ['Agile Coach', 'Engineering Manager', 'Product Owner'],
   },
   {
@@ -171,7 +155,6 @@ const roles: Role[] = [
     description: 'Planifica, coordina y controla proyectos de software. Gestiona alcance, tiempo, presupuesto y riesgos. Comunica progreso a stakeholders.',
     skills: ['Planificación y estimación', 'Gestión de riesgos', 'Comunicación ejecutiva', 'Presupuestos y recursos', 'Metodologías (Agile, Waterfall, híbrido)', 'Negociación de alcance'],
     tools: ['MS Project / Monday', 'Jira', 'Excel / Sheets', 'PowerPoint / Slides'],
-    salaryRange: '38k - 60k €',
     nextSteps: ['Program Manager', 'Head of Delivery', 'CTO'],
   },
   {
@@ -180,7 +163,6 @@ const roles: Role[] = [
     description: 'Traduce necesidades de negocio a requisitos técnicos. Modela procesos, define historias de usuario, valida que la solución resuelve el problema real.',
     skills: ['Levantamiento de requisitos', 'Modelado de procesos (BPMN)', 'User stories + criterios de aceptación', 'Análisis de datos (SQL, Excel avanzado)', 'Prototipado (wireframes)', 'Domain-Driven Design (colaboración)'],
     tools: ['Jira / Confluence', 'Miro', 'Figma (wireframes)', 'SQL', 'Camunda Modeler'],
-    salaryRange: '30k - 50k €',
     nextSteps: ['Product Owner', 'Product Manager', 'Arquitecto de Negocio'],
   },
   // ── ARQUITECTURA ──
@@ -190,7 +172,6 @@ const roles: Role[] = [
     description: 'Define la estructura de los sistemas. Toma decisiones técnicas de alto impacto (monolito vs microservicios, patrones, tecnologías). Balancea pragmatismo con visión a largo plazo.',
     skills: ['Patrones arquitectónicos (hexagonal, CQRS, event-driven)', 'Evaluación de trade-offs', 'ADRs (Architecture Decision Records)', 'Comunicación técnica a todas las capas', 'Sistemas distribuidos', 'Seguridad y compliance'],
     tools: ['C4 Model / Structurizr', 'Mermaid / PlantUML', 'ADRs', 'Radar tecnológico'],
-    salaryRange: '55k - 85k €',
     nextSteps: ['Principal Architect', 'VP Engineering', 'CTO'],
   },
 ];
@@ -201,6 +182,57 @@ const levels = [
   { id: 'senior', label: 'Senior', color: 'text-purple-400' },
   { id: 'lead', label: 'Lead / Architect', color: 'text-orange-400' },
   { id: 'cross', label: 'Transversal', color: 'text-slate-400' },
+];
+
+const mobileCareerMap = [
+  {
+    label: 'Frontend',
+    dot: 'bg-cyan-400',
+    border: 'border-cyan-500/30',
+    bg: 'bg-cyan-500/10',
+    steps: ['Frontend Junior', 'Frontend Mid', 'Frontend Senior'],
+    destination: 'Tech Lead o Arquitecto de Software',
+  },
+  {
+    label: 'Backend',
+    dot: 'bg-amber-400',
+    border: 'border-amber-500/30',
+    bg: 'bg-amber-500/10',
+    steps: ['Backend Junior', 'Backend Mid', 'Backend Senior'],
+    destination: 'Staff Engineer o Arquitecto de Software',
+  },
+  {
+    label: 'DevOps / SRE',
+    dot: 'bg-green-400',
+    border: 'border-green-500/30',
+    bg: 'bg-green-500/10',
+    steps: ['DevOps Junior', 'DevOps / SRE Senior'],
+    destination: 'Platform Architect o liderazgo técnico',
+  },
+  {
+    label: 'Data / IA',
+    dot: 'bg-purple-400',
+    border: 'border-purple-500/30',
+    bg: 'bg-purple-500/10',
+    steps: ['Data Analyst', 'Data Engineer / AI Engineer', 'ML Engineer'],
+    destination: 'Data Architect o Head of AI',
+  },
+  {
+    label: 'QA / Testing',
+    dot: 'bg-rose-400',
+    border: 'border-rose-500/30',
+    bg: 'bg-rose-500/10',
+    steps: ['QA / Tester', 'QA Automation Lead'],
+    destination: 'Head of QA o Arquitectura de calidad',
+  },
+  {
+    label: 'Gestion / Proceso',
+    dot: 'bg-blue-400',
+    border: 'border-blue-500/30',
+    bg: 'bg-blue-500/10',
+    steps: ['Scrum Master', 'Project Manager', 'Business Analyst'],
+    destination: 'Product, Delivery o Arquitectura de negocio',
+  },
 ];
 ---
 
@@ -217,7 +249,42 @@ const levels = [
   <!-- Career Map SVG -->
   <div class="mb-16">
     <h3 class="text-lg font-bold text-white mb-6 text-center">Mapa de carreras</h3>
-    <div class="bg-slate-900 border border-slate-700 rounded-xl p-6 md:p-8 overflow-x-auto">
+    <div class="grid gap-4 md:hidden">
+      {mobileCareerMap.map((path) => (
+        <article class={`rounded-xl border p-4 ${path.bg} ${path.border}`}>
+          <div class="flex items-center gap-2 mb-3">
+            <span class={`h-2.5 w-2.5 rounded-full ${path.dot}`}></span>
+            <h4 class="text-sm font-semibold text-white">{path.label}</h4>
+          </div>
+          <div class="space-y-2">
+            {path.steps.map((step, index) => (
+              <>
+                <div class="rounded-lg border border-slate-800 bg-slate-950/70 px-3 py-2 text-sm text-slate-200">
+                  {step}
+                </div>
+                {index < path.steps.length - 1 && (
+                  <div class="pl-3 text-xs font-mono text-slate-500">↓ siguiente nivel</div>
+                )}
+              </>
+            ))}
+          </div>
+          <p class="mt-3 text-xs text-slate-400">
+            Salida habitual: <span class="text-slate-200">{path.destination}</span>
+          </p>
+        </article>
+      ))}
+
+      <div class="rounded-xl border border-orange-500/30 bg-orange-500/10 p-4">
+        <div class="text-sm font-semibold text-orange-300">Convergencia en arquitectura</div>
+        <p class="mt-2 text-sm text-slate-300">
+          A medida que creces, distintos tracks pueden acabar convergiendo en decisiones de arquitectura,
+          producto o liderazgo técnico. En móvil esta vista prioriza legibilidad; el mapa completo sigue
+          visible en tablet y desktop.
+        </p>
+      </div>
+    </div>
+
+    <div class="hidden md:block bg-slate-900 border border-slate-700 rounded-xl p-6 md:p-8 overflow-x-auto">
       <svg viewBox="0 0 960 570" class="w-full" style="min-width: 750px; max-height: 570px;">
         <!-- Column headers -->
         <text x="150" y="30" text-anchor="middle" fill="#4ade80" font-size="11" font-weight="700">JUNIOR</text>
@@ -359,9 +426,8 @@ const levels = [
   <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-4" id="role-cards">
     {roles.map(role => (
       <div class={`role-card ${role.color} border ${role.borderColor} rounded-xl p-5 transition-all`} data-track={role.track} data-role-card={role.id}>
-        <div class="flex items-center justify-between mb-3">
+        <div class="mb-3">
           <h4 class="font-bold text-white text-sm">{role.title}</h4>
-          <span class="text-xs px-2 py-0.5 rounded-full bg-slate-800 text-slate-400">{role.salaryRange}</span>
         </div>
         <p class="text-xs text-slate-300 mb-4">{role.description}</p>
 
