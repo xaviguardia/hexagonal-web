@@ -1,0 +1,148 @@
+---
+interface FAQItem {
+  id: string;
+  question: string;
+  answer: string;
+  diagram?: string;
+}
+
+const faqs: FAQItem[] = [
+  {
+    id: 'deuda-tecnica',
+    question: '¿Qué es la deuda técnica?',
+    answer: `
+      <p class="mb-4">La <strong class="text-white">deuda técnica</strong> es una metáfora financiera inventada por <strong class="text-white">Ward Cunningham</strong> (1992). Funciona exactamente como una deuda monetaria:</p>
+
+      <div class="grid md:grid-cols-2 gap-4 mb-6">
+        <div class="bg-slate-800/50 border border-blue-500/30 rounded-lg p-4">
+          <div class="text-sm font-bold text-blue-400 mb-2">Deuda financiera</div>
+          <ul class="text-xs space-y-1.5 text-slate-300">
+            <li>Pides un préstamo → recibes dinero hoy</li>
+            <li>Pagas <strong class="text-white">intereses</strong> cada mes</li>
+            <li>Si no amortizas, los intereses crecen</li>
+            <li>Si amortizas, dejas de pagar intereses</li>
+          </ul>
+        </div>
+        <div class="bg-slate-800/50 border border-amber-500/30 rounded-lg p-4">
+          <div class="text-sm font-bold text-amber-400 mb-2">Deuda técnica</div>
+          <ul class="text-xs space-y-1.5 text-slate-300">
+            <li>Tomas un atajo → entregas antes hoy</li>
+            <li>Pagas <strong class="text-white">intereses</strong> en cada cambio futuro</li>
+            <li>Si no refactorizas, cada cambio cuesta más</li>
+            <li>Si refactorizas, recuperas velocidad</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="bg-slate-900 border border-slate-700 rounded-lg p-4 mb-6">
+        <div class="text-sm font-bold text-white mb-3">Ejemplo concreto</div>
+        <div class="space-y-3 text-sm text-slate-300">
+          <p>Tu equipo necesita entregar una feature para el viernes. Hay dos opciones:</p>
+          <div class="grid md:grid-cols-2 gap-3">
+            <div class="bg-green-950/30 border border-green-500/30 rounded-lg p-3">
+              <div class="text-xs font-bold text-green-400 mb-1">Opción A: hacerlo bien (5 días)</div>
+              <p class="text-xs text-slate-400">Crear un puerto, un adaptador, tests, separar responsabilidades. Tarda más, pero cada cambio futuro cuesta 1 hora.</p>
+            </div>
+            <div class="bg-amber-950/30 border border-amber-500/30 rounded-lg p-3">
+              <div class="text-xs font-bold text-amber-400 mb-1">Opción B: atajo (2 días)</div>
+              <p class="text-xs text-slate-400">Meter la lógica en el controller, hardcodear valores, sin tests. Entregas antes, pero cada cambio futuro cuesta 4 horas.</p>
+            </div>
+          </div>
+          <p class="text-slate-400 text-xs">La opción B no es "mala" — es una <strong class="text-white">decisión consciente</strong>. El problema es cuando se acumula sin control y nadie "amortiza" (refactoriza).</p>
+        </div>
+      </div>
+
+      <div class="mb-6">
+        <div class="text-sm font-bold text-white mb-3">Tipos de deuda técnica (Martin Fowler)</div>
+        <div class="grid grid-cols-2 gap-3">
+          <div class="bg-slate-800/50 border border-slate-700 rounded-lg p-3">
+            <div class="text-xs font-bold text-green-400 mb-1">Deliberada + Prudente</div>
+            <p class="text-xs text-slate-400">"Sabemos que esto es un atajo, lo documentamos, y planificamos refactorizar en el sprint 12."</p>
+          </div>
+          <div class="bg-slate-800/50 border border-slate-700 rounded-lg p-3">
+            <div class="text-xs font-bold text-amber-400 mb-1">Deliberada + Imprudente</div>
+            <p class="text-xs text-slate-400">"No tenemos tiempo para diseñar bien, ya lo arreglaremos" (spoiler: nunca se arregla).</p>
+          </div>
+          <div class="bg-slate-800/50 border border-slate-700 rounded-lg p-3">
+            <div class="text-xs font-bold text-blue-400 mb-1">Inadvertida + Prudente</div>
+            <p class="text-xs text-slate-400">"Ahora que entendemos mejor el dominio, vemos que deberíamos haberlo modelado diferente."</p>
+          </div>
+          <div class="bg-slate-800/50 border border-slate-700 rounded-lg p-3">
+            <div class="text-xs font-bold text-red-400 mb-1">Inadvertida + Imprudente</div>
+            <p class="text-xs text-slate-400">"¿Qué es una capa? Metemos todo en el controller." — falta de conocimiento, no decisión.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="bg-amber-500/10 border border-amber-500/30 rounded-lg p-4 mb-6">
+        <div class="text-sm font-bold text-amber-300 mb-2">¿Cómo ayuda la arquitectura hexagonal?</div>
+        <ul class="text-xs space-y-1.5 text-slate-300">
+          <li><strong class="text-white">Puertos y adaptadores</strong> → cambiar tecnología (BD, framework) sin tocar el dominio = menos intereses</li>
+          <li><strong class="text-white">Dominio aislado</strong> → las reglas de negocio no se "ensucian" con detalles técnicos = deuda crece más lento</li>
+          <li><strong class="text-white">Tests sin infraestructura</strong> → refactorizar con red de seguridad = amortizar es más barato</li>
+          <li><strong class="text-white">Inversión de dependencias</strong> → el dominio no depende de nada externo = puedes reemplazar piezas una a una</li>
+        </ul>
+      </div>
+
+      <div class="bg-slate-800/50 border border-slate-700 rounded-lg p-4">
+        <div class="text-sm font-bold text-white mb-2">La regla de oro</div>
+        <p class="text-sm text-slate-300">La deuda técnica es inevitable y a veces necesaria. Lo peligroso no es tenerla, sino <strong class="text-white">no saber que la tienes</strong> o <strong class="text-white">no planificar cuándo amortizarla</strong>. Un equipo maduro la hace visible, la mide, y la paga antes de que los intereses paralicen el proyecto.</p>
+      </div>
+    `,
+  },
+];
+---
+
+<section id="faq" class="max-w-5xl mx-auto px-6 py-24 reveal">
+  <div class="text-center mb-16">
+    <span class="text-xs font-mono text-sky-400 uppercase tracking-widest">Formación</span>
+    <h2 class="text-3xl font-bold text-white mt-3 mb-2">Conceptos y FAQ</h2>
+    <p class="text-slate-400 max-w-2xl mx-auto">
+      Preguntas frecuentes y conceptos clave que aparecen cuando trabajas con
+      arquitectura de software. Explicados con ejemplos, no con definiciones de libro.
+    </p>
+  </div>
+
+  <div class="space-y-4" id="faq-list">
+    {faqs.map(faq => (
+      <div class="border border-slate-700 rounded-xl overflow-hidden" data-faq={faq.id}>
+        <button
+          class="faq-toggle w-full flex items-center justify-between px-6 py-5 bg-slate-800/50 hover:bg-slate-800 transition-colors text-left"
+          aria-expanded="false"
+        >
+          <span class="text-lg font-semibold text-white pr-4">{faq.question}</span>
+          <svg class="faq-chevron w-5 h-5 text-slate-400 shrink-0 transition-transform duration-200" viewBox="0 0 20 20" fill="currentColor">
+            <path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z" clip-rule="evenodd" />
+          </svg>
+        </button>
+        <div class="faq-content hidden px-6 py-6 bg-slate-900/50">
+          <div class="prose-sm" set:html={faq.answer} />
+        </div>
+      </div>
+    ))}
+  </div>
+</section>
+
+<script>
+  document.getElementById('faq-list')?.addEventListener('click', function(e) {
+    var btn = (e.target as HTMLElement).closest('.faq-toggle');
+    if (!btn) return;
+    var content = btn.nextElementSibling as HTMLElement;
+    var chevron = btn.querySelector('.faq-chevron') as HTMLElement;
+    var expanded = btn.getAttribute('aria-expanded') === 'true';
+
+    // Close all others
+    document.querySelectorAll('.faq-toggle').forEach(function(other) {
+      if (other !== btn) {
+        other.setAttribute('aria-expanded', 'false');
+        (other.nextElementSibling as HTMLElement)?.classList.add('hidden');
+        (other.querySelector('.faq-chevron') as HTMLElement)?.classList.remove('rotate-180');
+      }
+    });
+
+    // Toggle current
+    btn.setAttribute('aria-expanded', expanded ? 'false' : 'true');
+    content?.classList.toggle('hidden');
+    chevron?.classList.toggle('rotate-180');
+  });
+</script>
