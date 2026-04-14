@@ -589,7 +589,7 @@ const groups: Group[] = [
         id: 'tracing-port',
         label: 'TracingPort.ts',
         path: 'src/domain/ports/output/TracingPort.ts',
-        concept: { label: 'Observabilidad: OTEL', href: '#codigo' },
+        concept: { label: 'Observabilidad: OTEL', href: '#observabilidad' },
         code: [
           cm('// Puerto de salida para trazas — el dominio no conoce OTEL'),
           `${kw('export interface')} ${tp('SpanHandle')} {`,
@@ -611,7 +611,7 @@ const groups: Group[] = [
         id: 'traced-use-case',
         label: 'TracedUseCase.ts',
         path: 'src/application/decorators/TracedUseCase.ts',
-        concept: { label: 'Observabilidad: OTEL', href: '#codigo' },
+        concept: { label: 'Observabilidad: OTEL', href: '#observabilidad' },
         code: [
           cm('// Decorator funcional: cualquier use case + tracing automatico'),
           `${kw('export function')} ${fn('withTracing')}&lt;I, O&gt;(`,

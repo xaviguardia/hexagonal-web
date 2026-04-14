@@ -1,0 +1,289 @@
+---
+// Observabilidad / OpenTelemetry in Hexagonal Architecture
+---
+<section id="observabilidad" class="max-w-5xl mx-auto px-6 py-24 reveal">
+  <div class="text-center mb-16">
+    <span class="text-xs font-mono text-orange-400 uppercase tracking-widest">Avanzado</span>
+    <h2 class="text-3xl font-bold text-white mt-3 mb-2">Observabilidad con OpenTelemetry</h2>
+    <p class="text-slate-400 max-w-2xl mx-auto">
+      Como instrumentar una arquitectura hexagonal sin contaminar el dominio.
+      Trazas, metricas y logs fluyen por puertos — el negocio nunca sabe que existe OTEL.
+    </p>
+  </div>
+
+  <!-- El problema -->
+  <div class="mb-20">
+    <h3 class="text-xl font-bold text-orange-400 mb-6">El problema: observabilidad acoplada</h3>
+    <div class="grid md:grid-cols-2 gap-6">
+      <div class="bg-red-950/30 border border-red-500/30 rounded-xl p-6">
+        <h4 class="font-bold text-red-400 mb-3">Mal: OTEL en el dominio</h4>
+        <pre class="text-xs bg-slate-900/80 rounded-lg p-4 overflow-x-auto"><code class="text-red-300" set:html={`// Order.ts — CONTAMINADO
+import { trace } from '@opentelemetry/api';
+
+export class Order {
+  confirm() {
+    const span = trace.getTracer('app')
+      .startSpan('Order.confirm');  // !!
+    this.status = "CONFIRMED";
+    span.end();                     // !!
+  }
+}`} /></pre>
+        <p class="text-xs text-red-300 mt-3">El dominio depende de un SDK de infraestructura. Imposible testear sin OTEL configurado.</p>
+      </div>
+      <div class="bg-green-950/30 border border-green-500/30 rounded-xl p-6">
+        <h4 class="font-bold text-green-400 mb-3">Bien: puerto + decorator</h4>
+        <pre class="text-xs bg-slate-900/80 rounded-lg p-4 overflow-x-auto"><code class="text-green-300" set:html={`// Order.ts — LIMPIO
+export class Order {
+  confirm() {
+    if (this.status === "SHIPPED")
+      throw new DomainError("...");
+    this.status = "CONFIRMED";
+    this.record(new OrderConfirmedEvent(...));
+  }
+}
+// Tracing vive en el decorator, fuera del dominio`} /></pre>
+        <p class="text-xs text-green-300 mt-3">El dominio es puro. OTEL se inyecta como decorator en la Composition Root.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- TracingPort -->
+  <div class="mb-20">
+    <h3 class="text-xl font-bold text-orange-400 mb-6">TracingPort: el puerto de salida</h3>
+    <p class="text-slate-400 text-sm mb-6">
+      El dominio define <strong class="text-white">que</strong> quiere trazar (un span con nombre y atributos),
+      pero no <strong class="text-white">como</strong>. El adaptador decide si usa OTEL, Datadog, o simplemente console.log.
+    </p>
+
+    <div class="grid md:grid-cols-2 gap-6">
+      <div class="bg-slate-800/50 border border-slate-700 rounded-xl p-6">
+        <h4 class="font-bold text-orange-400 mb-3">Puerto (contrato)</h4>
+        <pre class="text-xs bg-slate-900/80 rounded-lg p-4 overflow-x-auto"><code class="text-orange-300" set:html={`interface SpanHandle {
+  setAttribute(key: string, val: string | number): void;
+  recordException(error: Error): void;
+  setStatus(s: "ok" | "error"): void;
+  end(): void;
+}
+
+interface TracingPort {
+  startSpan(
+    name: string,
+    attrs?: Record<string, string>
+  ): SpanHandle;
+}`} /></pre>
+      </div>
+      <div class="bg-slate-800/50 border border-slate-700 rounded-xl p-6">
+        <h4 class="font-bold text-purple-400 mb-3">Adaptador (OTEL)</h4>
+        <pre class="text-xs bg-slate-900/80 rounded-lg p-4 overflow-x-auto"><code class="text-purple-300" set:html={`class OtelTracingAdapter implements TracingPort {
+  private tracer = trace.getTracer('hexagonal-app');
+
+  startSpan(name: string, attrs?: Record<string, string>): SpanHandle {
+    const span = this.tracer.startSpan(name);
+    if (attrs) {
+      for (const [k, v] of Object.entries(attrs)) {
+        span.setAttribute(k, v);
+      }
+    }
+    return span; // Span de OTEL ya implementa SpanHandle
+  }
+}`} /></pre>
+      </div>
+    </div>
+  </div>
+
+  <!-- Decorator pattern -->
+  <div class="mb-20">
+    <h3 class="text-xl font-bold text-orange-400 mb-6">Decorator: tracing transparente</h3>
+    <p class="text-slate-400 text-sm mb-6">
+      En vez de instrumentar cada use case manualmente, un decorator funcional envuelve cualquier
+      use case y le agrega tracing automaticamente. El use case original no cambia.
+    </p>
+
+    <div class="bg-slate-900 border border-slate-700 rounded-xl p-6 mb-6">
+      <pre class="text-xs overflow-x-auto"><code class="text-green-300" set:html={`function withTracing<I, O>(
+  uc:      { execute(i: I): Promise<O> },
+  tracing: TracingPort,
+  name:    string,
+): { execute(i: I): Promise<O> } {
+  return {
+    async execute(input: I): Promise<O> {
+      const span = tracing.startSpan(name, { use_case: name });
+      try {
+        const result = await uc.execute(input);
+        span.setStatus("ok");
+        return result;
+      } catch (err) {
+        if (err instanceof Error) span.recordException(err);
+        span.setStatus("error");
+        throw err;
+      } finally {
+        span.end();
+      }
+    }
+  };
+}`} /></pre>
+    </div>
+
+    <div class="bg-slate-800/50 border border-orange-400/30 rounded-xl p-6">
+      <h4 class="font-bold text-white mb-3">Composition Root: donde se conecta todo</h4>
+      <pre class="text-xs bg-slate-900/80 rounded-lg p-4 overflow-x-auto"><code class="text-amber-300" set:html={`// main.ts — Composition Root
+const otel = new OtelTracingAdapter();
+
+// Use case original
+const createOrder = new CreateOrderService(repo, eventBus);
+
+// Use case con tracing (mismo contrato, transparente)
+const traced = withTracing(createOrder, otel, "CreateOrder");
+
+// El controller recibe el use case decorado
+const controller = new OrderController(traced);`} /></pre>
+      <p class="text-sm text-slate-300 mt-3">
+        El controller no sabe si recibe el use case original o el decorado — ambos implementan
+        el mismo contrato. Puedes apilar decorators: <code class="text-orange-300">withTracing(withRetry(withLogging(uc)))</code>.
+      </p>
+    </div>
+  </div>
+
+  <!-- Tres pilares -->
+  <div class="mb-20">
+    <h3 class="text-xl font-bold text-orange-400 mb-6">Los tres pilares en hexagonal</h3>
+    <div class="grid md:grid-cols-3 gap-4">
+      <div class="bg-slate-800/50 border border-slate-700 rounded-xl p-5">
+        <h4 class="font-bold text-blue-400 text-sm mb-2">Traces (trazas)</h4>
+        <p class="text-xs text-slate-300 mb-3">Flujo completo de una request a traves de use cases, repositorios y servicios externos.</p>
+        <div class="text-xs text-slate-400 space-y-1">
+          <div class="flex items-center gap-2">
+            <span class="w-2 h-2 rounded-full bg-blue-400"></span>
+            <span>TracingPort + SpanHandle</span>
+          </div>
+          <div class="flex items-center gap-2">
+            <span class="w-2 h-2 rounded-full bg-purple-400"></span>
+            <span>OtelTracingAdapter</span>
+          </div>
+          <div class="flex items-center gap-2">
+            <span class="w-2 h-2 rounded-full bg-teal-400"></span>
+            <span>ConsoleTracingAdapter (tests)</span>
+          </div>
+        </div>
+      </div>
+      <div class="bg-slate-800/50 border border-slate-700 rounded-xl p-5">
+        <h4 class="font-bold text-green-400 text-sm mb-2">Metrics (metricas)</h4>
+        <p class="text-xs text-slate-300 mb-3">Contadores y histogramas de negocio: ordenes creadas, latencia por use case, errores por tipo.</p>
+        <div class="text-xs text-slate-400 space-y-1">
+          <div class="flex items-center gap-2">
+            <span class="w-2 h-2 rounded-full bg-green-400"></span>
+            <span>MetricsPort</span>
+          </div>
+          <div class="flex items-center gap-2">
+            <span class="w-2 h-2 rounded-full bg-purple-400"></span>
+            <span>OtelMetricsAdapter</span>
+          </div>
+          <div class="flex items-center gap-2">
+            <span class="w-2 h-2 rounded-full bg-teal-400"></span>
+            <span>InMemoryMetrics (tests)</span>
+          </div>
+        </div>
+      </div>
+      <div class="bg-slate-800/50 border border-slate-700 rounded-xl p-5">
+        <h4 class="font-bold text-amber-400 text-sm mb-2">Logs (estructurados)</h4>
+        <p class="text-xs text-slate-300 mb-3">Logs JSON con correlacion de trace_id para conectar logs con trazas en Grafana/Kibana.</p>
+        <div class="text-xs text-slate-400 space-y-1">
+          <div class="flex items-center gap-2">
+            <span class="w-2 h-2 rounded-full bg-amber-400"></span>
+            <span>LoggerPort</span>
+          </div>
+          <div class="flex items-center gap-2">
+            <span class="w-2 h-2 rounded-full bg-purple-400"></span>
+            <span>PinoLoggerAdapter</span>
+          </div>
+          <div class="flex items-center gap-2">
+            <span class="w-2 h-2 rounded-full bg-teal-400"></span>
+            <span>SilentLogger (tests)</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Diagram -->
+  <div class="mb-20">
+    <h3 class="text-xl font-bold text-orange-400 mb-6">Flujo de una traza</h3>
+    <div class="bg-slate-900 border border-slate-700 rounded-xl p-8">
+      <svg viewBox="0 0 750 200" class="w-full" style="max-height: 200px;">
+        <!-- HTTP Request -->
+        <rect x="10" y="70" width="110" height="60" rx="8" fill="#0f172a" stroke="#3b82f6" stroke-width="1.5"/>
+        <text x="65" y="95" text-anchor="middle" fill="#60a5fa" font-size="11" font-weight="700">Controller</text>
+        <text x="65" y="112" text-anchor="middle" fill="#60a5fa80" font-size="8">HTTP Adapter</text>
+
+        <!-- Decorator -->
+        <rect x="155" y="60" width="140" height="80" rx="10" fill="#431407" stroke="#ea580c" stroke-width="2"/>
+        <text x="225" y="85" text-anchor="middle" fill="#fb923c" font-size="10" font-weight="700">withTracing</text>
+        <text x="225" y="100" text-anchor="middle" fill="#fb923c80" font-size="8">startSpan("CreateOrder")</text>
+        <text x="225" y="115" text-anchor="middle" fill="#fb923c80" font-size="8">setStatus / end</text>
+        <text x="225" y="130" text-anchor="middle" fill="#fb923c60" font-size="7">Decorator transparente</text>
+        <line x1="120" y1="100" x2="155" y2="100" stroke="#3b82f6" stroke-width="1.5" marker-end="url(#arr-otel)"/>
+
+        <!-- Use Case -->
+        <rect x="330" y="70" width="120" height="60" rx="8" fill="#0f172a" stroke="#22c55e" stroke-width="1.5"/>
+        <text x="390" y="95" text-anchor="middle" fill="#4ade80" font-size="10" font-weight="700">CreateOrder</text>
+        <text x="390" y="112" text-anchor="middle" fill="#4ade8080" font-size="8">Use Case (puro)</text>
+        <line x1="295" y1="100" x2="330" y2="100" stroke="#ea580c" stroke-width="1.5" marker-end="url(#arr-otel)"/>
+
+        <!-- Repo -->
+        <rect x="485" y="70" width="110" height="60" rx="8" fill="#0f172a" stroke="#8b5cf6" stroke-width="1.5"/>
+        <text x="540" y="95" text-anchor="middle" fill="#a78bfa" font-size="10" font-weight="700">Repository</text>
+        <text x="540" y="112" text-anchor="middle" fill="#a78bfa80" font-size="8">Postgres Adapter</text>
+        <line x1="450" y1="100" x2="485" y2="100" stroke="#22c55e" stroke-width="1.5" marker-end="url(#arr-otel)"/>
+
+        <!-- Exporter -->
+        <rect x="630" y="70" width="110" height="60" rx="8" fill="#0f172a" stroke="#f59e0b" stroke-width="1.5"/>
+        <text x="685" y="95" text-anchor="middle" fill="#fbbf24" font-size="10" font-weight="700">OTEL Collector</text>
+        <text x="685" y="112" text-anchor="middle" fill="#fbbf2480" font-size="8">Jaeger / Tempo</text>
+
+        <!-- Dashed line from decorator to exporter -->
+        <path d="M225,140 C225,175 685,175 685,130" fill="none" stroke="#ea580c" stroke-width="1" stroke-dasharray="5,3" marker-end="url(#arr-otel)"/>
+        <text x="450" y="185" text-anchor="middle" fill="#ea580c80" font-size="8">span exportado via OTLP</text>
+
+        <defs>
+          <marker id="arr-otel" markerWidth="8" markerHeight="8" refX="4" refY="4" orient="auto">
+            <path d="M0,1 L8,4 L0,7 Z" fill="#fb923c"/>
+          </marker>
+        </defs>
+      </svg>
+    </div>
+  </div>
+
+  <!-- Testing -->
+  <div class="mb-10">
+    <h3 class="text-xl font-bold text-orange-400 mb-6">Testing sin OTEL</h3>
+    <p class="text-slate-400 text-sm mb-6">
+      Gracias al puerto, en tests usas un adaptador falso que no exporta nada.
+      Los tests son rapidos y no necesitan un OTEL Collector corriendo.
+    </p>
+    <div class="bg-slate-900 border border-slate-700 rounded-xl p-6">
+      <pre class="text-xs overflow-x-auto"><code class="text-teal-300" set:html={`class FakeTracingAdapter implements TracingPort {
+  spans: { name: string; status?: string }[] = [];
+
+  startSpan(name: string): SpanHandle {
+    const record = { name, status: undefined as string | undefined };
+    this.spans.push(record);
+    return {
+      setAttribute() {},
+      recordException() {},
+      setStatus(s: "ok" | "error") { record.status = s; },
+      end() {},
+    };
+  }
+}
+
+// En el test:
+const fakeTracing = new FakeTracingAdapter();
+const sut = withTracing(new CreateOrderService(repo, bus), fakeTracing, "CreateOrder");
+
+await sut.execute({ customerId: "c1", items: [anItem()] });
+
+expect(fakeTracing.spans).toHaveLength(1);
+expect(fakeTracing.spans[0].status).toBe("ok");`} /></pre>
+    </div>
+  </div>
+</section>
