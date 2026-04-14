@@ -516,6 +516,79 @@ const questions = [
     correct: 1,
     explanation: 'DimDate (year, quarter, month, day_of_week, is_weekend) es identica para todos los tenants. No contiene datos de negocio ni informacion sensible. Todos los tenants comparten la misma tabla de fechas.',
   },
+  // ── OBSERVABILIDAD (OTEL) ──────────────────────────────────────
+  {
+    topic: 'Observabilidad', difficulty: 'easy',
+    q: 'Donde debe vivir la dependencia a @opentelemetry/api?',
+    options: [
+      'En la entidad Order.ts del dominio',
+      'En el use case CreateOrderService.ts',
+      'En un adaptador de infraestructura (OtelTracingAdapter)',
+      'En el puerto TracingPort',
+    ],
+    correct: 2,
+    explanation: 'OTEL es una libreria externa y pertenece a la capa de infraestructura. El adaptador OtelTracingAdapter implementa el puerto TracingPort. Ni el dominio ni los use cases conocen OTEL.',
+  },
+  {
+    topic: 'Observabilidad', difficulty: 'medium',
+    q: 'Que patron permite agregar tracing a un use case sin modificarlo?',
+    options: [
+      'Factory Method',
+      'Decorator',
+      'Observer',
+      'Strategy',
+    ],
+    correct: 1,
+    explanation: 'El Decorator envuelve el use case manteniendo el mismo contrato execute(). withTracing(useCase, port, name) devuelve un objeto que abre span, ejecuta el use case, y cierra span. El use case original no cambia.',
+  },
+  {
+    topic: 'Observabilidad', difficulty: 'medium',
+    q: 'En que capa se conecta withTracing(useCase, otelAdapter, "CreateOrder")?',
+    options: [
+      'En el dominio (Order.ts)',
+      'En el controller (OrderController.ts)',
+      'En la Composition Root (main.ts)',
+      'En el test (CreateOrder.test.ts)',
+    ],
+    correct: 2,
+    explanation: 'La Composition Root (main.ts) es donde se instancian todas las dependencias y se conectan los decorators. El controller recibe el use case ya decorado sin saber si tiene tracing o no.',
+  },
+  {
+    topic: 'Observabilidad', difficulty: 'hard',
+    q: 'Como se testea un use case decorado con tracing sin un OTEL Collector?',
+    options: [
+      'Usando jest.mock para mockear @opentelemetry/api',
+      'Saltando el test de tracing porque es infraestructura',
+      'Usando un FakeTracingAdapter que guarda spans en memoria',
+      'Configurando un Collector local en Docker para cada test',
+    ],
+    correct: 2,
+    explanation: 'Un FakeTracingAdapter implementa TracingPort guardando spans en un array. El test verifica spans creados y sus status. Sin mocks, sin Docker, sin OTEL. El puerto hace posible la sustitucion.',
+  },
+  {
+    topic: 'Observabilidad', difficulty: 'hard',
+    q: 'Que principio SOLID justifica que el controller no distinga entre un use case original y uno decorado con tracing?',
+    options: [
+      'Single Responsibility (SRP)',
+      'Open/Closed (OCP)',
+      'Liskov Substitution (LSP)',
+      'Interface Segregation (ISP)',
+    ],
+    correct: 2,
+    explanation: 'LSP: si el use case decorado implementa el mismo contrato { execute(I): Promise<O> }, puede sustituir al original en cualquier contexto. El controller funciona igual con o sin tracing.',
+  },
+  {
+    topic: 'Observabilidad', difficulty: 'hard',
+    q: 'Cuales son los tres pilares de observabilidad y sus puertos en hexagonal?',
+    options: [
+      'CPU, RAM, Disco -- MonitoringPort',
+      'Traces (TracingPort), Metrics (MetricsPort), Logs (LoggerPort)',
+      'Alertas, Dashboards, Runbooks -- AlertPort',
+      'Errors, Warnings, Info -- ConsolePort',
+    ],
+    correct: 1,
+    explanation: 'Traces (flujo de requests), Metrics (contadores/histogramas), Logs (eventos estructurados). Cada pilar tiene su puerto y adaptadores: OTEL para prod, fakes para tests, console para dev local.',
+  },
 ];
 
 const topics = [...new Set(questions.map(q => q.topic))];
