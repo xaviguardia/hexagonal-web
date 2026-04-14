@@ -119,13 +119,22 @@ const roles: Role[] = [
     nextSteps: ['Senior Data Engineer', 'AI/ML Engineer', 'Data Architect'],
   },
   {
-    id: 'ia-engineer', title: 'AI / ML Engineer', level: 'mid', track: 'data',
+    id: 'ai-engineer', title: 'AI Engineer', level: 'mid', track: 'data',
     color: 'bg-purple-500/10', borderColor: 'border-purple-500/40',
-    description: 'Integra modelos de IA en aplicaciones productivas. Construye pipelines de datos, fine-tunea modelos, diseña RAG y agentes. Puente entre data science y backend.',
-    skills: ['Python + ML frameworks (PyTorch, scikit-learn)', 'LLMs y prompt engineering', 'RAG (Retrieval Augmented Generation)', 'Pipelines de datos (Airflow, dbt)', 'MLOps (MLflow, Weights & Biases)', 'Vectorstores (Pinecone, pgvector)'],
-    tools: ['Jupyter', 'LangChain / Claude SDK', 'Docker', 'dbt', 'Airflow'],
+    description: 'Integra modelos de IA en aplicaciones productivas. Diseña y programa agentes autónomos, sistemas RAG, y orquestaciones multi-modelo. Puente entre los modelos y el producto final.',
+    skills: ['Diseño y programación de agentes (Claude Agent SDK, LangGraph)', 'Prompt engineering avanzado', 'RAG (Retrieval Augmented Generation)', 'Orquestación multi-agente (tool use, planificación, memoria)', 'Evaluación y testing de LLMs (evals, benchmarks)', 'Integración con APIs y herramientas externas (MCP, function calling)'],
+    tools: ['Claude SDK / Anthropic API', 'LangChain / LangGraph', 'Vectorstores (Pinecone, pgvector)', 'Jupyter', 'Docker'],
     salaryRange: '40k - 70k €',
-    nextSteps: ['Senior AI Engineer', 'ML Architect', 'Head of AI'],
+    nextSteps: ['Senior AI Engineer', 'AI Architect', 'Head of AI'],
+  },
+  {
+    id: 'ml-engineer', title: 'ML Engineer', level: 'senior', track: 'data',
+    color: 'bg-purple-500/10', borderColor: 'border-purple-500/50',
+    description: 'Entrena, fine-tunea y despliega modelos de machine learning en producción. Construye pipelines de entrenamiento, gestiona el ciclo de vida del modelo y monitoriza drift.',
+    skills: ['Python + ML frameworks (PyTorch, TensorFlow)', 'Fine-tuning de modelos (LoRA, RLHF)', 'MLOps (MLflow, Weights & Biases, Kubeflow)', 'Feature stores y pipelines de datos', 'Monitorización de modelos (data drift, performance)', 'Infraestructura GPU (CUDA, distribución)'],
+    tools: ['MLflow / W&B', 'Kubeflow / SageMaker', 'PyTorch', 'Airflow', 'GPU clusters'],
+    salaryRange: '50k - 80k €',
+    nextSteps: ['ML Architect', 'Head of AI', 'Research Scientist'],
   },
   // ── QA / TESTING ──
   {
@@ -268,12 +277,17 @@ const levels = [
         <text x="370" y="282" text-anchor="middle" fill="#c084fc" font-size="10" font-weight="600">Data Engineer</text>
         <text x="370" y="298" text-anchor="middle" fill="#c084fc80" font-size="8">ETL, dbt, Warehouse</text>
 
-        <rect x="500" y="260" width="180" height="50" rx="8" fill="#1a0a2e" stroke="#a855f7" stroke-width="1.5" class="cursor-pointer hover:fill-[#2a1040]" data-role="ia-engineer"/>
-        <text x="590" y="282" text-anchor="middle" fill="#c084fc" font-size="10" font-weight="600">AI / ML Engineer</text>
-        <text x="590" y="298" text-anchor="middle" fill="#c084fc80" font-size="8">LLMs, RAG, MLOps</text>
+        <rect x="500" y="240" width="180" height="50" rx="8" fill="#1a0a2e" stroke="#a855f7" stroke-width="1.5" class="cursor-pointer hover:fill-[#2a1040]" data-role="ai-engineer"/>
+        <text x="590" y="260" text-anchor="middle" fill="#c084fc" font-size="10" font-weight="600">AI Engineer</text>
+        <text x="590" y="276" text-anchor="middle" fill="#c084fc80" font-size="8">Agentes, RAG, Tool Use</text>
+
+        <rect x="500" y="300" width="180" height="50" rx="8" fill="#1a0a2e" stroke="#a855f7" stroke-width="1.5" class="cursor-pointer hover:fill-[#2a1040]" data-role="ml-engineer"/>
+        <text x="590" y="322" text-anchor="middle" fill="#c084fc" font-size="10" font-weight="600">ML Engineer</text>
+        <text x="590" y="338" text-anchor="middle" fill="#c084fc80" font-size="8">Fine-tuning, MLOps, GPU</text>
 
         <line x1="240" y1="285" x2="280" y2="285" stroke="#a855f7" stroke-width="1.5" marker-end="url(#arr-career)"/>
-        <line x1="460" y1="285" x2="500" y2="285" stroke="#a855f7" stroke-width="1.5" marker-end="url(#arr-career)"/>
+        <line x1="460" y1="275" x2="500" y2="265" stroke="#a855f7" stroke-width="1.5" marker-end="url(#arr-career)"/>
+        <line x1="460" y1="295" x2="500" y2="315" stroke="#a855f7" stroke-width="1.5" marker-end="url(#arr-career)"/>
 
         <!-- ── QA ── -->
         <rect x="60" y="330" width="180" height="50" rx="8" fill="#1a0a0a" stroke="#f43f5e" stroke-width="1.5" class="cursor-pointer hover:fill-[#2a1010]" data-role="qa-junior"/>
