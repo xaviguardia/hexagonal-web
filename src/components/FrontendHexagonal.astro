@@ -1,0 +1,389 @@
+---
+const kw = (s) => `<span class="text-purple-400">${s}</span>`;
+const fn = (s) => `<span class="text-yellow-300">${s}</span>`;
+const tp = (s) => `<span class="text-cyan-300">${s}</span>`;
+const cm = (s) => `<span class="text-slate-500">${s}</span>`;
+const st = (s) => `<span class="text-emerald-300">${s}</span>`;
+const nm = (s) => `<span class="text-slate-200">${s}</span>`;
+const er = (s) => `<span class="text-red-400">${s}</span>`;
+const ok = (s) => `<span class="text-green-400">${s}</span>`;
+
+const tabs = [
+  {
+    id: 'fe-hexagon',
+    label: 'Hexagono Frontend',
+  },
+  {
+    id: 'validaciones',
+    label: 'Validaciones',
+  },
+  {
+    id: 'metadata-ui',
+    label: 'Metadata-Driven UI',
+  },
+];
+
+const hookCode = [
+  cm('// PRIMARY ADAPTER — el hook conecta React con el use case'),
+  cm('// No contiene logica, solo ciclo de vida'),
+  `${kw('function')} ${fn('usePedidoForm')}(${nm('id')}) {`,
+  `  ${kw('const')} [${nm('state')}, ${nm('setState')}] = ${fn('useState')}(${kw('null')});`,
+  `  ${kw('const')} [${nm('errors')}, ${nm('setErrors')}] = ${fn('useState')}({});`,
+  ``,
+  `  ${fn('useEffect')}(() => {`,
+  `    ${kw('new')} ${tp('LoadPedidoFormUseCase')}(`,
+  `      ${kw('new')} ${tp('HttpPedidoRepository')}(),`,
+  `      ${kw('new')} ${tp('HttpFormSchemaRepository')}(),`,
+  `    ).${fn('execute')}(${nm('id')}).${fn('then')}(${nm('setState')});`,
+  `  }, [${nm('id')}]);`,
+  ``,
+  `  ${kw('const')} ${fn('save')} = ${kw('async')} (${nm('data')}) => {`,
+  `    ${kw('try')} {`,
+  `      ${kw('await')} ${kw('new')} ${tp('SavePedidoUseCase')}(${kw('new')} ${tp('HttpPedidoRepository')}()).${fn('execute')}(${nm('data')});`,
+  `    } ${kw('catch')} (${nm('e')}) {`,
+  `      ${kw('if')} (${nm('e')} ${kw('instanceof')} ${tp('ApiDomainError')}) ${fn('setErrors')}({ [${nm('e')}.field]: ${nm('e')}.message });`,
+  `    }`,
+  `  };`,
+  ``,
+  `  ${kw('return')} { ${nm('state')}, ${nm('errors')}, ${fn('save')} };`,
+  `}`,
+  ``,
+  cm('// COMPONENTE — solo renderiza, sin logica'),
+  `${kw('function')} ${fn('PedidoEditPage')}({ ${nm('id')} }) {`,
+  `  ${kw('const')} { ${nm('state')}, ${nm('errors')}, ${fn('save')} } = ${fn('usePedidoForm')}(${nm('id')});`,
+  `  ${kw('if')} (!${nm('state')}) ${kw('return')} <${tp('Spinner')} />;`,
+  `  ${kw('return')} <${tp('DynamicForm')} ${nm('schema')}={${nm('state')}.${nm('schema')}} ${nm('data')}={${nm('state')}.${nm('data')}} ${nm('errors')}={${nm('errors')}} ${nm('onSave')}={${fn('save')}} />;`,
+  `}`,
+].join('\n');
+
+const useCaseCode = [
+  cm('// APPLICATION LAYER — pure TypeScript, sin React, sin fetch'),
+  cm('// Completamente testable con Jest sin montar componentes'),
+  `${kw('class')} ${tp('LoadPedidoFormUseCase')} {`,
+  `  ${kw('constructor')}(`,
+  `    ${kw('private')} ${nm('pedidoRepo')}: ${tp('PedidoRepository')},`,
+  `    ${kw('private')} ${nm('schemaRepo')}: ${tp('FormSchemaRepository')},`,
+  `  ) {}`,
+  ``,
+  `  ${kw('async')} ${fn('execute')}(${nm('id')}: ${tp('string')}): ${tp('Promise<PedidoFormState>')} {`,
+  `    ${kw('const')} [${nm('data')}, ${nm('schema')}] = ${kw('await')} ${tp('Promise')}.${fn('all')}([`,
+  `      ${kw('this')}.${nm('pedidoRepo')}.${fn('findById')}(${nm('id')}),`,
+  `      ${kw('this')}.${nm('schemaRepo')}.${fn('getSchemaForPedido')}(${st("'edicion'")})`,
+  `    ]);`,
+  `    ${kw('return')} { ${nm('data')}, ${nm('schema')}, ${nm('errors')}: {}, ${nm('status')}: ${st("'idle'")} };`,
+  `  }`,
+  `}`,
+  ``,
+  cm('// SECONDARY ADAPTER — implementa el puerto con fetch'),
+  `${kw('class')} ${tp('HttpPedidoRepository')} ${kw('implements')} ${tp('PedidoRepository')} {`,
+  `  ${kw('async')} ${fn('save')}(${nm('pedido')}: ${tp('PedidoDto')}): ${tp('Promise<void>')} {`,
+  `    ${kw('const')} ${nm('res')} = ${kw('await')} ${fn('fetch')}(${st('`/api/pedidos/${pedido.id}`')}, {`,
+  `      ${nm('method')}: ${st("'PUT'")}, ${nm('body')}: ${tp('JSON')}.${fn('stringify')}(${nm('pedido')})`,
+  `    });`,
+  `    ${kw('if')} (!${nm('res')}.${nm('ok')}) {`,
+  `      ${kw('const')} ${nm('err')} = ${kw('await')} ${nm('res')}.${fn('json')}();`,
+  `      ${kw('throw')} ${kw('new')} ${tp('ApiDomainError')}(${nm('err')}.${nm('code')}, ${nm('err')}.${nm('message')}, ${nm('err')}.${nm('field')});`,
+  `    }`,
+  `  }`,
+  `}`,
+].join('\n');
+
+const validacionesCode = [
+  cm('// FRONTEND: validacion de formato/UX solamente'),
+  cm('// Zod schema compartido con el backend (paquete contracts/)'),
+  `${kw('const')} ${nm('PedidoSchema')} = ${nm('z')}.${fn('object')}({`,
+  `  ${nm('clienteId')}: ${nm('z')}.${fn('string')}().${fn('uuid')}(),`,
+  `  ${nm('importe')}: ${nm('z')}.${fn('number')}().${fn('positive')}(),`,
+  ok(`  // SOLO formato — las reglas de negocio estan en el backend`),
+  `});`,
+  ``,
+  cm('// BACKEND: las reglas de negocio viven en el dominio'),
+  `${kw('class')} ${tp('Pedido')} {`,
+  `  ${fn('confirmar')}() {`,
+  `    ${kw('if')} (${kw('this')}.${nm('estado')} !== ${st("'borrador'")}) {`,
+  `      ${kw('throw')} ${kw('new')} ${tp('DomainError')}(${st("'ESTADO_INVALIDO'")}, ...);`,
+  `    }`,
+  `    ${kw('if')} (${kw('this')}.${nm('cliente')}.${nm('creditoSuperado')}) {`,
+  `      ${kw('throw')} ${kw('new')} ${tp('DomainError')}(${st("'CREDITO_SUPERADO'")}, ...);`,
+  `    }`,
+  `    ${kw('if')} (${kw('this')}.${nm('lineas')}.${nm('length')} === 0) {`,
+  `      ${kw('throw')} ${kw('new')} ${tp('DomainError')}(${st("'SIN_LINEAS'")}, ...);`,
+  `    }`,
+  `  }`,
+  `}`,
+  ``,
+  cm('// ADAPTER HTTP: traduce excepciones a errores estructurados'),
+  `} ${kw('catch')} (${nm('e')}) {`,
+  `  ${kw('if')} (${nm('e')} ${kw('instanceof')} ${tp('DomainError')}) {`,
+  `    ${nm('res')}.${fn('status')}(422).${fn('json')}({`,
+  `      ${nm('code')}: ${nm('e')}.${nm('code')},`,
+  `      ${nm('message')}: ${nm('e')}.${nm('message')},`,
+  `      ${nm('field')}: ${nm('e')}.${nm('field')},`,
+  `    });`,
+  `  }`,
+  `}`,
+].join('\n');
+
+const metadataCode = [
+  cm('// Use Case como Form Configuration Provider'),
+  cm('// Decide que control usar segun el contexto'),
+  `${kw('class')} ${tp('GetPedidoSchemaUseCase')} {`,
+  `  ${fn('execute')}(${nm('context')}: ${st("'alta'")} | ${st("'edicion'")}): ${tp('FormSchema')} {`,
+  `    ${kw('return')} {`,
+  `      ${nm('fields')}: [`,
+  `        {`,
+  `          ${nm('name')}: ${st("'clienteId'")}, ${nm('type')}: ${st("'lookup'")},`,
+  `          ${nm('label')}: ${st("'Cliente'")},`,
+  `          ${nm('relation')}: {`,
+  `            ${nm('entity')}: ${st("'clientes'")},`,
+  `            ${nm('displayField')}: ${st("'razonSocial'")},`,
+  `            ${nm('searchPort')}: ${st("'/api/clientes/search'")}`,
+  `          }`,
+  `        },`,
+  `        {`,
+  `          ${nm('name')}: ${st("'lineas'")}, ${nm('type')}: ${st("'grid'")},`,
+  `          ${nm('label')}: ${st("'Lineas de pedido'")},`,
+  `          ${nm('relation')}: {`,
+  `            ${nm('columns')}: [`,
+  `              { ${nm('name')}: ${st("'articuloId'")}, ${nm('type')}: ${st("'lookup'")}, ${nm('relation')}: { ${nm('entity')}: ${st("'articulos'")} } },`,
+  `              { ${nm('name')}: ${st("'cantidad'")},   ${nm('type')}: ${st("'number'")} },`,
+  `              { ${nm('name')}: ${st("'precio'")},     ${nm('type')}: ${st("'number'")}, ${nm('readonly')}: ${kw('true')} },`,
+  `            ]`,
+  `          }`,
+  `        },`,
+  `        {`,
+  `          ${nm('name')}: ${st("'etiquetas'")}, ${nm('type')}: ${st("'multiselect'")},`,
+  `          ${nm('label')}: ${st("'Etiquetas'")},`,
+  `          ${nm('relation')}: { ${nm('entity')}: ${st("'etiquetas'")}, ${nm('searchPort')}: ${st("'/api/etiquetas'")} }`,
+  `        }`,
+  `      ]`,
+  `    };`,
+  `  }`,
+  `}`,
+  ``,
+  cm('// FRONTEND: renderer generico, no hardcodea campos'),
+  `${kw('function')} ${fn('renderField')}(${nm('meta')}, ${nm('value')}) {`,
+  `  ${kw('switch')} (${nm('meta')}.${nm('type')}) {`,
+  `    ${kw('case')} ${st("'lookup'")}:      ${kw('return')} <${tp('LookupField')}     ${nm('meta')}={${nm('meta')}} ${nm('value')}={${nm('value')}} />;`,
+  `    ${kw('case')} ${st("'grid'")}:        ${kw('return')} <${tp('EditableGrid')}    ${nm('meta')}={${nm('meta')}} ${nm('value')}={${nm('value')}} />;`,
+  `    ${kw('case')} ${st("'multiselect'")}: ${kw('return')} <${tp('MultiSelect')}     ${nm('meta')}={${nm('meta')}} ${nm('value')}={${nm('value')}} />;`,
+  `    ${kw('default')}:            ${kw('return')} <${tp('TextField')}       ${nm('meta')}={${nm('meta')}} ${nm('value')}={${nm('value')}} />;`,
+  `  }`,
+  `}`,
+].join('\n');
+---
+
+<section id="frontend-hexagonal" class="py-20 px-6 max-w-6xl mx-auto reveal">
+  <div class="text-center mb-12">
+    <span class="text-xs font-mono text-purple-400 uppercase tracking-widest">Aplicacion real</span>
+    <h2 class="text-3xl font-bold text-white mt-2">Frontend Hexagonal</h2>
+    <p class="text-slate-400 mt-3 max-w-2xl mx-auto">
+      El frontend tiene su propio hexagono. Los componentes son adapters primarios, los hooks son use cases, y fetch es un adapter secundario.
+    </p>
+  </div>
+
+  <!-- Tabs -->
+  <div class="flex gap-2 mb-8 flex-wrap" id="fe-tabs">
+    {tabs.map((t, i) => (
+      <button
+        class={`fe-tab px-4 py-2 rounded font-mono text-sm transition-colors ${i === 0 ? 'bg-purple-600 text-white' : 'bg-slate-800 text-slate-400 hover:text-white'}`}
+        data-tab={t.id}
+      >
+        {t.label}
+      </button>
+    ))}
+  </div>
+
+  <!-- Tab: Hexagono Frontend -->
+  <div id="fe-hexagon" class="fe-panel">
+    <div class="grid lg:grid-cols-2 gap-8 items-start">
+      <!-- Diagrama -->
+      <div class="space-y-2">
+        <div class="rounded-lg border border-purple-500/30 bg-purple-500/5 p-4">
+          <div class="text-xs font-mono text-purple-400 mb-2 uppercase">Primary Adapters (Driving)</div>
+          <div class="text-sm text-slate-300">Componentes React/Vue/Angular</div>
+          <div class="text-xs text-slate-500 mt-1">Solo renderizan y dispatchen — sin logica</div>
+        </div>
+        <div class="flex justify-center text-slate-600">↓ llaman a</div>
+        <div class="rounded-lg border border-cyan-500/30 bg-cyan-500/5 p-4">
+          <div class="text-xs font-mono text-cyan-400 mb-2 uppercase">Application Layer</div>
+          <div class="text-sm text-slate-300">Use Cases (hooks / servicios puros)</div>
+          <div class="text-xs text-slate-500 mt-1">No conocen React ni fetch — 100% testables</div>
+        </div>
+        <div class="flex justify-center text-slate-600">↓ usa interfaces</div>
+        <div class="rounded-lg border border-emerald-500/30 bg-emerald-500/5 p-4">
+          <div class="text-xs font-mono text-emerald-400 mb-2 uppercase">Domain (frontend)</div>
+          <div class="text-sm text-slate-300">FormSchema, State machines, ValidationRules</div>
+          <div class="text-xs text-slate-500 mt-1">NO duplica dominio backend — modela comportamiento UI</div>
+        </div>
+        <div class="flex justify-center text-slate-600">↓ implementado por</div>
+        <div class="rounded-lg border border-amber-500/30 bg-amber-500/5 p-4">
+          <div class="text-xs font-mono text-amber-400 mb-2 uppercase">Secondary Adapters (Driven)</div>
+          <div class="text-sm text-slate-300">HttpRepository · LocalStorageRepo · WebSocket</div>
+          <div class="text-xs text-slate-500 mt-1">Intercambiables sin tocar use cases</div>
+        </div>
+      </div>
+      <!-- Codigo -->
+      <div>
+        <div class="text-xs font-mono text-slate-500 mb-2">Hook como adapter + Use Case puro</div>
+        <pre class="bg-slate-950 rounded-lg p-4 text-xs font-mono overflow-x-auto border border-slate-800"><code set:html={hookCode} /></pre>
+      </div>
+    </div>
+
+    <!-- Tabla de mapeo -->
+    <div class="mt-8 overflow-x-auto">
+      <table class="w-full text-sm">
+        <thead>
+          <tr class="border-b border-slate-700">
+            <th class="text-left py-2 px-3 text-slate-400 font-normal">Pieza</th>
+            <th class="text-left py-2 px-3 text-slate-400 font-normal">Rol en hexagonal</th>
+            <th class="text-left py-2 px-3 text-slate-400 font-normal">Ejemplo</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-800">
+          <tr><td class="py-2 px-3 text-purple-300 font-mono">Component</td><td class="py-2 px-3 text-slate-300">Adapter primario</td><td class="py-2 px-3 text-slate-500">PedidoEditPage, TaskInbox</td></tr>
+          <tr><td class="py-2 px-3 text-purple-300 font-mono">Hook</td><td class="py-2 px-3 text-slate-300">Adapter primario / Use Case</td><td class="py-2 px-3 text-slate-500">usePedidoForm, useTaskList</td></tr>
+          <tr><td class="py-2 px-3 text-cyan-300 font-mono">UseCase class</td><td class="py-2 px-3 text-slate-300">Application layer</td><td class="py-2 px-3 text-slate-500">LoadPedidoFormUseCase</td></tr>
+          <tr><td class="py-2 px-3 text-emerald-300 font-mono">FormSchema</td><td class="py-2 px-3 text-slate-300">Domain model (UI)</td><td class="py-2 px-3 text-slate-500">FieldMeta, ColumnMeta</td></tr>
+          <tr><td class="py-2 px-3 text-amber-300 font-mono">HttpRepository</td><td class="py-2 px-3 text-slate-300">Adapter secundario</td><td class="py-2 px-3 text-slate-500">HttpPedidoRepository</td></tr>
+          <tr><td class="py-2 px-3 text-amber-300 font-mono">LocalStorageRepo</td><td class="py-2 px-3 text-slate-300">Adapter secundario</td><td class="py-2 px-3 text-slate-500">Borradores offline</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Tab: Validaciones -->
+  <div id="validaciones" class="fe-panel hidden">
+    <div class="grid lg:grid-cols-2 gap-8 items-start">
+      <div class="space-y-4">
+        <h3 class="text-lg font-semibold text-white">Donde vive cada validacion</h3>
+        <div class="space-y-3">
+          <div class="p-4 rounded-lg bg-slate-800/50 border border-slate-700">
+            <div class="flex items-center justify-between mb-1">
+              <span class="text-sm font-semibold text-purple-300">Frontend (UX)</span>
+              <span class="text-xs text-slate-500">Zod / HTML5</span>
+            </div>
+            <p class="text-xs text-slate-400">Formato, campos requeridos, longitud maxima. Mejora experiencia pero NUNCA reemplaza backend.</p>
+          </div>
+          <div class="p-4 rounded-lg bg-slate-800/50 border border-slate-700">
+            <div class="flex items-center justify-between mb-1">
+              <span class="text-sm font-semibold text-cyan-300">Use Case (Aplicacion)</span>
+              <span class="text-xs text-slate-500">Precondiciones</span>
+            </div>
+            <p class="text-xs text-slate-400">Permisos del usuario, existencia de entidades relacionadas, contexto de operacion.</p>
+          </div>
+          <div class="p-4 rounded-lg bg-slate-800/50 border border-emerald-500/30">
+            <div class="flex items-center justify-between mb-1">
+              <span class="text-sm font-semibold text-emerald-300">Dominio — fuente de verdad</span>
+              <span class="text-xs text-emerald-600">UNICO punto</span>
+            </div>
+            <p class="text-xs text-slate-400">Invariantes de negocio: "pedido sin lineas", "credito superado", "stock insuficiente". Solo aqui.</p>
+          </div>
+          <div class="p-4 rounded-lg bg-slate-800/50 border border-slate-700">
+            <div class="flex items-center justify-between mb-1">
+              <span class="text-sm font-semibold text-amber-300">DB Constraints</span>
+              <span class="text-xs text-slate-500">Ultima defensa</span>
+            </div>
+            <p class="text-xs text-slate-400">UNIQUE, NOT NULL, FK. No depender de esto — es el ultimo recurso.</p>
+          </div>
+        </div>
+
+        <div class="mt-4 p-4 rounded-lg bg-blue-500/10 border border-blue-500/30">
+          <div class="text-sm font-semibold text-blue-300 mb-2">Schema Sharing</div>
+          <p class="text-xs text-slate-400">En monorepos, el schema de <strong>formato</strong> (Zod) se comparte entre FE y BE via un paquete <code class="text-blue-300">contracts/</code>. Las reglas de negocio NUNCA se comparten — solo existen en el dominio backend.</p>
+        </div>
+      </div>
+      <div>
+        <div class="text-xs font-mono text-slate-500 mb-2">Patron completo de validaciones</div>
+        <pre class="bg-slate-950 rounded-lg p-4 text-xs font-mono overflow-x-auto border border-slate-800"><code set:html={validacionesCode} /></pre>
+      </div>
+    </div>
+
+    <div class="mt-8 overflow-x-auto">
+      <table class="w-full text-sm">
+        <thead>
+          <tr class="border-b border-slate-700">
+            <th class="text-left py-2 px-3 text-slate-400 font-normal">Validacion</th>
+            <th class="text-left py-2 px-3 text-slate-400 font-normal">Capa</th>
+            <th class="text-left py-2 px-3 text-slate-400 font-normal">Ejemplo</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-800">
+          <tr><td class="py-2 px-3 text-slate-300">Campo requerido</td><td class="py-2 px-3 text-purple-300">Frontend</td><td class="py-2 px-3 text-slate-500">z.string().min(1)</td></tr>
+          <tr><td class="py-2 px-3 text-slate-300">Formato email</td><td class="py-2 px-3 text-purple-300">Frontend + Backend</td><td class="py-2 px-3 text-slate-500">z.string().email()</td></tr>
+          <tr><td class="py-2 px-3 text-slate-300">Stock insuficiente</td><td class="py-2 px-3 text-emerald-300">Dominio</td><td class="py-2 px-3 text-slate-500">pedido.confirmar() throws</td></tr>
+          <tr><td class="py-2 px-3 text-slate-300">Credito superado</td><td class="py-2 px-3 text-emerald-300">Dominio</td><td class="py-2 px-3 text-slate-500">cliente.puedeOperar()</td></tr>
+          <tr><td class="py-2 px-3 text-slate-300">Usuario sin permiso</td><td class="py-2 px-3 text-cyan-300">Use Case</td><td class="py-2 px-3 text-slate-500">authService.canEdit()</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Tab: Metadata-Driven UI -->
+  <div id="metadata-ui" class="fe-panel hidden">
+    <div class="grid lg:grid-cols-2 gap-8 items-start">
+      <div class="space-y-4">
+        <h3 class="text-lg font-semibold text-white">FormSchema: el Use Case como configurador de formularios</h3>
+        <p class="text-slate-400 text-sm">En un ERP, el Use Case devuelve no solo datos sino tambien <strong class="text-white">como editarlos</strong>. El frontend es un renderer generico que interpreta el schema.</p>
+
+        <div class="space-y-2">
+          <div class="text-xs font-mono text-slate-500 uppercase mb-2">Tipos de control segun semantica</div>
+          <div class="grid grid-cols-2 gap-2">
+            <div class="p-3 rounded bg-slate-800/50 border border-slate-700">
+              <div class="text-xs font-mono text-purple-300">FK</div>
+              <div class="text-xs text-slate-400 mt-1">→ lookup con busqueda</div>
+            </div>
+            <div class="p-3 rounded bg-slate-800/50 border border-slate-700">
+              <div class="text-xs font-mono text-purple-300">1:N</div>
+              <div class="text-xs text-slate-400 mt-1">→ grid editable</div>
+            </div>
+            <div class="p-3 rounded bg-slate-800/50 border border-slate-700">
+              <div class="text-xs font-mono text-purple-300">M:N</div>
+              <div class="text-xs text-slate-400 mt-1">→ multiselect</div>
+            </div>
+            <div class="p-3 rounded bg-slate-800/50 border border-slate-700">
+              <div class="text-xs font-mono text-purple-300">enum pequeno</div>
+              <div class="text-xs text-slate-400 mt-1">→ select / radio</div>
+            </div>
+            <div class="p-3 rounded bg-slate-800/50 border border-slate-700">
+              <div class="text-xs font-mono text-purple-300">boolean</div>
+              <div class="text-xs text-slate-400 mt-1">→ checkbox / toggle</div>
+            </div>
+            <div class="p-3 rounded bg-slate-800/50 border border-slate-700">
+              <div class="text-xs font-mono text-purple-300">texto largo</div>
+              <div class="text-xs text-slate-400 mt-1">→ textarea / richtext</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="p-4 rounded-lg bg-emerald-500/10 border border-emerald-500/30">
+          <div class="text-sm font-semibold text-emerald-300 mb-1">Beneficio clave</div>
+          <p class="text-xs text-slate-400">Cambias el tipo de control en el Use Case sin tocar ningun componente. Cambias React por Vue sin tocar ningun Use Case. Las decisiones de presentacion no contaminan el dominio.</p>
+        </div>
+      </div>
+      <div>
+        <div class="text-xs font-mono text-slate-500 mb-2">Use Case como Form Configuration Provider</div>
+        <pre class="bg-slate-950 rounded-lg p-4 text-xs font-mono overflow-x-auto border border-slate-800"><code set:html={metadataCode} /></pre>
+      </div>
+    </div>
+  </div>
+</section>
+
+<script>
+  document.getElementById('fe-tabs').addEventListener('click', function(e) {
+    var btn = e.target.closest('.fe-tab');
+    if (!btn) return;
+    var target = btn.dataset.tab;
+    document.querySelectorAll('.fe-tab').forEach(function(b) {
+      b.classList.remove('bg-purple-600', 'text-white');
+      b.classList.add('bg-slate-800', 'text-slate-400');
+    });
+    btn.classList.add('bg-purple-600', 'text-white');
+    btn.classList.remove('bg-slate-800', 'text-slate-400');
+    document.querySelectorAll('.fe-panel').forEach(function(p) {
+      p.classList.add('hidden');
+    });
+    var panel = document.getElementById(target);
+    if (panel) panel.classList.remove('hidden');
+  });
+</script>

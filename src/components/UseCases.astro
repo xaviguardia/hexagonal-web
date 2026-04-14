@@ -1,0 +1,303 @@
+---
+const kw = (s) => `<span class="text-purple-400">${s}</span>`;
+const fn = (s) => `<span class="text-yellow-300">${s}</span>`;
+const tp = (s) => `<span class="text-cyan-300">${s}</span>`;
+const cm = (s) => `<span class="text-slate-500">${s}</span>`;
+const st = (s) => `<span class="text-emerald-300">${s}</span>`;
+const nm = (s) => `<span class="text-slate-200">${s}</span>`;
+const er = (s) => `<span class="text-red-400">${s}</span>`;
+const ok = (s) => `<span class="text-green-400">${s}</span>`;
+
+const tabs = [
+  {
+    id: 'basico',
+    title: 'Use Case basico',
+    badge: 'Application Service',
+    description: 'Un Use Case = una accion concreta que el sistema puede realizar. Orquesta el dominio usando puertos. Nada mas.',
+    doesItems: [
+      { title: 'Recibe un Command o Query', desc: 'Objeto simple con los datos necesarios para ejecutar la accion.' },
+      { title: 'Valida la entrada',         desc: 'Comprueba que los datos son coherentes antes de llamar al dominio.' },
+      { title: 'Orquesta el dominio',       desc: 'Llama a los metodos del dominio (Order.create, order.cancel...).' },
+      { title: 'Persiste o notifica',       desc: 'Usa los puertos de salida sin saber que hay detras.' },
+      { title: 'Devuelve un resultado',     desc: 'Una entidad del dominio o un DTO. Nunca un objeto de Express.' },
+    ],
+    doesntItems: [
+      { title: 'Logica de negocio',            desc: 'Las reglas van en el Dominio. El Use Case solo coordina.' },
+      { title: 'Conocer Express/HTTP',         desc: 'No recibe Request ni devuelve Response de ningun framework.' },
+      { title: 'Acceder directamente a la BD', desc: 'Siempre a traves del puerto OrderRepository.' },
+      { title: 'Llamar a otro Use Case',       desc: 'Si necesitas componer acciones, hazlo en el dominio.' },
+    ],
+    code: [
+      `${cm('// CreateOrderService implementa el puerto de entrada CreateOrderUseCase')}`,
+      `${kw('export class')} ${tp('CreateOrderService')} ${kw('implements')} ${tp('CreateOrderUseCase')} {`,
+      `  ${fn('constructor')}(`,
+      `    ${cm('// Inyectamos puertos de salida')}`,
+      `    ${kw('private readonly')} ${nm('orderRepository')}: ${tp('OrderRepository')},`,
+      `    ${kw('private readonly')} ${nm('notificationPort')}: ${tp('NotificationPort')},`,
+      `  ) {}`,
+      ``,
+      `  ${kw('async')} ${fn('execute')}(${nm('command')}: ${tp('CreateOrderCommand')}): ${tp('Promise')}&lt;${tp('Order')}&gt; {`,
+      `    ${cm('// 1. Dominio valida las reglas de negocio')}`,
+      `    ${kw('const')} ${nm('order')} = ${tp('Order')}.${fn('create')}(${fn('uuidv4')}(), ${nm('command')}.customerId, ${nm('command')}.items);`,
+      ``,
+      `    ${cm('// 2. Puertos de salida — no importa la implementacion')}`,
+      `    ${kw('await')} ${kw('this')}.${nm('orderRepository')}.${fn('save')}(${nm('order')});`,
+      `    ${kw('await')} ${kw('this')}.${nm('notificationPort')}.${fn('notifyOrderCreated')}(${nm('order')});`,
+      ``,
+      `    ${kw('return')} ${nm('order')};`,
+      `  }`,
+      `}`,
+    ].join('\n'),
+  },
+  {
+    id: 'command-bus',
+    title: 'Command Bus',
+    badge: 'Mediator Pattern',
+    description: 'En vez de inyectar cada use case directamente en el controller, un bus despacha comandos al handler correspondiente. Desacopla quien envía el comando de quien lo procesa.',
+    code: [
+      cm('// domain/ports/input.ports.ts — handlers del bus'),
+      `${kw('interface')} ${tp('CommandHandler')}&lt;${tp('C')}, ${tp('R')}&gt; {`,
+      `  ${fn('handle')}(${nm('command')}: ${tp('C')}): ${tp('Promise')}&lt;${tp('R')}&gt;;`,
+      `}`,
+      '',
+      cm('// application/CreateOrderHandler.ts'),
+      `${kw('class')} ${tp('CreateOrderHandler')} ${kw('implements')} ${tp('CommandHandler')}&lt;${tp('CreateOrderCommand')}, ${tp('Order')}&gt; {`,
+      `  ${kw('constructor')}(${kw('private')} ${nm('repo')}: ${tp('OrderRepository')}, ${kw('private')} ${nm('notify')}: ${tp('NotificationPort')}) {}`,
+      `  ${kw('async')} ${fn('handle')}(${nm('cmd')}: ${tp('CreateOrderCommand')}) {`,
+      `    ${kw('const')} ${nm('order')} = ${tp('Order')}.${fn('create')}(${fn('uuid')}(), ${nm('cmd')}.customerId, ${nm('cmd')}.items);`,
+      `    ${kw('await')} ${kw('this')}.${nm('repo')}.${fn('save')}(${nm('order')});`,
+      `    ${kw('await')} ${kw('this')}.${nm('notify')}.${fn('notifyOrderCreated')}(${nm('order')});`,
+      `    ${kw('return')} ${nm('order')};`,
+      `  }`,
+      `}`,
+      '',
+      cm('// infrastructure/bus/InMemoryCommandBus.ts'),
+      `${kw('class')} ${tp('InMemoryCommandBus')} {`,
+      `  ${kw('private')} ${nm('handlers')} = ${kw('new')} ${tp('Map')}();`,
+      `  ${fn('register')}(${nm('commandName')}, ${nm('handler')}) { ${kw('this')}.${nm('handlers')}.${fn('set')}(${nm('commandName')}, ${nm('handler')}); }`,
+      `  ${kw('async')} ${fn('dispatch')}(${nm('command')}) {`,
+      `    ${kw('const')} ${nm('handler')} = ${kw('this')}.${nm('handlers')}.${fn('get')}(${nm('command')}.constructor.name);`,
+      `    ${kw('if')} (!${nm('handler')}) ${kw('throw new')} ${tp('Error')}(${st('`No handler for ${command.constructor.name}`')});`,
+      `    ${kw('return')} ${nm('handler')}.${fn('handle')}(${nm('command')});`,
+      `  }`,
+      `}`,
+      '',
+      cm('// Controller — solo conoce el bus'),
+      `${kw('class')} ${tp('OrderController')} {`,
+      `  ${kw('async')} ${fn('createOrder')}(${nm('req')}, ${nm('res')}) {`,
+      `    ${kw('const')} ${nm('order')} = ${kw('await')} ${kw('this')}.${nm('bus')}.${fn('dispatch')}(${kw('new')} ${tp('CreateOrderCommand')}(${nm('req')}.body));`,
+      `    ${nm('res')}.${fn('json')}({ id: ${nm('order')}.id });`,
+      `  }`,
+      `}`,
+    ].join('\n'),
+  },
+  {
+    id: 'pipeline',
+    title: 'Pipeline / Middlewares',
+    badge: 'Cross-cutting concerns',
+    description: 'Logging, validacion, autorizacion, metricas y retry como capas que envuelven el handler sin modificarlo. Cada middleware es independiente y combinable.',
+    code: [
+      cm('// Middleware interface'),
+      `${kw('interface')} ${tp('Middleware')}&lt;${tp('C')}, ${tp('R')}&gt; {`,
+      `  ${fn('handle')}(${nm('cmd')}: ${tp('C')}, ${nm('next')}: () => ${tp('Promise')}&lt;${tp('R')}&gt;): ${tp('Promise')}&lt;${tp('R')}&gt;;`,
+      `}`,
+      '',
+      cm('// Middleware de logging'),
+      `${kw('class')} ${tp('LoggingMiddleware')} ${kw('implements')} ${tp('Middleware')}&lt;${kw('any')}, ${kw('any')}&gt; {`,
+      `  ${kw('async')} ${fn('handle')}(${nm('cmd')}, ${nm('next')}) {`,
+      `    ${nm('console')}.${fn('log')}(${st('`[CMD] ${cmd.constructor.name}`')});`,
+      `    ${kw('const')} ${nm('start')} = ${tp('Date')}.${fn('now')}();`,
+      `    ${kw('const')} ${nm('result')} = ${kw('await')} ${fn('next')}();`,
+      `    ${nm('console')}.${fn('log')}(${st('`[CMD] done in ${Date.now()-start}ms`')});`,
+      `    ${kw('return')} ${nm('result')};`,
+      `  }`,
+      `}`,
+      '',
+      cm('// Middleware de autorizacion'),
+      `${kw('class')} ${tp('AuthMiddleware')} ${kw('implements')} ${tp('Middleware')}&lt;${kw('any')}, ${kw('any')}&gt; {`,
+      `  ${kw('async')} ${fn('handle')}(${nm('cmd')}, ${nm('next')}) {`,
+      `    ${kw('if')} (!${nm('cmd')}.userId) ${kw('throw new')} ${tp('Error')}(${st('"No autorizado"')});`,
+      `    ${kw('return')} ${fn('next')}();`,
+      `  }`,
+      `}`,
+      '',
+      cm('// Pipeline: encadena middlewares + handler'),
+      `${kw('class')} ${tp('PipelineCommandBus')} {`,
+      `  ${kw('constructor')}(${kw('private')} ${nm('middlewares')}: ${tp('Middleware')}&lt;${kw('any')},${kw('any')}&gt;[]) {}`,
+      '',
+      `  ${kw('async')} ${fn('dispatch')}(${nm('command')}, ${nm('handler')}) {`,
+      `    ${kw('const')} ${fn('chain')} = (${nm('index')}) => {`,
+      `      ${kw('if')} (${nm('index')} === ${kw('this')}.${nm('middlewares')}.length) ${kw('return')} ${nm('handler')}.${fn('handle')}(${nm('command')});`,
+      `      ${kw('return')} ${kw('this')}.${nm('middlewares')}[${nm('index')}].${fn('handle')}(${nm('command')}, () => ${fn('chain')}(${nm('index')} + 1));`,
+      `    };`,
+      `    ${kw('return')} ${fn('chain')}(0);`,
+      `  }`,
+      `}`,
+      '',
+      ok('// Cada command pasa por: Auth -> Logging -> Validation -> Handler'),
+    ].join('\n'),
+  },
+  {
+    id: 'cqrs',
+    title: 'CQRS',
+    badge: 'Comandos vs Consultas',
+    description: 'Commands modifican estado (no devuelven datos). Queries leen estado (no modifican nada). Modelos y buses separados permiten optimizar cada camino de forma independiente.',
+    code: [
+      cm('// COMMANDS — modifican estado, devuelven void o ID'),
+      `${kw('interface')} ${tp('Command')} {}`,
+      `${kw('interface')} ${tp('CommandBus')} {`,
+      `  ${fn('dispatch')}(${nm('cmd')}: ${tp('Command')}): ${tp('Promise')}&lt;${kw('void')} | ${tp('string')}&gt;;`,
+      `}`,
+      '',
+      `${kw('class')} ${tp('CreateOrderCommand')} ${kw('implements')} ${tp('Command')} {`,
+      `  ${kw('constructor')}(${kw('readonly')} ${nm('customerId')}: ${tp('string')}, ${kw('readonly')} ${nm('items')}: ${tp('Item[]')}) {}`,
+      `}`,
+      '',
+      cm('// QUERIES — solo lectura, devuelven datos'),
+      `${kw('interface')} ${tp('Query')}&lt;${tp('R')}&gt; {}`,
+      `${kw('interface')} ${tp('QueryBus')} {`,
+      `  ${fn('ask')}(${nm('query')}: ${tp('Query')}&lt;${kw('any')}&gt;): ${tp('Promise')}&lt;${kw('any')}&gt;;`,
+      `}`,
+      '',
+      `${kw('class')} ${tp('GetOrderQuery')} ${kw('implements')} ${tp('Query')}&lt;${tp('OrderDTO')}&gt; {`,
+      `  ${kw('constructor')}(${kw('readonly')} ${nm('orderId')}: ${tp('string')}) {}`,
+      `}`,
+      '',
+      cm('// Query Handler: usa Read Model optimizado'),
+      `${kw('class')} ${tp('GetOrderHandler')} {`,
+      `  ${kw('async')} ${fn('handle')}(${nm('query')}: ${tp('GetOrderQuery')}): ${tp('Promise')}&lt;${tp('OrderDTO')}&gt; {`,
+      cm('    // Query directa SQL, sin reconstruir el agregado'),
+      `    ${kw('return')} ${kw('this')}.${nm('queryRepo')}.${fn('findOrderSummary')}(${nm('query')}.orderId);`,
+      `  }`,
+      `}`,
+      '',
+      cm('// Controller usa ambos buses'),
+      `${kw('async')} ${fn('createOrder')}(${nm('req')}, ${nm('res')}) {`,
+      `  ${kw('const')} ${nm('id')} = ${kw('await')} ${kw('this')}.${nm('commandBus')}.${fn('dispatch')}(${kw('new')} ${tp('CreateOrderCommand')}(${nm('req')}.body));`,
+      `  ${kw('const')} ${nm('order')} = ${kw('await')} ${kw('this')}.${nm('queryBus')}.${fn('ask')}(${kw('new')} ${tp('GetOrderQuery')}(${nm('id')}));`,
+      `  ${nm('res')}.${fn('json')}(${nm('order')});`,
+      `}`,
+    ].join('\n'),
+  },
+];
+---
+
+<section id="usecases" class="py-24 px-6 max-w-6xl mx-auto reveal">
+  <div class="text-center mb-16">
+    <span class="text-xs font-mono text-blue-400 uppercase tracking-widest">Capa de Aplicacion</span>
+    <h2 class="text-3xl font-bold text-white mt-3 mb-4">Use Cases y patrones de aplicacion</h2>
+    <p class="text-slate-400 max-w-2xl mx-auto">
+      La capa de aplicacion orquesta el dominio. Aqui viven los use cases, el bus de comandos,
+      los middlewares transversales y la separacion CQRS.
+    </p>
+  </div>
+
+  <!-- Tabs -->
+  <div class="flex flex-wrap gap-3 justify-center mb-12">
+    {tabs.map((t, i) => (
+      <button
+        class="uc-tab px-4 py-2 rounded-lg text-sm font-mono border transition-all"
+        data-tab={t.id}
+        class:list={[
+          i === 0
+            ? 'bg-blue-500/20 border-blue-500/50 text-blue-300'
+            : 'bg-slate-800 border-slate-700 text-slate-400 hover:border-slate-500'
+        ]}
+      >
+        {t.title}
+      </button>
+    ))}
+  </div>
+
+  <!-- Tab: Use Case basico -->
+  <div class="uc-panel" data-panel="basico">
+    <div class="mb-8">
+      <div class="flex items-center gap-3 mb-2 flex-wrap">
+        <h3 class="text-white font-bold text-lg">{tabs[0].title}</h3>
+        <span class="text-xs px-2 py-1 rounded-full bg-blue-500/20 border border-blue-500/40 text-blue-300 font-mono">{tabs[0].badge}</span>
+      </div>
+      <p class="text-slate-400 text-sm">{tabs[0].description}</p>
+    </div>
+
+    <div class="grid md:grid-cols-2 gap-8 mb-10">
+      <div>
+        <h4 class="font-bold text-sm mb-4 text-blue-300 uppercase tracking-wide">Que hace</h4>
+        <ul class="space-y-3">
+          {tabs[0].doesItems.map(item => (
+            <li class="flex gap-3">
+              <span class="mt-1 w-2 h-2 rounded-full bg-blue-500 shrink-0"></span>
+              <div>
+                <span class="font-semibold text-slate-200 text-sm">{item.title}</span>
+                <span class="text-slate-400 text-sm"> — {item.desc}</span>
+              </div>
+            </li>
+          ))}
+        </ul>
+      </div>
+      <div>
+        <h4 class="font-bold text-sm mb-4 text-red-400 uppercase tracking-wide">Que NO hace</h4>
+        <ul class="space-y-3">
+          {tabs[0].doesntItems.map(item => (
+            <li class="flex gap-3">
+              <span class="mt-1 w-2 h-2 rounded-full bg-red-500 shrink-0"></span>
+              <div>
+                <span class="font-semibold text-slate-200 text-sm">{item.title}</span>
+                <span class="text-slate-400 text-sm"> — {item.desc}</span>
+              </div>
+            </li>
+          ))}
+        </ul>
+      </div>
+    </div>
+
+    <div class="bg-slate-950 rounded-xl border border-blue-900/40 overflow-hidden">
+      <div class="px-4 py-2 bg-slate-900 border-b border-blue-900/40 flex items-center gap-2">
+        <span class="w-3 h-3 rounded-full bg-red-500/40"></span>
+        <span class="w-3 h-3 rounded-full bg-yellow-500/40"></span>
+        <span class="w-3 h-3 rounded-full bg-blue-500/70"></span>
+        <span class="text-slate-500 text-xs font-mono ml-2">application/CreateOrderService.ts</span>
+      </div>
+      <pre class="p-4 text-sm font-mono leading-relaxed overflow-x-auto"><code set:html={tabs[0].code} /></pre>
+    </div>
+  </div>
+
+  <!-- Tabs restantes: Command Bus, Pipeline, CQRS -->
+  {tabs.slice(1).map((t) => (
+    <div class="uc-panel" data-panel={t.id} style="display:none">
+      <div class="mb-6">
+        <div class="flex items-center gap-3 mb-2 flex-wrap">
+          <h3 class="text-white font-bold text-lg">{t.title}</h3>
+          <span class="text-xs px-2 py-1 rounded-full bg-blue-500/20 border border-blue-500/40 text-blue-300 font-mono">{t.badge}</span>
+        </div>
+        <p class="text-slate-400 text-sm leading-relaxed max-w-3xl">{t.description}</p>
+      </div>
+      <div class="bg-slate-950 rounded-xl border border-blue-900/40 overflow-hidden">
+        <div class="px-4 py-2 bg-slate-900 border-b border-blue-900/40 flex items-center gap-2">
+          <span class="w-3 h-3 rounded-full bg-red-500/40"></span>
+          <span class="w-3 h-3 rounded-full bg-yellow-500/40"></span>
+          <span class="w-3 h-3 rounded-full bg-blue-500/70"></span>
+          <span class="text-slate-500 text-xs font-mono ml-2">application/</span>
+        </div>
+        <pre class="p-4 text-sm font-mono leading-relaxed overflow-x-auto"><code set:html={t.code} /></pre>
+      </div>
+    </div>
+  ))}
+</section>
+
+<script>
+  var tabs = document.querySelectorAll('.uc-tab');
+  var panels = document.querySelectorAll('.uc-panel');
+  tabs.forEach(function(tab) {
+    tab.addEventListener('click', function() {
+      var target = tab.getAttribute('data-tab');
+      tabs.forEach(function(t) {
+        t.className = 'uc-tab px-4 py-2 rounded-lg text-sm font-mono border transition-all bg-slate-800 border-slate-700 text-slate-400 hover:border-slate-500';
+      });
+      tab.className = 'uc-tab px-4 py-2 rounded-lg text-sm font-mono border transition-all bg-blue-500/20 border-blue-500/50 text-blue-300';
+      panels.forEach(function(p) {
+        p.style.display = p.getAttribute('data-panel') === target ? '' : 'none';
+      });
+    });
+  });
+</script>
+

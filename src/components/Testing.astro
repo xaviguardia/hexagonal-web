@@ -1,0 +1,248 @@
+---
+const kw = (s) => `<span class="text-purple-400">${s}</span>`;
+const fn = (s) => `<span class="text-yellow-300">${s}</span>`;
+const tp = (s) => `<span class="text-cyan-300">${s}</span>`;
+const cm = (s) => `<span class="text-slate-500">${s}</span>`;
+const st = (s) => `<span class="text-emerald-300">${s}</span>`;
+const nm = (s) => `<span class="text-slate-200">${s}</span>`;
+const er = (s) => `<span class="text-red-400">${s}</span>`;
+const ok = (s) => `<span class="text-green-400">${s}</span>`;
+
+const tabs = [
+  {
+    id: 'jerarquia',
+    title: 'Jerarquia de Tests',
+    badge: 'Piramide de tests',
+    description: 'La arquitectura hexagonal define naturalmente tres niveles de test con costes y velocidades distintas. Cuantos mas tests en la base, mas rapido y barato el feedback.',
+    code: [
+      cm('// NIVEL 1 — Tests de Dominio (puros, sin mocks)'),
+      cm('// Velocidad: milisegundos. Sin BD, sin red, sin frameworks.'),
+      '',
+      `${fn('describe')}(${st('"Order"')}, () => {`,
+      `  ${fn('it')}(${st('"no puede confirmar una orden sin items"')}, () => {`,
+      `    ${kw('const')} ${nm('order')} = ${tp('Order')}.${fn('create')}(${tp('OrderId')}.${fn('new')}(), ${tp('CustomerId')}.${fn('of')}(${st('"c1"')}));`,
+      ok('    expect(() => order.confirm()).toThrow("Sin items");'),
+      `  });`,
+      `});`,
+      '',
+      cm('// NIVEL 2 — Tests de Use Case (con Fakes de puertos)'),
+      cm('// Velocidad: milisegundos. Fakes en memoria, no mocks.'),
+      '',
+      `${fn('describe')}(${st('"CreateOrderService"')}, () => {`,
+      `  ${fn('it')}(${st('"crea una orden y notifica"')}, ${kw('async')} () => {`,
+      `    ${kw('const')} ${nm('repo')} = ${kw('new')} ${tp('InMemoryOrderRepository')}();`,
+      `    ${kw('const')} ${nm('notify')} = ${kw('new')} ${tp('SpyNotificationAdapter')}();`,
+      `    ${kw('const')} ${nm('svc')} = ${kw('new')} ${tp('CreateOrderService')}(${nm('repo')}, ${nm('notify')});`,
+      `    ${kw('await')} ${nm('svc')}.${fn('execute')}({ customerId: ${st('"c1"')}, items: [${cm('...')}] });`,
+      ok('    expect(notify.notified).toBe(true);'),
+      `  });`,
+      `});`,
+      '',
+      cm('// NIVEL 3 — Tests de Adaptador (integración con BD/API real)'),
+      cm('// Velocidad: segundos. Con base de datos de test.'),
+      '',
+      `${fn('describe')}(${st('"PgOrderRepository"')}, () => {`,
+      `  ${fn('it')}(${st('"persiste y recupera una orden"')}, ${kw('async')} () => {`,
+      `    ${kw('const')} ${nm('repo')} = ${kw('new')} ${tp('PgOrderRepository')}(${nm('testDb')});`,
+      `    ${kw('await')} ${nm('repo')}.${fn('save')}(${nm('order')});`,
+      `    ${kw('const')} ${nm('found')} = ${kw('await')} ${nm('repo')}.${fn('findById')}(${nm('order')}.id);`,
+      ok('    expect(found?.id).toEqual(order.id);'),
+      `  });`,
+      `});`,
+    ].join('\n'),
+    rule: 'Regla del 70/20/10: 70% tests de dominio, 20% tests de use case con fakes, 10% tests de adaptador con infraestructura real. Nunca mocks en los tests de use case.',
+  },
+  {
+    id: 'test-doubles',
+    title: 'Fake vs Mock vs Stub',
+    badge: 'Test doubles en puertos',
+    description: 'Los puertos (interfaces) permiten sustituir la infraestructura real en tests. Pero hay tres tipos de sustituto con propositos distintos, y confundirlos lleva a tests fragiles.',
+    code: [
+      cm('// STUB: devuelve datos predefinidos, no verifica llamadas'),
+      `${kw('class')} ${tp('StubOrderRepository')} ${kw('implements')} ${tp('OrderRepository')} {`,
+      `  ${kw('async')} ${fn('findById')}(${nm('id')}) {`,
+      `    ${kw('return')} ${tp('Order')}.${fn('reconstitute')}({ id: ${nm('id')}, status: ${st('"draft"')}, ${cm('...')} });`,
+      `  }`,
+      `  ${kw('async')} ${fn('save')}(${nm('order')}) { }  ${cm('// no hace nada')}`,
+      `}`,
+      '',
+      cm('// FAKE: implementacion real pero simplificada (en memoria)'),
+      `${kw('class')} ${tp('InMemoryOrderRepository')} ${kw('implements')} ${tp('OrderRepository')} {`,
+      `  ${kw('private')} ${nm('store')} = ${kw('new')} ${tp('Map')}();`,
+      `  ${kw('async')} ${fn('findById')}(${nm('id')}) { ${kw('return')} ${kw('this')}.${nm('store')}.${fn('get')}(${nm('id')}) ?? ${kw('null')}; }`,
+      `  ${kw('async')} ${fn('save')}(${nm('order')}) { ${kw('this')}.${nm('store')}.${fn('set')}(${nm('order')}.id, ${nm('order')}); }`,
+      `}`,
+      '',
+      cm('// SPY: fake que registra las llamadas para verificarlas'),
+      `${kw('class')} ${tp('SpyNotificationAdapter')} ${kw('implements')} ${tp('NotificationPort')} {`,
+      `  ${nm('notifiedOrders')}: ${tp('Order')}[] = [];`,
+      '',
+      `  ${kw('async')} ${fn('notifyOrderCreated')}(${nm('order')}) {`,
+      `    ${kw('this')}.${nm('notifiedOrders')}.${fn('push')}(${nm('order')});`,
+      `  }`,
+      `}`,
+      '',
+      cm('// En el test:'),
+      `${kw('const')} ${nm('spy')} = ${kw('new')} ${tp('SpyNotificationAdapter')}();`,
+      `${kw('await')} ${nm('svc')}.${fn('execute')}(${nm('cmd')});`,
+      ok('expect(spy.notifiedOrders).toHaveLength(1);'),
+      ok('expect(spy.notifiedOrders[0].id).toBe(orderId);'),
+    ].join('\n'),
+    rule: 'Usa Fake (InMemory) para la mayoria de tests de use case. Usa Spy cuando necesitas verificar que se llamo a un puerto con datos concretos. Evita Mock frameworks — acoplan el test a la implementacion.',
+  },
+  {
+    id: 'contract',
+    title: 'Contract Testing',
+    badge: 'Fake vs Adaptador real',
+    description: 'El riesgo del Fake es que diverga del adaptador real. Contract Testing ejecuta el mismo conjunto de tests contra el Fake y contra el adaptador real, garantizando que son equivalentes.',
+    code: [
+      cm('// Contrato compartido: suite de tests abstracta'),
+      `${kw('abstract class')} ${tp('OrderRepositoryContract')} {`,
+      `  ${kw('abstract')} ${fn('createSut')}(): ${tp('OrderRepository')};`,
+      '',
+      `  ${fn('runTests')}() {`,
+      `    ${kw('let')} ${nm('sut')}: ${tp('OrderRepository')};`,
+      `    ${fn('beforeEach')}(() => { ${nm('sut')} = ${kw('this')}.${fn('createSut')}(); });`,
+      '',
+      `    ${fn('it')}(${st('"save y findById devuelven la misma orden"')}, ${kw('async')} () => {`,
+      `      ${kw('const')} ${nm('order')} = ${tp('Order')}.${fn('create')}(${cm('...')});`,
+      `      ${kw('await')} ${nm('sut')}.${fn('save')}(${nm('order')});`,
+      `      ${kw('const')} ${nm('found')} = ${kw('await')} ${nm('sut')}.${fn('findById')}(${nm('order')}.id);`,
+      ok('      expect(found?.id).toEqual(order.id);'),
+      `    });`,
+      '',
+      `    ${fn('it')}(${st('"findById devuelve null si no existe"')}, ${kw('async')} () => {`,
+      `      ${kw('const')} ${nm('found')} = ${kw('await')} ${nm('sut')}.${fn('findById')}(${st('"id-inexistente"')});`,
+      ok('      expect(found).toBeNull();'),
+      `    });`,
+      `  }`,
+      `}`,
+      '',
+      cm('// Test del Fake — rapidisimo'),
+      `${kw('class')} ${tp('InMemoryRepositoryTest')} ${kw('extends')} ${tp('OrderRepositoryContract')} {`,
+      `  ${fn('createSut')}() { ${kw('return')} ${kw('new')} ${tp('InMemoryOrderRepository')}(); }`,
+      `}`,
+      '',
+      cm('// Test del adaptador real — usa BD de test'),
+      `${kw('class')} ${tp('PgRepositoryTest')} ${kw('extends')} ${tp('OrderRepositoryContract')} {`,
+      `  ${fn('createSut')}() { ${kw('return')} ${kw('new')} ${tp('PgOrderRepository')}(${nm('testDb')}); }`,
+      `}`,
+    ].join('\n'),
+    rule: 'Si el InMemoryRepository pasa los contract tests y el PgRepository tambien los pasa, cualquier use case que funcione con uno funcionara con el otro. Sin sorpresas en produccion.',
+  },
+  {
+    id: 'fitness',
+    title: 'Fitness Functions',
+    badge: 'Regla de dependencia',
+    description: 'Tests automatizados que verifican que la arquitectura no se esta degradando. Detectan violaciones de la regla de dependencia antes de que lleguen a main.',
+    code: [
+      cm('// dependency-cruiser — .dependency-cruiser.js'),
+      `${kw('module')}.${nm('exports')} = {`,
+      `  forbidden: [`,
+      `    {`,
+      `      name: ${st('"domain-no-infra"')},`,
+      `      comment: ${st('"El dominio no puede importar infraestructura"')},`,
+      `      severity: ${st('"error"')},`,
+      `      from: { path: ${st('"^src/domain"')} },`,
+      `      to:   { path: ${st('"^src/infrastructure"')} }`,
+      `    },`,
+      `    {`,
+      `      name: ${st('"domain-no-application"')},`,
+      `      comment: ${st('"El dominio no puede importar application"')},`,
+      `      severity: ${st('"error"')},`,
+      `      from: { path: ${st('"^src/domain"')} },`,
+      `      to:   { path: ${st('"^src/application"')} }`,
+      `    },`,
+      `    {`,
+      `      name: ${st('"application-no-infra"')},`,
+      `      comment: ${st('"Application solo importa puertos, no adaptadores"')},`,
+      `      severity: ${st('"error"')},`,
+      `      from: { path: ${st('"^src/application"')} },`,
+      `      to:   { path: ${st('"^src/infrastructure"')} }`,
+      `    },`,
+      `  ]`,
+      `};`,
+      '',
+      cm('// package.json — ejecutar en CI'),
+      `${st('"lint:arch"')}: ${st('"depcruise src --config .dependency-cruiser.js"')}`,
+      '',
+      ok('// Si alguien hace: import { PgOrderRepository } from "../../infrastructure/..."'),
+      ok('// desde domain/ o application/, la build de CI falla inmediatamente.'),
+    ].join('\n'),
+    rule: 'Las fitness functions son la "constitucion" de la arquitectura. Se ejecutan en CI con cada PR. Documentan las reglas de dependencia de forma ejecutable, no solo en un README.',
+  },
+];
+---
+
+<section id="testing" class="py-24 px-6 max-w-6xl mx-auto reveal">
+  <div class="text-center mb-16">
+    <span class="text-xs font-mono text-sky-400 uppercase tracking-widest">Testing</span>
+    <h2 class="text-3xl font-bold text-white mt-3 mb-4">Estrategia de tests en hexagonal</h2>
+    <p class="text-slate-400 max-w-2xl mx-auto">
+      La arquitectura hexagonal hace que testear sea natural. Los puertos son los puntos de sustitucion.
+      El dominio se testa sin infraestructura. Los adaptadores se validan con contratos.
+    </p>
+  </div>
+
+  <!-- Tabs -->
+  <div class="flex flex-wrap gap-3 justify-center mb-12">
+    {tabs.map((t, i) => (
+      <button
+        class="test-tab px-4 py-2 rounded-lg text-sm font-mono border transition-all"
+        data-tab={t.id}
+        class:list={[
+          i === 0
+            ? 'bg-sky-500/20 border-sky-500/50 text-sky-300'
+            : 'bg-slate-800 border-slate-700 text-slate-400 hover:border-slate-500'
+        ]}
+      >
+        {t.title}
+      </button>
+    ))}
+  </div>
+
+  {tabs.map((t, i) => (
+    <div class="test-panel" data-panel={t.id} style={i !== 0 ? 'display:none' : ''}>
+      <div class="mb-6">
+        <div class="flex items-center gap-3 mb-2 flex-wrap">
+          <h3 class="text-white font-bold text-lg">{t.title}</h3>
+          <span class="text-xs px-2 py-1 rounded-full bg-sky-500/20 border border-sky-500/40 text-sky-300 font-mono">{t.badge}</span>
+        </div>
+        <p class="text-slate-400 text-sm leading-relaxed max-w-3xl">{t.description}</p>
+      </div>
+
+      <div class="bg-slate-950 rounded-xl border border-sky-900/40 overflow-hidden">
+        <div class="flex items-center gap-2 px-4 py-2 bg-slate-900 border-b border-sky-900/40">
+          <span class="w-3 h-3 rounded-full bg-red-500/40"></span>
+          <span class="w-3 h-3 rounded-full bg-yellow-500/40"></span>
+          <span class="w-3 h-3 rounded-full bg-sky-500/70"></span>
+          <span class="text-slate-500 text-xs font-mono ml-2">tests/</span>
+        </div>
+        <pre class="p-4 text-sm font-mono leading-relaxed overflow-x-auto"><code set:html={t.code} /></pre>
+      </div>
+
+      <div class="mt-6 bg-sky-500/10 border border-sky-500/30 rounded-xl p-5">
+        <p class="text-sky-200 text-sm leading-relaxed">
+          <span class="font-semibold text-sky-400">Regla: </span>{t.rule}
+        </p>
+      </div>
+    </div>
+  ))}
+</section>
+
+<script>
+  var tabs = document.querySelectorAll('.test-tab');
+  var panels = document.querySelectorAll('.test-panel');
+  tabs.forEach(function(tab) {
+    tab.addEventListener('click', function() {
+      var target = tab.getAttribute('data-tab');
+      tabs.forEach(function(t) {
+        t.className = 'test-tab px-4 py-2 rounded-lg text-sm font-mono border transition-all bg-slate-800 border-slate-700 text-slate-400 hover:border-slate-500';
+      });
+      tab.className = 'test-tab px-4 py-2 rounded-lg text-sm font-mono border transition-all bg-sky-500/20 border-sky-500/50 text-sky-300';
+      panels.forEach(function(p) {
+        p.style.display = p.getAttribute('data-panel') === target ? '' : 'none';
+      });
+    });
+  });
+</script>

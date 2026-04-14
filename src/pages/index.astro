@@ -1,0 +1,108 @@
+---
+import Nav from '../components/Nav.astro';
+import Hero from '../components/Hero.astro';
+import Concepto from '../components/Concepto.astro';
+import Capas from '../components/Capas.astro';
+import Puertos from '../components/Puertos.astro';
+import Flujo from '../components/Flujo.astro';
+import Dominio from '../components/Dominio.astro';
+import UseCases from '../components/UseCases.astro';
+import Infraestructura from '../components/Infraestructura.astro';
+import Refactoring from '../components/Refactoring.astro';
+import Rendimiento from '../components/Rendimiento.astro';
+import Transaccionalidad from '../components/Transaccionalidad.astro';
+import Testing from '../components/Testing.astro';
+import FrontendHexagonal from '../components/FrontendHexagonal.astro';
+import BPMN from '../components/BPMN.astro';
+import DataLake from '../components/DataLake.astro';
+import CodigoExplorer from '../components/CodigoExplorer.astro';
+import Flashcards from '../components/Flashcards.astro';
+import Quiz from '../components/Quiz.astro';
+import Resumen from '../components/Resumen.astro';
+import '../styles/global.css';
+---
+
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="generator" content={Astro.generator} />
+    <title>Arquitectura Hexagonal — Guia Interactiva</title>
+    <meta name="description" content="Aprende arquitectura hexagonal (Ports & Adapters) de forma visual e interactiva con ejemplos reales en TypeScript." />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet" />
+  </head>
+  <body class="bg-slate-950 text-slate-100">
+    <Nav />
+    <!-- Layout: sidebar + main -->
+    <div class="lg:pl-56">
+      <!-- Mobile top bar spacer -->
+      <div class="h-12 lg:hidden"></div>
+      <main>
+        <Hero />
+
+        <hr class="border-slate-800" />
+        <Concepto />
+        <hr class="border-slate-800" />
+        <Capas />
+        <hr class="border-slate-800" />
+        <Puertos />
+        <hr class="border-slate-800" />
+        <Flujo />
+
+        <hr class="border-slate-800" />
+        <Dominio />
+        <hr class="border-slate-800" />
+        <UseCases />
+        <hr class="border-slate-800" />
+        <Infraestructura />
+
+        <hr class="border-slate-800" />
+        <Refactoring />
+        <hr class="border-slate-800" />
+        <Rendimiento />
+        <hr class="border-slate-800" />
+        <Transaccionalidad />
+        <hr class="border-slate-800" />
+        <Testing />
+
+        <hr class="border-slate-800" />
+        <FrontendHexagonal />
+        <hr class="border-slate-800" />
+        <BPMN />
+        <hr class="border-slate-800" />
+        <DataLake />
+
+        <hr class="border-slate-800" />
+        <CodigoExplorer />
+        <hr class="border-slate-800" />
+        <Flashcards />
+        <hr class="border-slate-800" />
+        <Quiz />
+        <hr class="border-slate-800" />
+        <Resumen />
+      </main>
+
+      <footer class="border-t border-slate-800 text-center py-10 text-slate-500 text-sm">
+        Arquitectura Hexagonal — Ports &amp; Adapters — Alistair Cockburn, 2005
+      </footer>
+    </div>
+
+    <script>
+      var revealObserver = new IntersectionObserver(
+        function(entries) {
+          entries.forEach(function(e) {
+            if (e.isIntersecting) {
+              e.target.classList.add('in-view');
+              revealObserver.unobserve(e.target);
+            }
+          });
+        },
+        { threshold: 0.1 }
+      );
+      document.querySelectorAll('.reveal').forEach(function(el) {
+        revealObserver.observe(el);
+      });
+    </script>
+  </body>
+</html>

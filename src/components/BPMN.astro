@@ -1,0 +1,313 @@
+---
+const kw = (s) => `<span class="text-purple-400">${s}</span>`;
+const fn = (s) => `<span class="text-yellow-300">${s}</span>`;
+const tp = (s) => `<span class="text-cyan-300">${s}</span>`;
+const cm = (s) => `<span class="text-slate-500">${s}</span>`;
+const st = (s) => `<span class="text-emerald-300">${s}</span>`;
+const nm = (s) => `<span class="text-slate-200">${s}</span>`;
+const er = (s) => `<span class="text-red-400">${s}</span>`;
+const ok = (s) => `<span class="text-green-400">${s}</span>`;
+
+const tabs = [
+  { id: 'bpmn-intro',    label: 'BPMN en Hexagonal' },
+  { id: 'service-tasks', label: 'Service Tasks' },
+  { id: 'user-tasks',    label: 'User Tasks + FormSchema' },
+];
+
+const portCode = [
+  cm('// Puerto de proceso en la capa de aplicacion'),
+  cm('// El dominio puede pedir arrancar un proceso sin saber que es Camunda'),
+  `${kw('interface')} ${tp('ProcessPort')} {`,
+  `  ${fn('startProcess')}(${nm('key')}: ${tp('string')}, ${nm('vars')}: ${tp('ProcessVariables')}): ${tp('Promise<string>')};`,
+  `  ${fn('completeUserTask')}(${nm('taskId')}: ${tp('string')}, ${nm('vars')}: ${tp('ProcessVariables')}): ${tp('Promise<void>')};`,
+  `  ${fn('getActiveTasksForUser')}(${nm('userId')}: ${tp('string')}): ${tp('Promise<UserTask[]>')};`,
+  `  ${fn('getTaskById')}(${nm('taskId')}: ${tp('string')}): ${tp('Promise<UserTask>')};`,
+  `}`,
+  ``,
+  cm('// Use Case que arranca el proceso — no sabe si es Camunda o Flowable'),
+  `${kw('class')} ${tp('IniciarAprobacionPedidoUseCase')} {`,
+  `  ${kw('constructor')}(`,
+  `    ${kw('private')} ${nm('pedidoRepo')}: ${tp('PedidoRepository')},`,
+  `    ${kw('private')} ${nm('process')}: ${tp('ProcessPort')},`,
+  `  ) {}`,
+  ``,
+  `  ${kw('async')} ${fn('execute')}(${nm('pedidoId')}: ${tp('string')}): ${tp('Promise<void>')} {`,
+  `    ${kw('const')} ${nm('pedido')} = ${kw('await')} ${kw('this')}.${nm('pedidoRepo')}.${fn('findById')}(${nm('pedidoId')});`,
+  `    ${nm('pedido')}.${fn('enviarAAprobacion')}();`,
+  ok('    // El dominio no sabe nada del proceso BPMN'),
+  `    ${kw('await')} ${kw('this')}.${nm('pedidoRepo')}.${fn('save')}(${nm('pedido')});`,
+  `    ${kw('await')} ${kw('this')}.${nm('process')}.${fn('startProcess')}(${st("'aprobacion-pedido'")}, {`,
+  `      ${nm('pedidoId')},`,
+  `      ${nm('importe')}: ${nm('pedido')}.${nm('importe')},`,
+  `      ${nm('clienteId')}: ${nm('pedido')}.${nm('clienteId')},`,
+  `    });`,
+  `  }`,
+  `}`,
+  ``,
+  cm('// Adapter en infraestructura — implementa el puerto con Camunda'),
+  `${kw('class')} ${tp('CamundaProcessAdapter')} ${kw('implements')} ${tp('ProcessPort')} {`,
+  `  ${kw('async')} ${fn('startProcess')}(${nm('key')}, ${nm('vars')}) {`,
+  `    ${kw('const')} ${nm('instance')} = ${kw('await')} ${kw('this')}.${nm('client')}.${fn('createProcessInstance')}({ ${nm('bpmnProcessId')}: ${nm('key')}, ${nm('variables')}: ${nm('vars')} });`,
+  `    ${kw('return')} ${nm('instance')}.${nm('processInstanceKey')}.${fn('toString')}();`,
+  `  }`,
+  `}`,
+].join('\n');
+
+const serviceTaskCode = [
+  cm('// Cada step automatico del BPMN delega a un Use Case'),
+  cm('// El BPMN solo decide el flujo — la logica esta en el use case'),
+  `@${tp('Component')}`,
+  `${kw('class')} ${tp('ValidarCreditoDelegate')} ${kw('implements')} ${tp('JavaDelegate')} {`,
+  `  ${kw('constructor')}(${kw('private')} ${nm('useCase')}: ${tp('ValidarCreditoUseCase')}) {}`,
+  ``,
+  `  ${fn('execute')}(${nm('execution')}: ${tp('DelegateExecution')}): ${tp('void')} {`,
+  `    ${kw('const')} ${nm('pedidoId')} = ${nm('execution')}.${fn('getVariable')}(${st("'pedidoId'")});`,
+  `    ${kw('const')} ${nm('result')} = ${kw('this')}.${nm('useCase')}.${fn('execute')}(${nm('pedidoId')});`,
+  ok('    // Solo escribe variables para que el gateway BPMN pueda decidir'),
+  `    ${nm('execution')}.${fn('setVariable')}(${st("'creditoAprobado'")}, ${nm('result')}.${nm('aprobado')});`,
+  `    ${nm('execution')}.${fn('setVariable')}(${st("'motivoRechazo'")}, ${nm('result')}.${nm('motivo')});`,
+  `  }`,
+  `}`,
+  ``,
+  cm('// BPMN XML — el proceso no contiene logica, solo orquesta'),
+  er('<!-- MAL: logica de negocio en script task -->'),
+  er('<bpmn:scriptTask>'),
+  er('  <bpmn:script>'),
+  er('    if (importe > 10000 && cliente.riesgo == "alto") { ... }'),
+  er('  </bpmn:script>'),
+  er('</bpmn:scriptTask>'),
+  ``,
+  ok('<!-- BIEN: delega al use case via delegate -->'),
+  ok('<bpmn:serviceTask id="validarCredito"'),
+  ok('  camunda:delegateExpression="${validarCreditoDelegate}" />'),
+  ``,
+  ok('<bpmn:exclusiveGateway id="creditoGateway" />'),
+  ok('<bpmn:sequenceFlow sourceRef="creditoGateway" targetRef="aprobar">'),
+  ok('  <bpmn:conditionExpression>${creditoAprobado == true}</bpmn:conditionExpression>'),
+  ok('</bpmn:sequenceFlow>'),
+].join('\n');
+
+const userTaskCode = [
+  cm('// User Task: paso humano en el proceso'),
+  cm('// El frontend consulta tareas pendientes y carga el formulario'),
+  ``,
+  cm('// Use Case que conecta BPMN con FormSchema'),
+  `${kw('class')} ${tp('GetUserTaskFormUseCase')} {`,
+  `  ${kw('constructor')}(`,
+  `    ${kw('private')} ${nm('process')}: ${tp('ProcessPort')},`,
+  `    ${kw('private')} ${nm('schemaRepo')}: ${tp('FormSchemaRepository')},`,
+  `  ) {}`,
+  ``,
+  `  ${kw('async')} ${fn('execute')}(${nm('taskId')}: ${tp('string')}) {`,
+  `    ${kw('const')} ${nm('task')} = ${kw('await')} ${kw('this')}.${nm('process')}.${fn('getTaskById')}(${nm('taskId')});`,
+  `    ${kw('const')} ${nm('schema')} = ${kw('await')} ${kw('this')}.${nm('schemaRepo')}.${fn('getSchemaForTask')}(${nm('task')}.${nm('definitionKey')});`,
+  cm('    //                                      \'aprobar-pedido\' → schema especifico'),
+  `    ${kw('return')} { ${nm('task')}, ${nm('schema')}, ${nm('data')}: ${nm('task')}.${nm('variables')} };`,
+  `  }`,
+  `}`,
+  ``,
+  cm('// Use Case para completar la tarea (el usuario envia el formulario)'),
+  `${kw('class')} ${tp('CompleteUserTaskUseCase')} {`,
+  `  ${kw('async')} ${fn('execute')}(${nm('taskId')}: ${tp('string')}, ${nm('decision')}: ${tp('TaskDecision')}) {`,
+  `    ${kw('await')} ${kw('this')}.${nm('process')}.${fn('completeUserTask')}(${nm('taskId')}, {`,
+  `      ${nm('aprobado')}: ${nm('decision')}.${nm('aprobado')},`,
+  `      ${nm('comentario')}: ${nm('decision')}.${nm('comentario')},`,
+  `    });`,
+  ok('    // El BPMN avanza automaticamente al siguiente paso'),
+  `  }`,
+  `}`,
+  ``,
+  cm('// Frontend: bandeja de entrada de tareas'),
+  `${kw('function')} ${fn('TaskInbox')}() {`,
+  `  ${kw('const')} ${nm('tasks')} = ${fn('useTasks')}(); ${cm('// llama GetActiveTasksForUserUseCase')}`,
+  `  ${kw('return')} ${nm('tasks')}.${fn('map')}(${nm('t')} => (`,
+  `    <${tp('TaskCard')}`,
+  `      ${nm('title')}={${nm('t')}.${nm('name')}}`,
+  `      ${nm('onClick')}={() => ${fn('navigate')}(${st('`/tasks/${t.id}`')})}`,
+  `    />`,
+  `  ));`,
+  `}`,
+].join('\n');
+---
+
+<section id="bpmn" class="py-20 px-6 max-w-6xl mx-auto reveal">
+  <div class="text-center mb-12">
+    <span class="text-xs font-mono text-amber-400 uppercase tracking-widest">Procesos de negocio</span>
+    <h2 class="text-3xl font-bold text-white mt-2">BPMN en Arquitectura Hexagonal</h2>
+    <p class="text-slate-400 mt-3 max-w-2xl mx-auto">
+      BPMN (Camunda, Flowable, Activiti) vive en la capa de infraestructura como orquestador de use cases. El dominio nunca sabe que existe un proceso.
+    </p>
+  </div>
+
+  <!-- Tabs -->
+  <div class="flex gap-2 mb-8 flex-wrap" id="bpmn-tabs">
+    {tabs.map((t, i) => (
+      <button
+        class={`bpmn-tab px-4 py-2 rounded font-mono text-sm transition-colors ${i === 0 ? 'bg-amber-600 text-white' : 'bg-slate-800 text-slate-400 hover:text-white'}`}
+        data-tab={t.id}
+        data-active-class="bg-amber-600"
+      >
+        {t.label}
+      </button>
+    ))}
+  </div>
+
+  <!-- Tab: BPMN en Hexagonal -->
+  <div id="bpmn-intro" class="bpmn-panel">
+    <div class="grid lg:grid-cols-2 gap-8 items-start">
+      <!-- Diagrama capas -->
+      <div class="space-y-2">
+        <div class="rounded-lg border border-slate-600 bg-slate-800/50 p-4">
+          <div class="text-xs font-mono text-purple-400 mb-1 uppercase">Primary Adapters</div>
+          <div class="text-sm text-slate-300">Task Inbox UI · Process Monitor</div>
+          <div class="text-xs text-slate-500 mt-1">"Tengo tareas pendientes" — consulta use cases</div>
+        </div>
+        <div class="flex justify-center text-slate-600">↓</div>
+        <div class="rounded-lg border border-slate-600 bg-slate-800/50 p-4">
+          <div class="text-xs font-mono text-cyan-400 mb-1 uppercase">Application Layer</div>
+          <div class="text-sm text-slate-300">ValidarPedidoUseCase · AprobarUseCase · NotificarUseCase</div>
+          <div class="text-xs text-slate-500 mt-1">Cada paso del proceso es un use case independiente</div>
+        </div>
+        <div class="flex justify-center text-slate-600">↓</div>
+        <div class="rounded-lg border border-slate-600 bg-slate-800/50 p-4">
+          <div class="text-xs font-mono text-emerald-400 mb-1 uppercase">Domain</div>
+          <div class="text-sm text-slate-300">Pedido · Cliente · Stock</div>
+          <div class="text-xs text-slate-500 mt-1">No sabe nada de BPMN ni del proceso</div>
+        </div>
+        <div class="flex justify-center text-slate-600">↓</div>
+        <div class="rounded-lg border border-amber-500/40 bg-amber-500/10 p-4">
+          <div class="text-xs font-mono text-amber-400 mb-1 uppercase">Infrastructure — BPMN vive aqui</div>
+          <div class="text-sm text-slate-300">CamundaProcessAdapter · ServiceTask delegates</div>
+          <div class="text-xs text-slate-500 mt-1">Glue code que conecta el motor BPMN con los use cases</div>
+        </div>
+      </div>
+
+      <div>
+        <div class="text-xs font-mono text-slate-500 mb-2">Puerto de proceso + Use Case que lo usa</div>
+        <pre class="bg-slate-950 rounded-lg p-4 text-xs font-mono overflow-x-auto border border-slate-800"><code set:html={portCode} /></pre>
+      </div>
+    </div>
+
+    <!-- Cuando usar BPMN -->
+    <div class="mt-8 overflow-x-auto">
+      <div class="text-sm font-semibold text-white mb-4">Cuando usar BPMN vs State Machine en dominio</div>
+      <table class="w-full text-sm">
+        <thead>
+          <tr class="border-b border-slate-700">
+            <th class="text-left py-2 px-3 text-slate-400 font-normal">Situacion</th>
+            <th class="text-left py-2 px-3 text-slate-400 font-normal">Solucion recomendada</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-800">
+          <tr><td class="py-2 px-3 text-slate-300">Flujo simple, automatico, sin humanos</td><td class="py-2 px-3 text-emerald-300">State machine en la entidad de dominio</td></tr>
+          <tr><td class="py-2 px-3 text-slate-300">Flujo con aprobaciones humanas</td><td class="py-2 px-3 text-amber-300">BPMN User Tasks</td></tr>
+          <tr><td class="py-2 px-3 text-slate-300">Proceso que dura dias o semanas</td><td class="py-2 px-3 text-amber-300">BPMN (persistencia de instancias)</td></tr>
+          <tr><td class="py-2 px-3 text-slate-300">Necesitas auditar cada transicion</td><td class="py-2 px-3 text-amber-300">BPMN (historico gratis)</td></tr>
+          <tr><td class="py-2 px-3 text-slate-300">Proceso distribuido entre microservicios</td><td class="py-2 px-3 text-cyan-300">BPMN o Saga</td></tr>
+          <tr><td class="py-2 px-3 text-slate-300">Flujo cambia frecuentemente sin deploy</td><td class="py-2 px-3 text-amber-300">BPMN (despliegue de procesos independiente)</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Tab: Service Tasks -->
+  <div id="service-tasks" class="bpmn-panel hidden">
+    <div class="grid lg:grid-cols-2 gap-8 items-start">
+      <div class="space-y-4">
+        <h3 class="text-lg font-semibold text-white">Service Task: automatico, delega al Use Case</h3>
+        <p class="text-slate-400 text-sm">Cuando el proceso BPMN llega a un Service Task automatico, Camunda invoca el delegate. El delegate es glue code en infraestructura — llama al use case y escribe variables de resultado.</p>
+
+        <div class="space-y-3">
+          <div class="p-4 rounded-lg bg-red-500/10 border border-red-500/30">
+            <div class="text-sm font-semibold text-red-300 mb-1">Anti-patron: logica en Script Task</div>
+            <p class="text-xs text-slate-400">Poner condiciones y calculos directamente en el XML del BPMN. Imposible de testear, no reutilizable, acoplado al motor.</p>
+          </div>
+          <div class="p-4 rounded-lg bg-green-500/10 border border-green-500/30">
+            <div class="text-sm font-semibold text-green-300 mb-1">Patron correcto: delegate ligero</div>
+            <p class="text-xs text-slate-400">El delegate solo extrae variables, llama al use case, y escribe el resultado. La logica vive en el use case — testeable con Jest.</p>
+          </div>
+        </div>
+
+        <div class="p-4 rounded-lg bg-slate-800 border border-slate-700">
+          <div class="text-xs font-mono text-slate-400 mb-2">Flujo de ejecucion</div>
+          <div class="space-y-1 text-xs font-mono">
+            <div class="text-slate-300">1. BPMN llega al Service Task</div>
+            <div class="text-slate-300">2. Camunda invoca el delegate</div>
+            <div class="text-slate-300">3. Delegate extrae variables del proceso</div>
+            <div class="text-slate-300">4. Delegate llama al Use Case</div>
+            <div class="text-slate-300">5. Delegate escribe resultado como variable</div>
+            <div class="text-slate-300">6. BPMN avanza segun la variable (gateway)</div>
+          </div>
+        </div>
+      </div>
+      <div>
+        <div class="text-xs font-mono text-slate-500 mb-2">Delegate correcto vs anti-patron</div>
+        <pre class="bg-slate-950 rounded-lg p-4 text-xs font-mono overflow-x-auto border border-slate-800"><code set:html={serviceTaskCode} /></pre>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tab: User Tasks + FormSchema -->
+  <div id="user-tasks" class="bpmn-panel hidden">
+    <div class="grid lg:grid-cols-2 gap-8 items-start">
+      <div class="space-y-4">
+        <h3 class="text-lg font-semibold text-white">User Task: el punto donde todo se conecta</h3>
+        <p class="text-slate-400 text-sm">Un User Task es un paso humano en el proceso. El frontend consulta la bandeja de tareas, carga el formulario dinamico via FormSchema, y al enviar completa la tarea en BPMN.</p>
+
+        <div class="p-4 rounded-lg bg-slate-800 border border-slate-700">
+          <div class="text-xs font-mono text-amber-400 mb-3 uppercase">Flujo completo</div>
+          <div class="space-y-2 text-xs">
+            <div class="flex items-center gap-2">
+              <span class="w-5 h-5 rounded-full bg-amber-600 text-white text-center leading-5 flex-shrink-0">1</span>
+              <span class="text-slate-300">Usuario abre bandeja → <code class="text-amber-300">GetActiveTasksForUserUseCase</code></span>
+            </div>
+            <div class="flex items-center gap-2">
+              <span class="w-5 h-5 rounded-full bg-amber-600 text-white text-center leading-5 flex-shrink-0">2</span>
+              <span class="text-slate-300">Selecciona tarea → <code class="text-amber-300">GetUserTaskFormUseCase</code> devuelve <code class="text-cyan-300">task + schema</code></span>
+            </div>
+            <div class="flex items-center gap-2">
+              <span class="w-5 h-5 rounded-full bg-amber-600 text-white text-center leading-5 flex-shrink-0">3</span>
+              <span class="text-slate-300">Frontend renderiza <code class="text-purple-300">DynamicForm</code> segun el schema</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <span class="w-5 h-5 rounded-full bg-amber-600 text-white text-center leading-5 flex-shrink-0">4</span>
+              <span class="text-slate-300">Usuario completa y envia → <code class="text-amber-300">CompleteUserTaskUseCase</code></span>
+            </div>
+            <div class="flex items-center gap-2">
+              <span class="w-5 h-5 rounded-full bg-amber-600 text-white text-center leading-5 flex-shrink-0">5</span>
+              <span class="text-slate-300">BPMN avanza automaticamente al siguiente paso</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="p-4 rounded-lg bg-blue-500/10 border border-blue-500/30">
+          <div class="text-sm font-semibold text-blue-300 mb-1">La conexion con Metadata-Driven UI</div>
+          <p class="text-xs text-slate-400">Cada User Task tiene un <code class="text-blue-300">definitionKey</code> (ej: "aprobar-pedido"). El <code class="text-blue-300">FormSchemaRepository</code> mapea ese key al FormSchema correcto — con sus lookups, grids y validaciones especificas del paso.</p>
+        </div>
+      </div>
+      <div>
+        <div class="text-xs font-mono text-slate-500 mb-2">Use Cases para User Tasks + bandeja de entrada</div>
+        <pre class="bg-slate-950 rounded-lg p-4 text-xs font-mono overflow-x-auto border border-slate-800"><code set:html={userTaskCode} /></pre>
+      </div>
+    </div>
+  </div>
+</section>
+
+<script>
+  document.getElementById('bpmn-tabs').addEventListener('click', function(e) {
+    var btn = e.target.closest('.bpmn-tab');
+    if (!btn) return;
+    var target = btn.dataset.tab;
+    document.querySelectorAll('.bpmn-tab').forEach(function(b) {
+      b.classList.remove('bg-amber-600', 'text-white');
+      b.classList.add('bg-slate-800', 'text-slate-400');
+    });
+    btn.classList.add('bg-amber-600', 'text-white');
+    btn.classList.remove('bg-slate-800', 'text-slate-400');
+    document.querySelectorAll('.bpmn-panel').forEach(function(p) {
+      p.classList.add('hidden');
+    });
+    var panel = document.getElementById(target);
+    if (panel) panel.classList.remove('hidden');
+  });
+</script>

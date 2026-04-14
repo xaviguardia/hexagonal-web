@@ -1,0 +1,58 @@
+---
+const rows = [
+  { concept: 'Entidad', layer: 'domain', where: 'src/domain/model/', example: 'Order, Product, User', note: 'Tiene identidad (id), puede mutar estado' },
+  { concept: 'Value Object', layer: 'domain', where: 'src/domain/model/', example: 'Money, Address, OrderItem', note: 'Inmutable, sin id, definido por sus valores' },
+  { concept: 'Puerto de entrada', layer: 'domain', where: 'src/domain/ports/', example: 'CreateOrderUseCase', note: 'Interfaz que el dominio expone' },
+  { concept: 'Puerto de salida', layer: 'domain', where: 'src/domain/ports/', example: 'OrderRepository, NotificationPort', note: 'Interfaz que el dominio necesita' },
+  { concept: 'Use Case / Service', layer: 'app', where: 'src/application/', example: 'CreateOrderService', note: 'Implementa puerto entrada, usa puertos salida' },
+  { concept: 'Command / Query', layer: 'app', where: 'src/application/', example: 'CreateOrderCommand', note: 'DTO de entrada al Use Case' },
+  { concept: 'Adaptador entrada', layer: 'infra', where: 'src/infrastructure/driving/', example: 'OrderController', note: 'HTTP, CLI, tests — llama a Use Cases' },
+  { concept: 'Adaptador salida', layer: 'infra', where: 'src/infrastructure/driven/', example: 'InMemoryOrderRepository', note: 'BD, email, APIs — implementa puertos salida' },
+  { concept: 'Composition Root', layer: 'infra', where: 'src/main.ts', example: 'main.ts', note: 'Unico lugar que conecta todo' },
+];
+
+const layerLabel: Record<string, string> = {
+  domain: 'Dominio',
+  app:    'Aplicacion',
+  infra:  'Infraestructura',
+};
+const layerClass: Record<string, string> = {
+  domain: 'bg-amber-100 text-amber-900',
+  app:    'bg-blue-100 text-blue-900',
+  infra:  'bg-purple-100 text-purple-900',
+};
+---
+
+<section class="max-w-5xl mx-auto px-6 py-24 reveal">
+  <h2 class="text-3xl font-extrabold mb-2 tracking-tight">Resumen</h2>
+  <p class="text-slate-400 mb-10 text-lg">Todos los conceptos de un vistazo.</p>
+
+  <div class="bg-slate-800/40 border border-slate-700 rounded-xl overflow-hidden overflow-x-auto">
+    <table class="w-full text-sm min-w-[700px]">
+      <thead>
+        <tr class="border-b border-slate-700 bg-slate-900/60">
+          <th class="text-left px-5 py-3 text-xs uppercase tracking-widest text-slate-500 font-semibold">Concepto</th>
+          <th class="text-left px-5 py-3 text-xs uppercase tracking-widest text-slate-500 font-semibold">Capa</th>
+          <th class="text-left px-5 py-3 text-xs uppercase tracking-widest text-slate-500 font-semibold">Ubicacion</th>
+          <th class="text-left px-5 py-3 text-xs uppercase tracking-widest text-slate-500 font-semibold">Ejemplo</th>
+          <th class="text-left px-5 py-3 text-xs uppercase tracking-widest text-slate-500 font-semibold">Nota</th>
+        </tr>
+      </thead>
+      <tbody>
+        {rows.map((r, i) => (
+          <tr class={`border-b border-slate-700/50 ${i % 2 === 0 ? '' : 'bg-slate-900/20'}`}>
+            <td class="px-5 py-3 font-semibold text-slate-200">{r.concept}</td>
+            <td class="px-5 py-3">
+              <span class={`text-xs font-bold px-2 py-0.5 rounded-full ${layerClass[r.layer]}`}>
+                {layerLabel[r.layer]}
+              </span>
+            </td>
+            <td class="px-5 py-3 font-mono text-xs text-amber-300">{r.where}</td>
+            <td class="px-5 py-3 font-mono text-xs text-slate-300">{r.example}</td>
+            <td class="px-5 py-3 text-xs text-slate-400">{r.note}</td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  </div>
+</section>

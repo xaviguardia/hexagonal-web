@@ -1,0 +1,800 @@
+---
+const questions = [
+  // ── FUNDAMENTOS ────────────────────────────────────────────────
+  {
+    topic: 'Fundamentos', difficulty: 'easy',
+    q: 'En arquitectura hexagonal, la regla de dependencia dice que...',
+    options: [
+      'Las capas externas dependen de las internas',
+      'Las capas internas dependen de las externas',
+      'Todas las capas son independientes entre si',
+      'El dominio puede importar Express si es necesario',
+    ],
+    correct: 0,
+    explanation: 'Las capas externas (infraestructura) dependen de las internas (dominio). Nunca al reves. El dominio no conoce Express, Prisma ni ningun framework externo.',
+  },
+  {
+    topic: 'Fundamentos', difficulty: 'easy',
+    q: 'Cual es el nombre original de la arquitectura hexagonal?',
+    options: [
+      'Clean Architecture',
+      'Ports & Adapters',
+      'Onion Architecture',
+      'Layered Architecture',
+    ],
+    correct: 1,
+    explanation: 'Alistair Cockburn la llamo "Ports & Adapters" en 2005. El hexagono es solo la representacion visual. El nombre describe exactamente como funciona: puertos (interfaces) y adaptadores (implementaciones).',
+  },
+  // ── PUERTOS ────────────────────────────────────────────────────
+  {
+    topic: 'Ports & Adapters', difficulty: 'easy',
+    q: 'Cual es un ejemplo de adaptador PRIMARIO (driving)?',
+    options: [
+      'PgOrderRepository',
+      'SendGridEmailAdapter',
+      'HttpOrderController',
+      'RedisCache',
+    ],
+    correct: 2,
+    explanation: 'HttpOrderController es un adaptador primario: inicia la conversacion con el dominio traduciendo HTTP a comandos del dominio. Los otros son adaptadores secundarios (driven).',
+  },
+  {
+    topic: 'Ports & Adapters', difficulty: 'medium',
+    q: 'Quien define la interfaz OrderRepository?',
+    options: [
+      'La capa de infraestructura (PgOrderRepository)',
+      'La capa de aplicacion (CreateOrderService)',
+      'La capa de dominio',
+      'La Composition Root (main.ts)',
+    ],
+    correct: 2,
+    explanation: 'El dominio define los puertos de salida. OrderRepository vive en domain/ports/output.ports.ts. La infraestructura implementa ese contrato. Esto invierte la dependencia: el dominio manda.',
+  },
+  {
+    topic: 'Ports & Adapters', difficulty: 'hard',
+    q: 'Un puerto de salida puede tener multiples adaptadores. Cual es la ventaja?',
+    options: [
+      'Mayor velocidad de ejecucion',
+      'Cambiar implementaciones sin tocar el dominio o los use cases',
+      'Reducir el numero de clases del proyecto',
+      'Poder usar multiples bases de datos simultaneamente',
+    ],
+    correct: 1,
+    explanation: 'InMemoryOrderRepository, PgOrderRepository y MongoOrderRepository implementan el mismo puerto. Cambiar entre ellos (tests vs produccion vs migracion) no requiere modificar una sola linea del dominio.',
+  },
+  // ── DOMINIO ────────────────────────────────────────────────────
+  {
+    topic: 'Dominio', difficulty: 'medium',
+    q: 'Cual es la diferencia entre Entidad y Value Object?',
+    options: [
+      'La Entidad tiene metodos, el Value Object solo datos',
+      'La Entidad tiene identidad unica, el Value Object se compara por valor',
+      'El Value Object puede importar librerias externas, la Entidad no',
+      'No hay diferencia practica, son intercambiables',
+    ],
+    correct: 1,
+    explanation: 'La Entidad tiene identidad (Order#123 != Order#456 aunque tengan los mismos datos). El Value Object no tiene identidad: Money(100,EUR) == Money(100,EUR). Los Value Objects son inmutables.',
+  },
+  {
+    topic: 'Dominio', difficulty: 'medium',
+    q: 'Que es "Primitive Obsession"?',
+    options: [
+      'Usar demasiados patrones de diseno en el dominio',
+      'Tener entidades con muchos metodos primitivos (getters/setters)',
+      'Usar tipos primitivos (string, number) donde deberia haber un concepto de dominio',
+      'Optimizar el dominio a nivel de bytes para mejor rendimiento',
+    ],
+    correct: 2,
+    explanation: 'Primitive Obsession: email: string puede ser "no-es-email". Email como Value Object valida en construccion y nunca puede ser invalido. El compilador tambien distingue Email de CustomerId.',
+  },
+  {
+    topic: 'Dominio', difficulty: 'hard',
+    q: 'Que regla define la frontera de un Aggregate Root?',
+    options: [
+      'El agregado puede tener maximo 5 entidades internas',
+      'Solo se puede acceder a los objetos internos a traves del Aggregate Root',
+      'El Aggregate Root debe implementar todos los puertos de salida',
+      'Cada Aggregate Root debe tener su propio esquema de BD',
+    ],
+    correct: 1,
+    explanation: 'La regla de acceso: el exterior solo referencia el Aggregate Root, nunca sus entidades internas. Para modificar un OrderItem debes llamar a order.addItem() o order.removeItem(), nunca acceder directamente.',
+  },
+  {
+    topic: 'Dominio', difficulty: 'hard',
+    q: 'Los Domain Events deben emitirse...',
+    options: [
+      'Antes de guardar en la base de datos',
+      'En el constructor de la entidad',
+      'Dentro del metodo de negocio que los produce, y despacharse tras el save',
+      'En el adaptador HTTP al recibir la peticion',
+    ],
+    correct: 2,
+    explanation: 'order.confirm() acumula OrderConfirmedEvent internamente. El use case los extrae (order.pullDomainEvents()) y los despacha despues del save. Asi el evento solo se publica si la persistencia fue exitosa.',
+  },
+  {
+    topic: 'Dominio', difficulty: 'medium',
+    q: 'Cual es la diferencia entre create() y reconstitute() en una entidad?',
+    options: [
+      'create() es publico, reconstitute() es privado',
+      'create() valida mas parametros que reconstitute()',
+      'create() crea nuevo y emite Domain Event; reconstitute() recarga desde BD sin evento',
+      'No hay diferencia, son sinonimos',
+    ],
+    correct: 2,
+    explanation: 'Order.create() es para nuevas ordenes: emite OrderCreatedEvent, aplica invariantes de creacion. Order.reconstitute() es para el repositorio: recarga el estado desde BD sin efectos secundarios.',
+  },
+  // ── APLICACION ────────────────────────────────────────────────
+  {
+    topic: 'Aplicacion', difficulty: 'easy',
+    q: 'Que NO debe hacer un Use Case?',
+    options: [
+      'Llamar a los puertos de salida',
+      'Contener logica de negocio',
+      'Recibir un Command Object',
+      'Devolver una entidad del dominio',
+    ],
+    correct: 1,
+    explanation: 'La logica de negocio vive en el dominio. El Use Case solo orquesta: llama al dominio, usa puertos de salida, devuelve resultado. Si hay una regla de negocio en el use case, esta mal ubicada.',
+  },
+  {
+    topic: 'Aplicacion', difficulty: 'medium',
+    q: 'Que ventaja tiene el Command Bus sobre inyectar use cases directamente?',
+    options: [
+      'Es mas rapido en ejecucion',
+      'Permite anadir middlewares transversales (logging, auth) sin tocar handlers',
+      'Reduce el numero de interfaces necesarias',
+      'El dominio puede acceder al bus directamente',
+    ],
+    correct: 1,
+    explanation: 'Con Command Bus puedes encadenar LoggingMiddleware, AuthMiddleware, ValidationMiddleware antes de llegar al handler. Cada middleware es independiente. Sin bus, tendrias que modificar cada use case.',
+  },
+  {
+    topic: 'Aplicacion', difficulty: 'hard',
+    q: 'En CQRS, un Command devuelve...',
+    options: [
+      'La entidad completa con todos sus datos',
+      'Un DTO con los campos que necesita el frontend',
+      'void o el ID del recurso creado',
+      'Un booleano indicando exito o fallo',
+    ],
+    correct: 2,
+    explanation: 'Commands modifican estado y devuelven void o el ID del recurso creado. Para leer los datos se usa una Query separada con su Read Model optimizado. Esta separacion permite escalar lectura y escritura de forma independiente.',
+  },
+  // ── INFRAESTRUCTURA ───────────────────────────────────────────
+  {
+    topic: 'Infraestructura', difficulty: 'medium',
+    q: 'Que problema resuelve el Anti-Corruption Layer (ACL)?',
+    options: [
+      'Protege la BD de inyecciones SQL',
+      'Evita que el modelo de un servicio externo contamine el dominio',
+      'Cifra la comunicacion con APIs externas',
+      'Centraliza el manejo de errores de red',
+    ],
+    correct: 1,
+    explanation: 'Sin ACL, los tipos de Stripe (StripeCustomer, PaymentIntent) invaden el dominio. El ACL traduce entre el modelo externo y el vocabulario del dominio propio. Si Stripe cambia su API, solo cambia el ACL.',
+  },
+  {
+    topic: 'Infraestructura', difficulty: 'medium',
+    q: 'Como implementar cache sin que el dominio lo sepa?',
+    options: [
+      'Inyectando Redis directamente en el use case',
+      'Anadir un metodo getFromCache() en la entidad Order',
+      'Creando un adaptador CachedOrderRepository que decora PgOrderRepository',
+      'Usando un middleware HTTP que cachea las respuestas',
+    ],
+    correct: 2,
+    explanation: 'Decorator Pattern sobre el puerto de salida. CachedOrderRepository implementa OrderRepository, envuelve PgOrderRepository y añade la logica de cache. El use case recibe el mismo puerto de siempre.',
+  },
+  {
+    topic: 'Infraestructura', difficulty: 'hard',
+    q: 'Cual es el orden de estados del Circuit Breaker?',
+    options: [
+      'Open -> Closed -> Half-Open',
+      'Closed -> Open -> Half-Open -> Closed',
+      'Half-Open -> Open -> Closed',
+      'Closed -> Half-Open -> Open',
+    ],
+    correct: 1,
+    explanation: 'Closed (normal, pasa todo) -> Open (tras N fallos, rechaza todas las llamadas) -> Half-Open (tras timeout, deja pasar una llamada de prueba) -> si tiene exito, vuelve a Closed.',
+  },
+  // ── REFACTORING ───────────────────────────────────────────────
+  {
+    topic: 'Refactoring', difficulty: 'medium',
+    q: 'El Specification Pattern emerge cuando...',
+    options: [
+      'El dominio tiene muchas entidades con el mismo nombre',
+      'El repositorio acumula demasiados metodos findBy*',
+      'Los use cases tienen mas de 5 dependencias inyectadas',
+      'El controlador HTTP supera 200 lineas',
+    ],
+    correct: 1,
+    explanation: 'Cuando findByCustomer, findByStatus, findByDateRange, findActiveByCustomer se multiplican indefinidamente. Specification encapsula la regla de consulta como objeto. El repositorio queda con un solo metodo findAll(spec).',
+  },
+  {
+    topic: 'Refactoring', difficulty: 'medium',
+    q: 'La regla ESLint max-params hace emerger que patron?',
+    options: [
+      'Domain Service',
+      'Factory Method',
+      'Command Object',
+      'Anti-Corruption Layer',
+    ],
+    correct: 2,
+    explanation: 'Cuando execute(customerId, productId, qty, address) viola max-params (>3), emerge el Command Object: execute(cmd: CreateOrderCommand). Facilita validacion con decoradores y el compilador detecta usos incorrectos.',
+  },
+  // ── TRANSACCIONALIDAD ─────────────────────────────────────────
+  {
+    topic: 'Transaccionalidad', difficulty: 'medium',
+    q: 'Que problema resuelve el Outbox Pattern?',
+    options: [
+      'Permite transacciones ACID entre multiples bases de datos',
+      'Garantiza que guardar en BD y publicar en Kafka sean atomicos',
+      'Sincroniza el esquema de la BD con el modelo de dominio',
+      'Permite rollback de mensajes ya publicados en Kafka',
+    ],
+    correct: 1,
+    explanation: 'Sin Outbox: save(order) en Postgres y publish(event) en Kafka pueden fallar independientemente. Con Outbox: el evento se guarda en la misma BD en la misma transaccion. Un worker publica a Kafka garantizando at-least-once.',
+  },
+  {
+    topic: 'Transaccionalidad', difficulty: 'hard',
+    q: 'Una Saga distribuida usa consistencia...',
+    options: [
+      'ACID inmediata mediante coordinador central',
+      'Eventual con compensaciones si algun paso falla',
+      'BASE sin posibilidad de compensar errores',
+      'Transaccional usando XA (two-phase commit)',
+    ],
+    correct: 1,
+    explanation: 'La Saga no tiene transaccion ACID distribuida. Cada servicio tiene su transaccion local. Si falla un paso, se ejecutan compensaciones (refund, cancel). La consistencia se alcanza eventualmente.',
+  },
+  {
+    topic: 'Transaccionalidad', difficulty: 'hard',
+    q: 'Unit of Work es en hexagonal...',
+    options: [
+      'Un patron del dominio que gestiona entidades',
+      'Un puerto de salida que agrupa operaciones en una transaccion atomica',
+      'Un adaptador primario que coordina use cases',
+      'Una clase de infraestructura que el dominio puede importar',
+    ],
+    correct: 1,
+    explanation: 'UnitOfWork es un puerto de salida: el dominio lo define como interfaz con begin/commit/rollback. El adaptador PgUnitOfWork lo implementa con transacciones reales. En tests, InMemoryUnitOfWork no necesita transacciones.',
+  },
+  // ── TESTING ───────────────────────────────────────────────────
+  {
+    topic: 'Testing', difficulty: 'easy',
+    q: 'Como se testea una entidad del dominio?',
+    options: [
+      'Con una BD de test y Jest supertest',
+      'Con mocks de todos sus metodos',
+      'Instanciando la clase directamente, sin mocks ni BD',
+      'A traves del adaptador HTTP con peticiones reales',
+    ],
+    correct: 2,
+    explanation: 'Las entidades del dominio no tienen dependencias externas: se pueden instanciar directamente. Order.create(), order.confirm(), etc. se prueban en milisegundos sin ninguna infraestructura.',
+  },
+  {
+    topic: 'Testing', difficulty: 'medium',
+    q: 'Cual es la diferencia entre un Stub y un Fake?',
+    options: [
+      'Son sinonimos, no hay diferencia practica',
+      'El Stub devuelve datos predefinidos; el Fake es una implementacion simplificada real',
+      'El Fake usa la BD real; el Stub la simula',
+      'El Stub es mas rapido que el Fake',
+    ],
+    correct: 1,
+    explanation: 'Stub: devuelve datos hardcoded, no tiene logica real. Fake: implementacion completa pero simplificada (InMemoryOrderRepository usa un Map). El Fake permite testear comportamientos mas complejos.',
+  },
+  {
+    topic: 'Testing', difficulty: 'hard',
+    q: 'Que garantiza el Contract Testing?',
+    options: [
+      'Que el adaptador real es mas rapido que el Fake',
+      'Que el Fake y el adaptador real cumplen el mismo contrato del puerto',
+      'Que los tests de dominio no usen infraestructura',
+      'Que el codigo cumple las reglas de estilo del proyecto',
+    ],
+    correct: 1,
+    explanation: 'La suite de contract tests se ejecuta contra InMemoryOrderRepository y contra PgOrderRepository. Si ambos pasan, cualquier use case que funcione con el Fake funcionara con Postgres. Sin sorpresas en produccion.',
+  },
+  {
+    topic: 'Testing', difficulty: 'hard',
+    q: 'Que son las Architecture Fitness Functions?',
+    options: [
+      'Metricas de rendimiento del servidor',
+      'Tests de carga para adaptadores externos',
+      'Tests automatizados en CI que verifican que la regla de dependencia no se viola',
+      'Funciones del dominio que verifican invariantes de negocio',
+    ],
+    correct: 2,
+    explanation: 'Con dependency-cruiser, si alguien importa infraestructura desde el dominio, la build de CI falla. Las fitness functions documentan las reglas arquitectonicas de forma ejecutable y se ejecutan en cada PR.',
+  },
+  {
+    topic: 'Testing', difficulty: 'medium',
+    q: 'Por que es preferible un Fake a un Mock framework (jest.mock)?',
+    options: [
+      'Los Fakes son mas faciles de escribir',
+      'Los Mock frameworks no funcionan con TypeScript',
+      'Los mocks acoplan el test a la implementacion interna; los Fakes solo verifican el resultado',
+      'Los Fakes tienen mejor rendimiento en ejecucion',
+    ],
+    correct: 2,
+    explanation: 'Un mock verifica que se llamo a repo.save() exactamente una vez con ciertos argumentos. Si cambias el orden de las llamadas internas, el test falla aunque el comportamiento sea correcto. El Fake solo verifica el estado final.',
+  },
+  // ── DIP ───────────────────────────────────────────────────────
+  {
+    topic: 'Dependency Injection', difficulty: 'medium',
+    q: 'Que es la Composition Root?',
+    options: [
+      'El directorio raiz del proyecto donde viven las entidades',
+      'El unico lugar donde se instancian y conectan todos los componentes',
+      'La clase base de la que heredan todos los use cases',
+      'Un patron para inyectar dependencias en el dominio',
+    ],
+    correct: 1,
+    explanation: 'La Composition Root (main.ts) es el unico sitio que conoce las implementaciones concretas. Crea PgOrderRepository, CreateOrderService, OrderController y los conecta. El resto del codigo solo conoce interfaces.',
+  },
+  // ── FRONTEND HEXAGONAL ────────────────────────────────────────
+  {
+    topic: 'Frontend Hexagonal', difficulty: 'easy',
+    q: 'Que rol tiene un componente React/Vue en la arquitectura hexagonal del frontend?',
+    options: [
+      'Es el dominio frontend — contiene las reglas de validacion',
+      'Es un adaptador primario — solo renderiza y despacha eventos',
+      'Es el use case — orquesta las llamadas al backend',
+      'Es un adaptador secundario — implementa el puerto HTTP',
+    ],
+    correct: 1,
+    explanation: 'Los componentes son adaptadores primarios (driving). Su unica responsabilidad es renderizar y traducir eventos de usuario en llamadas al use case. La logica vive en el use case, no en el componente.',
+  },
+  {
+    topic: 'Frontend Hexagonal', difficulty: 'medium',
+    q: 'Que validaciones pertenecen EXCLUSIVAMENTE al dominio backend y nunca deben estar solo en el frontend?',
+    options: [
+      'Formato de email y longitud maxima de campo',
+      'Campo requerido y tipo de dato',
+      'Reglas de negocio: stock insuficiente, credito superado, estado invalido',
+      'Patrones de URL y numeros de telefono',
+    ],
+    correct: 2,
+    explanation: 'Las reglas de negocio son la unica fuente de verdad del dominio backend. El frontend puede tener validaciones de formato para mejorar UX, pero nunca reemplazan las del backend. Un usuario malicioso puede saltarse el frontend.',
+  },
+  {
+    topic: 'Frontend Hexagonal', difficulty: 'hard',
+    q: 'En Metadata-Driven UI, una FK en el modelo del dominio se renderiza como...',
+    options: [
+      'Siempre como un campo de texto libre',
+      'El Use Case decide: puede ser lookup, select o texto segun el contexto',
+      'Siempre como un select con todos los valores posibles',
+      'El componente decide segun el nombre del campo',
+    ],
+    correct: 1,
+    explanation: 'El Use Case es el Form Configuration Provider: devuelve el FormSchema con el tipo de control para cada campo segun el contexto (alta, edicion, consulta). El frontend es un renderer generico que interpreta el schema.',
+  },
+  {
+    topic: 'Frontend Hexagonal', difficulty: 'hard',
+    q: 'Como se estructuran los errores que llegan del backend para que el frontend no contenga logica de negocio?',
+    options: [
+      'El frontend analiza el mensaje de error con regex para extraer el campo afectado',
+      'El adapter HTTP devuelve JSON estructurado con code, message y field; el frontend solo mapea code a texto',
+      'El frontend importa las clases DomainError del backend para identificarlas',
+      'Los errores de negocio se devuelven como codigo HTTP 500',
+    ],
+    correct: 1,
+    explanation: 'El adapter HTTP traduce DomainError a { code: "CREDITO_SUPERADO", message: "...", field: "importe" }. El frontend mapea el code a texto localizado. Asi no hay logica en el frontend ni acoplamientos a mensajes de error del backend.',
+  },
+  // ── BPMN ──────────────────────────────────────────────────────
+  {
+    topic: 'BPMN', difficulty: 'easy',
+    q: 'En que capa de la arquitectura hexagonal se ubica un motor BPMN como Camunda?',
+    options: [
+      'Dominio — gestiona el estado del proceso de negocio',
+      'Aplicacion — es un use case especial de larga duracion',
+      'Infraestructura — es un orquestador de use cases',
+      'Primary Adapter — inicia la conversacion con el dominio',
+    ],
+    correct: 2,
+    explanation: 'El motor BPMN es infraestructura. El dominio no importa nada de Camunda. Un CamundaProcessAdapter implementa el ProcessPort definido en la capa de aplicacion. Cambiar de Camunda a Flowable no toca el dominio ni los use cases.',
+  },
+  {
+    topic: 'BPMN', difficulty: 'medium',
+    q: 'En un Service Task de BPMN, donde debe vivir la logica de negocio?',
+    options: [
+      'En el Script Task del XML del proceso BPMN',
+      'En las condiciones del gateway de decision',
+      'En el Use Case que llama el delegate — no en el BPMN',
+      'En las variables del proceso de Camunda',
+    ],
+    correct: 2,
+    explanation: 'El delegate es glue code ligero: extrae variables, llama al use case, escribe resultado. El BPMN solo decide el flujo. Si pones logica en Script Tasks del XML, es imposible de testear, no es reutilizable y acopla al motor.',
+  },
+  {
+    topic: 'BPMN', difficulty: 'hard',
+    q: 'Un User Task en BPMN conecta con que patron del frontend?',
+    options: [
+      'Repository Pattern — para persistir el estado de la tarea',
+      'Metadata-Driven UI — el use case devuelve task + FormSchema para renderizar el formulario',
+      'Circuit Breaker — para manejar timeouts del motor BPMN',
+      'Outbox Pattern — para garantizar la entrega del evento de completado',
+    ],
+    correct: 1,
+    explanation: 'GetUserTaskFormUseCase devuelve la tarea activa y el FormSchema correspondiente a su definitionKey. El frontend renderiza el DynamicForm. Al enviar, CompleteUserTaskUseCase completa la tarea y el BPMN avanza automaticamente.',
+  },
+  {
+    topic: 'BPMN', difficulty: 'medium',
+    q: 'Cuando es mejor una State Machine en la entidad de dominio que un proceso BPMN?',
+    options: [
+      'Cuando el proceso tiene mas de 5 pasos',
+      'Cuando el proceso involucra multiples microservicios',
+      'Cuando el flujo es simple, automatico y sin pasos humanos',
+      'Cuando se necesita auditoria del historico de estados',
+    ],
+    correct: 2,
+    explanation: 'State Machine en dominio para flujos simples y automaticos (sin humanos, sin esperas de dias). BPMN para: pasos humanos (aprobaciones), procesos de larga duracion, auditoria automatica, flujos que cambian sin redeploy.',
+  },
+  // -- DATA LAKE -------------------------------------------------------
+  {
+    topic: 'Data Lake', difficulty: 'easy',
+    q: 'En la arquitectura Medallion, que capa almacena los eventos exactamente como los emitio el dominio?',
+    options: [
+      'Gold',
+      'Silver',
+      'Bronze',
+      'Copper',
+    ],
+    correct: 2,
+    explanation: 'Bronze almacena eventos crudos, sin transformacion. Es append-only e inmutable. Si Silver o Gold tienen un bug, se puede recomputar todo desde Bronze.',
+  },
+  {
+    topic: 'Data Lake', difficulty: 'medium',
+    q: 'Un registro Silver sin tenantId debe...',
+    options: [
+      'Pasar a Gold con tenantId = "default"',
+      'Quedarse en Silver hasta que alguien lo corrija',
+      'Ser rechazado (quarantined) inmediatamente',
+      'Ir a Copper para reintento',
+    ],
+    correct: 2,
+    explanation: 'Un registro sin tenantId es un riesgo de seguridad. La regla tenant_present tiene severidad "block" en ambos gates. Se rechaza irrecuperablemente, no se reintenta.',
+  },
+  {
+    topic: 'Data Lake', difficulty: 'medium',
+    q: 'Que diferencia hay entre un registro "quarantined" y uno "parked"?',
+    options: [
+      'No hay diferencia, son sinonimos',
+      'Quarantined es irrecuperable (dead letter), parked va a Copper para reintento',
+      'Parked es irrecuperable, quarantined se reintenta',
+      'Ambos van a Copper pero con diferente prioridad',
+    ],
+    correct: 1,
+    explanation: 'Quarantined (block) es irrecuperable: el registro fallo una regla critica (sin tenantId, eventName invalido). Parked (park) va a Copper porque el problema es temporal (servicio de enriquecimiento caido).',
+  },
+  {
+    topic: 'Data Lake', difficulty: 'hard',
+    q: 'En SCD Type 2, como sabe Power BI que segmento tenia un cliente cuando creo una orden en enero?',
+    options: [
+      'Consulta un log de cambios separado',
+      'El fact apunta a la version de DimCustomer que era current en ese momento (via customer_key con version)',
+      'Power BI hace un BETWEEN sobre valid_from y valid_to',
+      'No puede saberlo, solo ve el valor actual',
+    ],
+    correct: 1,
+    explanation: 'El FactOrderCreated apunta a customer_key = "cust-42-v1" (la version vigente en enero). DimCustomer tiene una fila por version con valid_from/valid_to. El join es directo por key, sin rangos.',
+  },
+  {
+    topic: 'Data Lake', difficulty: 'hard',
+    q: 'RLS en analitica multi-tenant se aplica en tres niveles. Cual es la ultima linea de defensa?',
+    options: [
+      'El puerto TypeScript (FactRepository)',
+      'Power BI DAX filters',
+      'Postgres Row Security Policies',
+      'La capa Silver',
+    ],
+    correct: 2,
+    explanation: 'Postgres RLS policies son la ultima linea de defensa. Incluso si el codigo TypeScript tiene un bug y olvida el WHERE tenant_id, Postgres no devuelve filas de otros tenants. Es defensa en profundidad.',
+  },
+  {
+    topic: 'Data Lake', difficulty: 'hard',
+    q: 'En la arquitectura hexagonal, donde vive la capa analitica (Bronze/Silver/Gold)?',
+    options: [
+      'Dentro del dominio, como parte del agregado Order',
+      'En la capa de aplicacion, como nuevos use cases sobre el agregado',
+      'Como puertos y adaptadores separados, suscrita al EventBus existente',
+      'En la infraestructura, acoplada al adaptador de base de datos',
+    ],
+    correct: 2,
+    explanation: 'La capa analitica es un suscriptor del EventBus (puerto de salida existente). Tiene sus propios puertos (BronzeEventStore, FactRepository) y adaptadores (InMemory, Postgres, Power BI). El dominio no sabe que existe.',
+  },
+  {
+    topic: 'Data Lake', difficulty: 'medium',
+    q: 'Que es una "dimension compartida" (shared dimension) y por que no necesita RLS?',
+    options: [
+      'Una dimension que existe en todos los tenants -- necesita RLS igualmente',
+      'DimDate: los dias del ano son iguales para todos, no contienen datos de negocio',
+      'Una dimension sin atributos, como un ID suelto',
+      'Una dimension temporal que se borra despues de Gold',
+    ],
+    correct: 1,
+    explanation: 'DimDate (year, quarter, month, day_of_week, is_weekend) es identica para todos los tenants. No contiene datos de negocio ni informacion sensible. Todos los tenants comparten la misma tabla de fechas.',
+  },
+];
+
+const topics = [...new Set(questions.map(q => q.topic))];
+---
+
+<section id="quiz" class="py-24 px-6 max-w-4xl mx-auto reveal">
+  <div class="text-center mb-12">
+    <span class="text-xs font-mono text-rose-400 uppercase tracking-widest">Examen</span>
+    <h2 class="text-3xl font-bold text-white mt-3 mb-2">Quiz de Arquitectura Hexagonal</h2>
+    <p class="text-slate-400">{questions.length} preguntas de opcion multiple. Cada pregunta muestra la explicacion al responder.</p>
+  </div>
+
+  <!-- Config -->
+  <div id="quiz-config" class="bg-slate-800/60 border border-slate-700 rounded-2xl p-8">
+    <h3 class="text-white font-bold mb-6">Configura tu examen</h3>
+    <div class="grid sm:grid-cols-2 gap-6 mb-8">
+      <div>
+        <label class="text-slate-400 text-sm font-medium block mb-3">Tema</label>
+        <div class="flex flex-wrap gap-2" id="quiz-topic-filter">
+          <button class="quiz-filter-btn active px-3 py-1.5 rounded-lg text-xs font-mono border border-rose-500/50 bg-rose-500/20 text-rose-300 transition-all" data-topic="all">
+            Todos los temas
+          </button>
+          {topics.map(t => (
+            <button class="quiz-filter-btn px-3 py-1.5 rounded-lg text-xs font-mono border border-slate-600 bg-slate-700/60 text-slate-400 hover:border-slate-500 transition-all" data-topic={t}>
+              {t}
+            </button>
+          ))}
+        </div>
+      </div>
+      <div>
+        <label class="text-slate-400 text-sm font-medium block mb-3">Numero de preguntas</label>
+        <div class="flex flex-wrap gap-2" id="quiz-count-filter">
+          <button class="quiz-count-btn active px-4 py-1.5 rounded-lg text-xs font-mono border border-rose-500/50 bg-rose-500/20 text-rose-300" data-count="10">10</button>
+          <button class="quiz-count-btn px-4 py-1.5 rounded-lg text-xs font-mono border border-slate-600 bg-slate-700/60 text-slate-400 hover:border-slate-500" data-count="20">20</button>
+          <button class="quiz-count-btn px-4 py-1.5 rounded-lg text-xs font-mono border border-slate-600 bg-slate-700/60 text-slate-400 hover:border-slate-500" data-count="999">Todas</button>
+        </div>
+      </div>
+    </div>
+    <button id="start-quiz" class="w-full py-3 rounded-xl bg-rose-500 hover:bg-rose-400 text-white font-bold text-sm transition-colors">
+      Iniciar examen
+    </button>
+  </div>
+
+  <!-- Quiz in progress -->
+  <div id="quiz-game" style="display:none">
+    <div class="flex items-center justify-between mb-6 flex-wrap gap-3">
+      <span id="quiz-progress" class="text-slate-400 text-sm font-mono"></span>
+      <div class="flex items-center gap-3">
+        <span id="quiz-score-live" class="text-sm font-mono text-green-400"></span>
+        <div class="h-2 w-48 bg-slate-700 rounded-full overflow-hidden">
+          <div id="quiz-progress-bar" class="h-full bg-rose-500 rounded-full transition-all" style="width:0%"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Question card -->
+    <div class="bg-slate-800/60 border border-slate-700 rounded-2xl p-8 mb-6">
+      <div class="flex items-center gap-3 mb-5">
+        <span id="quiz-q-topic" class="text-xs px-2 py-1 rounded-full bg-rose-500/20 border border-rose-500/30 text-rose-300 font-mono"></span>
+        <span id="quiz-q-diff" class="text-xs px-2 py-1 rounded-full font-mono"></span>
+      </div>
+      <h3 id="quiz-question" class="text-white font-bold text-lg leading-snug mb-8"></h3>
+      <div id="quiz-options" class="space-y-3"></div>
+    </div>
+
+    <!-- Explanation -->
+    <div id="quiz-explanation" class="rounded-xl p-5 mb-6" style="display:none">
+      <p id="quiz-explanation-text" class="text-sm leading-relaxed"></p>
+    </div>
+
+    <button id="quiz-next" class="w-full py-3 rounded-xl bg-rose-500 hover:bg-rose-400 text-white font-bold text-sm transition-colors" style="display:none">
+      Siguiente pregunta
+    </button>
+  </div>
+
+  <!-- Results -->
+  <div id="quiz-results" style="display:none">
+    <div class="bg-slate-800/60 border border-slate-700 rounded-2xl p-8 text-center mb-8">
+      <div id="result-emoji" class="text-5xl mb-4"></div>
+      <h3 id="result-title" class="text-2xl font-bold text-white mb-2"></h3>
+      <p id="result-score" class="text-4xl font-mono font-bold mb-4"></p>
+      <p id="result-desc" class="text-slate-400 text-sm"></p>
+    </div>
+
+    <!-- Breakdown by topic -->
+    <div id="result-breakdown" class="mb-8"></div>
+
+    <!-- Wrong answers review -->
+    <div id="wrong-answers" class="space-y-4 mb-8"></div>
+
+    <button id="quiz-restart" class="w-full py-3 rounded-xl bg-slate-700 hover:bg-slate-600 text-white font-bold text-sm transition-colors">
+      Volver a intentarlo
+    </button>
+  </div>
+</section>
+
+<script define:vars={{ questions }}>
+  var selectedTopic = 'all';
+  var selectedCount = 10;
+  var quizQuestions = [];
+  var currentQ = 0;
+  var score = 0;
+  var answered = [];
+
+  var diffStyle = {
+    easy:   { bg: 'bg-green-900/40 border-green-700/40 text-green-300', label: 'Facil' },
+    medium: { bg: 'bg-blue-900/40 border-blue-700/40 text-blue-300',   label: 'Medio' },
+    hard:   { bg: 'bg-red-900/40 border-red-700/40 text-red-300',      label: 'Dificil' },
+  };
+
+  // ── Config buttons ──
+  document.querySelectorAll('.quiz-filter-btn').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      selectedTopic = btn.getAttribute('data-topic');
+      document.querySelectorAll('.quiz-filter-btn').forEach(function(b) {
+        b.className = 'quiz-filter-btn px-3 py-1.5 rounded-lg text-xs font-mono border border-slate-600 bg-slate-700/60 text-slate-400 hover:border-slate-500 transition-all';
+      });
+      btn.className = 'quiz-filter-btn active px-3 py-1.5 rounded-lg text-xs font-mono border border-rose-500/50 bg-rose-500/20 text-rose-300 transition-all';
+    });
+  });
+
+  document.querySelectorAll('.quiz-count-btn').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      selectedCount = parseInt(btn.getAttribute('data-count'));
+      document.querySelectorAll('.quiz-count-btn').forEach(function(b) {
+        b.className = 'quiz-count-btn px-4 py-1.5 rounded-lg text-xs font-mono border border-slate-600 bg-slate-700/60 text-slate-400 hover:border-slate-500';
+      });
+      btn.className = 'quiz-count-btn active px-4 py-1.5 rounded-lg text-xs font-mono border border-rose-500/50 bg-rose-500/20 text-rose-300';
+    });
+  });
+
+  // ── Start quiz ──
+  document.getElementById('start-quiz').addEventListener('click', function() {
+    var pool = selectedTopic === 'all' ? questions.slice() : questions.filter(function(q) { return q.topic === selectedTopic; });
+    // shuffle
+    for (var i = pool.length - 1; i > 0; i--) {
+      var j = Math.floor(Math.random() * (i + 1));
+      var tmp = pool[i]; pool[i] = pool[j]; pool[j] = tmp;
+    }
+    quizQuestions = pool.slice(0, Math.min(selectedCount, pool.length));
+    currentQ = 0; score = 0; answered = [];
+    document.getElementById('quiz-config').style.display = 'none';
+    document.getElementById('quiz-results').style.display = 'none';
+    document.getElementById('quiz-game').style.display = '';
+    renderQuestion();
+  });
+
+  function renderQuestion() {
+    var q = quizQuestions[currentQ];
+    var total = quizQuestions.length;
+    document.getElementById('quiz-progress').textContent = 'Pregunta ' + (currentQ + 1) + ' de ' + total;
+    document.getElementById('quiz-score-live').textContent = score + '/' + currentQ + ' correctas';
+    document.getElementById('quiz-progress-bar').style.width = ((currentQ / total) * 100) + '%';
+    document.getElementById('quiz-q-topic').textContent = q.topic;
+    var ds = diffStyle[q.difficulty];
+    var diff = document.getElementById('quiz-q-diff');
+    diff.textContent = ds.label;
+    diff.className = 'text-xs px-2 py-1 rounded-full border font-mono ' + ds.bg;
+    document.getElementById('quiz-question').textContent = q.q;
+    document.getElementById('quiz-explanation').style.display = 'none';
+    document.getElementById('quiz-next').style.display = 'none';
+
+    var optionsEl = document.getElementById('quiz-options');
+    optionsEl.innerHTML = '';
+    q.options.forEach(function(opt, idx) {
+      var btn = document.createElement('button');
+      btn.textContent = opt;
+      btn.className = 'quiz-option w-full text-left px-5 py-3 rounded-xl border border-slate-600 bg-slate-700/50 text-slate-300 text-sm hover:border-slate-400 hover:bg-slate-700 transition-all';
+      btn.setAttribute('data-idx', idx);
+      btn.addEventListener('click', function() { selectAnswer(idx); });
+      optionsEl.appendChild(btn);
+    });
+  }
+
+  function selectAnswer(idx) {
+    var q = quizQuestions[currentQ];
+    var isCorrect = idx === q.correct;
+    if (isCorrect) score++;
+    answered.push({ q: q, chosen: idx, correct: isCorrect });
+
+    // Show feedback on buttons
+    document.querySelectorAll('.quiz-option').forEach(function(btn) {
+      var i = parseInt(btn.getAttribute('data-idx'));
+      btn.disabled = true;
+      if (i === q.correct) {
+        btn.className = 'quiz-option w-full text-left px-5 py-3 rounded-xl border text-sm bg-green-900/40 border-green-500/60 text-green-300';
+      } else if (i === idx && !isCorrect) {
+        btn.className = 'quiz-option w-full text-left px-5 py-3 rounded-xl border text-sm bg-red-900/40 border-red-500/60 text-red-300';
+      } else {
+        btn.className = 'quiz-option w-full text-left px-5 py-3 rounded-xl border text-sm border-slate-700 bg-slate-800/30 text-slate-500';
+      }
+    });
+
+    // Explanation
+    var expl = document.getElementById('quiz-explanation');
+    expl.style.display = '';
+    expl.className = isCorrect
+      ? 'rounded-xl p-5 mb-6 bg-green-900/30 border border-green-700/40'
+      : 'rounded-xl p-5 mb-6 bg-red-900/30 border border-red-700/40';
+    var explText = document.getElementById('quiz-explanation-text');
+    explText.className = isCorrect ? 'text-sm leading-relaxed text-green-200' : 'text-sm leading-relaxed text-red-200';
+    explText.textContent = (isCorrect ? 'Correcto. ' : 'Incorrecto. ') + q.explanation;
+
+    document.getElementById('quiz-score-live').textContent = score + '/' + (currentQ + 1) + ' correctas';
+
+    var nextBtn = document.getElementById('quiz-next');
+    nextBtn.style.display = '';
+    nextBtn.textContent = currentQ === quizQuestions.length - 1 ? 'Ver resultados' : 'Siguiente pregunta';
+  }
+
+  document.getElementById('quiz-next').addEventListener('click', function() {
+    currentQ++;
+    if (currentQ >= quizQuestions.length) {
+      showResults();
+    } else {
+      renderQuestion();
+    }
+  });
+
+  function showResults() {
+    document.getElementById('quiz-game').style.display = 'none';
+    document.getElementById('quiz-results').style.display = '';
+
+    var total = quizQuestions.length;
+    var pct = Math.round((score / total) * 100);
+
+    var emoji = pct >= 90 ? 'Excelente' : pct >= 70 ? 'Bien' : pct >= 50 ? 'En proceso' : 'Sigue practicando';
+    var titleColor = pct >= 70 ? 'text-green-400' : pct >= 50 ? 'text-yellow-400' : 'text-red-400';
+
+    document.getElementById('result-emoji').textContent = pct >= 90 ? '★★★' : pct >= 70 ? '★★' : pct >= 50 ? '★' : '○';
+    document.getElementById('result-title').textContent = emoji;
+    document.getElementById('result-title').className = 'text-2xl font-bold mb-2 ' + titleColor;
+    document.getElementById('result-score').textContent = score + ' / ' + total + ' (' + pct + '%)';
+    document.getElementById('result-score').className = 'text-4xl font-mono font-bold mb-4 ' + titleColor;
+    document.getElementById('result-desc').textContent = pct >= 90 ? 'Dominas la arquitectura hexagonal.' : pct >= 70 ? 'Buen nivel. Repasa los temas fallados.' : pct >= 50 ? 'Vas por buen camino. Mas practica.' : 'Repasa los conceptos fundamentales.';
+
+    // Breakdown by topic
+    var topicMap = {};
+    answered.forEach(function(a) {
+      var t = a.q.topic;
+      if (!topicMap[t]) topicMap[t] = { correct: 0, total: 0 };
+      topicMap[t].total++;
+      if (a.correct) topicMap[t].correct++;
+    });
+
+    var breakdownEl = document.getElementById('result-breakdown');
+    breakdownEl.innerHTML = '<h4 class="text-white font-bold mb-4">Resultado por tema</h4>';
+    Object.keys(topicMap).forEach(function(t) {
+      var td = topicMap[t];
+      var tpct = Math.round((td.correct / td.total) * 100);
+      var barColor = tpct >= 70 ? 'bg-green-500' : tpct >= 50 ? 'bg-yellow-500' : 'bg-red-500';
+      breakdownEl.innerHTML += '<div class="flex items-center gap-3 mb-3">'
+        + '<span class="text-slate-300 text-xs w-36 shrink-0">' + t + '</span>'
+        + '<div class="flex-1 h-2 bg-slate-700 rounded-full overflow-hidden">'
+        + '<div class="h-full rounded-full ' + barColor + '" style="width:' + tpct + '%"></div></div>'
+        + '<span class="text-slate-400 text-xs font-mono w-16 text-right">' + td.correct + '/' + td.total + '</span>'
+        + '</div>';
+    });
+
+    // Wrong answers
+    var wrong = answered.filter(function(a) { return !a.correct; });
+    var wrongEl = document.getElementById('wrong-answers');
+    if (wrong.length === 0) {
+      wrongEl.innerHTML = '';
+      return;
+    }
+    wrongEl.innerHTML = '<h4 class="text-white font-bold mb-4">Preguntas falladas</h4>';
+    wrong.forEach(function(a) {
+      wrongEl.innerHTML += '<div class="bg-slate-800/60 border border-red-900/40 rounded-xl p-5">'
+        + '<p class="text-slate-300 text-sm font-medium mb-3">' + a.q.q + '</p>'
+        + '<p class="text-red-400 text-xs mb-1">Tu respuesta: ' + a.q.options[a.chosen] + '</p>'
+        + '<p class="text-green-400 text-xs mb-3">Correcta: ' + a.q.options[a.q.correct] + '</p>'
+        + '<p class="text-slate-500 text-xs leading-relaxed">' + a.q.explanation + '</p>'
+        + '</div>';
+    });
+  }
+
+  document.getElementById('quiz-restart').addEventListener('click', function() {
+    document.getElementById('quiz-results').style.display = 'none';
+    document.getElementById('quiz-config').style.display = '';
+  });
+</script>

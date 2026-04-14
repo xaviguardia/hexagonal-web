@@ -1,0 +1,349 @@
+---
+// Flashcards quiz
+const cards = [
+  // ── USE CASES ──────────────────────────────────────────────────
+  { topic: 'Use Cases', difficulty: 'easy',
+    q: 'Que es un Use Case?',
+    a: 'Una accion concreta que el sistema puede realizar. Representa una intencion del usuario o un proceso de negocio. Cada Use Case hace una sola cosa.' },
+  { topic: 'Use Cases', difficulty: 'easy',
+    q: 'Donde viven los Use Cases en arquitectura hexagonal?',
+    a: 'En la capa de Aplicacion. Orquestan el dominio usando los puertos de salida. No contienen logica de negocio: esa esta en el dominio.' },
+  { topic: 'Use Cases', difficulty: 'medium',
+    q: 'Cual es la diferencia entre un Use Case y un Service?',
+    a: 'El Use Case es la INTERFAZ (puerto de entrada) que define que puede hacerse. El Service es la IMPLEMENTACION de ese Use Case. Ejemplo: CreateOrderUseCase (interfaz) y CreateOrderService (implementacion).' },
+  { topic: 'Use Cases', difficulty: 'medium',
+    q: 'Puede un Use Case llamar directamente a la base de datos?',
+    a: 'No. El Use Case llama al puerto de salida (interfaz OrderRepository). No sabe si es Postgres, MongoDB o memoria. Esa es la inversion de dependencias.' },
+  { topic: 'Use Cases', difficulty: 'medium',
+    q: 'Que recibe y que devuelve un Use Case?',
+    a: 'Recibe un Command o Query (objeto simple con los datos necesarios) y devuelve una entidad del dominio o DTO. Nunca recibe objetos de Express (Request, Response).' },
+  { topic: 'Use Cases', difficulty: 'medium',
+    q: 'Que es un Command Object y por que emerge del linting?',
+    a: 'Un objeto que encapsula los datos de entrada de un use case. Emerge cuando la regla max-params (>3 parametros) se viola. Facilita validacion, serializacion y versionado de la API.' },
+  // ── PORTS & ADAPTERS ───────────────────────────────────────────
+  { topic: 'Ports & Adapters', difficulty: 'easy',
+    q: 'Que es un Puerto (Port)?',
+    a: 'Es una interfaz (contrato) que define como se comunica el dominio con el exterior. Hay dos tipos: entrada (lo que el dominio expone) y salida (lo que el dominio necesita).' },
+  { topic: 'Ports & Adapters', difficulty: 'medium',
+    q: 'Cual es la diferencia entre puerto de entrada y de salida?',
+    a: 'Puerto de entrada (Driving): lo que el exterior llama al dominio. Ej: CreateOrderUseCase. Puerto de salida (Driven): lo que el dominio llama al exterior. Ej: OrderRepository.' },
+  { topic: 'Ports & Adapters', difficulty: 'hard',
+    q: 'Quien define los puertos de salida, el dominio o la infraestructura?',
+    a: 'El dominio. El dominio dice "necesito un repositorio que haga esto" y la infraestructura lo implementa. El dominio manda. Esto se llama inversion de dependencias (DIP).' },
+  { topic: 'Ports & Adapters', difficulty: 'medium',
+    q: 'Que diferencia hay entre un adaptador primario y uno secundario?',
+    a: 'El primario (driving) inicia la interaccion: HTTP controller, CLI, consumer de Kafka. El secundario (driven) es invocado por el dominio: repositorio BD, email, cache.' },
+  { topic: 'Ports & Adapters', difficulty: 'hard',
+    q: 'Cuantos adaptadores puede tener un mismo puerto?',
+    a: 'Ilimitados. Un puerto OrderRepository puede tener InMemoryOrderRepository (tests), PgOrderRepository (produccion) y MongoOrderRepository (migracion). El dominio no cambia.' },
+  // ── DOMINIO ────────────────────────────────────────────────────
+  { topic: 'Dominio', difficulty: 'easy',
+    q: 'Que puede importar una entidad del dominio?',
+    a: 'Nada externo. Sin Express, sin Prisma, sin axios. Solo tipos y otras clases del propio dominio. Si una entidad importa una libreria externa, algo esta mal.' },
+  { topic: 'Dominio', difficulty: 'medium',
+    q: 'Que es un Value Object y que lo diferencia de una Entidad?',
+    a: 'Un Value Object no tiene identidad propia: se compara por valor (Money(100,EUR) == Money(100,EUR)). Una Entidad tiene identidad unica (Order#123 != Order#456 aunque tengan los mismos datos).' },
+  { topic: 'Dominio', difficulty: 'medium',
+    q: 'Que es Primitive Obsession y como lo resuelven los Value Objects?',
+    a: 'Usar primitivos (string, number) donde deberia haber un concepto de dominio. Email como string puede ser "no-es-email". Email como Value Object valida su formato en construccion y nunca puede ser invalido.' },
+  { topic: 'Dominio', difficulty: 'hard',
+    q: 'Que es un Aggregate Root y que garantiza?',
+    a: 'La entidad raiz de un conjunto de objetos que forman una unidad de consistencia. Solo se puede acceder a los objetos internos a traves de el. El repositorio persiste y recupera el agregado completo.' },
+  { topic: 'Dominio', difficulty: 'hard',
+    q: 'Que son los Domain Events y quien los emite?',
+    a: 'Objetos que describen algo que YA ocurrio en el dominio: OrderConfirmedEvent, PaymentProcessedEvent. Los emite la propia entidad internamente (order.confirm() -> domainEvents.push(...)). El use case los despacha tras el save.' },
+  { topic: 'Dominio', difficulty: 'medium',
+    q: 'Para que sirve el Factory Method en una entidad?',
+    a: 'Para centralizar la logica de creacion y garantizar que la entidad nace en estado valido. Order.create() emite OrderCreatedEvent. Order.reconstitute() recarga desde BD sin emitir evento.' },
+  { topic: 'Dominio', difficulty: 'hard',
+    q: 'Que es un Domain Service y cuando usarlo?',
+    a: 'Logica de negocio pura que involucra varias entidades y no pertenece a ninguna concreta. OrderPricingService.calculateTotal(order, customer, rules) es Domain Service porque necesita Order y Customer.' },
+  { topic: 'Dominio', difficulty: 'hard',
+    q: 'Donde va la validacion de negocio?',
+    a: 'En el dominio. "Un pedido debe tener al menos un item" va en Order.confirm(). No en el controller ni en el service de aplicacion. El dominio protege sus invariantes.' },
+  // ── APLICACION ────────────────────────────────────────────────
+  { topic: 'Aplicacion', difficulty: 'medium',
+    q: 'Que es un Command Bus y que problema resuelve?',
+    a: 'Un mediador que despacha comandos al handler correcto. El controller solo conoce el bus, no cada use case individualmente. Permite anadir middlewares transversales sin tocar handlers.' },
+  { topic: 'Aplicacion', difficulty: 'hard',
+    q: 'Para que sirve un Pipeline de middlewares sobre use cases?',
+    a: 'Para aplicar logging, validacion, autorizacion, metricas o retry a todos los comandos de forma transversal. Cada middleware es independiente y se encadena sin modificar el handler.' },
+  { topic: 'Aplicacion', difficulty: 'hard',
+    q: 'Que es CQRS y cual es su beneficio principal?',
+    a: 'Command Query Responsibility Segregation: separar el modelo de escritura (Commands) del de lectura (Queries). Las queries pueden usar Read Models optimizados (SQL directo) sin reconstruir el agregado completo.' },
+  { topic: 'Aplicacion', difficulty: 'medium',
+    q: 'Que diferencia hay entre un Command y una Query en CQRS?',
+    a: 'Command: modifica estado, devuelve void o ID. Query: solo lee estado, nunca modifica nada. Esta separacion permite optimizar cada camino de forma independiente.' },
+  { topic: 'Aplicacion', difficulty: 'easy',
+    q: 'Puede un Use Case llamar a otro Use Case?',
+    a: 'No. Si necesitas componer logica, hazlo en el dominio (Domain Service) o crea un nuevo use case que encapsule la composicion. Llamar use cases entre si crea acoplamientos ocultos.' },
+  // ── INFRAESTRUCTURA ───────────────────────────────────────────
+  { topic: 'Infraestructura', difficulty: 'medium',
+    q: 'Que es el Anti-Corruption Layer (ACL)?',
+    a: 'Un adaptador que traduce el modelo de un servicio externo al vocabulario del dominio propio. Si Stripe cambia su API, solo cambia el ACL. El dominio nunca usa tipos de Stripe directamente.' },
+  { topic: 'Infraestructura', difficulty: 'medium',
+    q: 'Que es el Gateway Pattern en infraestructura?',
+    a: 'Un adaptador especializado para APIs externas que encapsula autenticacion, reintentos con backoff, paginacion y mapeo de errores. El dominio recibe un contrato simple.' },
+  { topic: 'Infraestructura', difficulty: 'hard',
+    q: 'Que es el Circuit Breaker y que estados tiene?',
+    a: 'Patron de resiliencia para adaptadores externos. Tres estados: Closed (normal), Open (falla rapida tras N fallos), Half-Open (prueba si el servicio se recupero). Evita acumular timeouts.' },
+  { topic: 'Infraestructura', difficulty: 'hard',
+    q: 'Como implementar cache sin contaminar el dominio?',
+    a: 'Con el Decorator Pattern sobre el puerto de salida. CachedOrderRepository implementa OrderRepository y envuelve PgOrderRepository. El use case recibe el mismo puerto, no sabe que existe Redis.' },
+  { topic: 'Infraestructura', difficulty: 'medium',
+    q: 'Como resolver el problema N+1 en repositorios?',
+    a: 'Anadir findByIds(ids[]) al puerto de salida. El adaptador implementa WHERE id IN (...). El use case llama una vez para IDs y otra para datos. Dos queries en vez de N+1.' },
+  // ── REFACTORING ───────────────────────────────────────────────
+  { topic: 'Refactoring', difficulty: 'medium',
+    q: 'La regla max-classes-per-file que patron hace emerger?',
+    a: 'Un fichero por Use Case. CreateOrderService, GetOrderService y CancelOrderService en ficheros separados. Mejora la navegacion y permite desplegar casos de uso de forma independiente.' },
+  { topic: 'Refactoring', difficulty: 'medium',
+    q: 'La regla max-params que patron hace emerger?',
+    a: 'El Command Object. En vez de execute(customerId, productId, qty, address) se usa execute(command: CreateOrderCommand). Facilita validacion con decoradores y versionado de la API.' },
+  { topic: 'Refactoring', difficulty: 'hard',
+    q: 'La regla max-lines en un repositorio que patron hace emerger?',
+    a: 'El Specification Pattern. En vez de findByCustomer, findByStatus, findByDateRange... se define Specification<Order> y un unico findAll(spec). Abierto a nuevos criterios sin modificar el repositorio.' },
+  // ── TRANSACCIONALIDAD ─────────────────────────────────────────
+  { topic: 'Transaccionalidad', difficulty: 'medium',
+    q: 'Que es el Unit of Work y cuando usarlo?',
+    a: 'Puerto de salida que agrupa multiples operaciones en una transaccion atomica. Cuando confirmar una orden requiere save(order) + reduce(stock), ambas van dentro de uow.begin()/commit(). Si falla una, rollback.' },
+  { topic: 'Transaccionalidad', difficulty: 'hard',
+    q: 'Que problema resuelve el Outbox Pattern?',
+    a: 'El doble write: guardar en BD y publicar en Kafka no son atomicos. El Outbox guarda el evento en una tabla de la misma BD en la misma transaccion. Un worker independiente lo publica a Kafka.' },
+  { topic: 'Transaccionalidad', difficulty: 'hard',
+    q: 'Que es una Saga y cuando se usa?',
+    a: 'Patron para transacciones distribuidas entre microservicios. Una secuencia de transacciones locales coordinadas por eventos. Cada paso tiene su compensacion si algo falla. La consistencia es eventual.' },
+  { topic: 'Transaccionalidad', difficulty: 'medium',
+    q: 'Cual es la diferencia de consistencia entre Unit of Work y Saga?',
+    a: 'Unit of Work: consistencia ACID inmediata (una sola BD). Outbox: eventual con at-least-once delivery (BD + broker). Saga: eventual con compensaciones (multiples servicios, multiples BDs).' },
+  { topic: 'Transaccionalidad', difficulty: 'hard',
+    q: 'El Outbox Pattern usa consistencia eventual. Que significa esto?',
+    a: 'Que el evento no se publica instantaneamente sino cuando el worker lo procesa. Puede tardar milisegundos o segundos. Pero nunca se pierde: si el worker falla, reintenta. Garantia at-least-once.' },
+  // ── TESTING ───────────────────────────────────────────────────
+  { topic: 'Testing', difficulty: 'easy',
+    q: 'Como se testea el dominio en arquitectura hexagonal?',
+    a: 'Con tests unitarios puros, sin mocks ni frameworks. Order.create(), order.cancel(), etc. se prueban instanciando la clase directamente. Sin BD, sin red, en milisegundos.' },
+  { topic: 'Testing', difficulty: 'medium',
+    q: 'Como se testea un Use Case sin base de datos real?',
+    a: 'Usando un Fake del puerto de salida: InMemoryOrderRepository en vez de PgOrderRepository. El use case no sabe el cambio. Rapido, sin setup de infraestructura.' },
+  { topic: 'Testing', difficulty: 'medium',
+    q: 'Cual es la diferencia entre Stub, Fake y Spy?',
+    a: 'Stub: devuelve datos predefinidos, no verifica llamadas. Fake: implementacion simplificada real (InMemory). Spy: fake que registra llamadas para verificar que se llamo con los datos correctos.' },
+  { topic: 'Testing', difficulty: 'hard',
+    q: 'Que es el Contract Testing y que problema resuelve?',
+    a: 'Ejecutar el mismo conjunto de tests contra el Fake y contra el adaptador real. Garantiza que InMemoryOrderRepository y PgOrderRepository son equivalentes. Evita sorpresas en produccion.' },
+  { topic: 'Testing', difficulty: 'hard',
+    q: 'Que son las Architecture Fitness Functions?',
+    a: 'Tests automatizados en CI que verifican que la regla de dependencia no se viola. Con dependency-cruiser: si domain/ importa infrastructure/, la build falla. La arquitectura queda documentada de forma ejecutable.' },
+  { topic: 'Testing', difficulty: 'medium',
+    q: 'Cual es la distribucion ideal de tests en hexagonal (regla 70/20/10)?',
+    a: '70% tests de dominio (puros, milisegundos), 20% tests de use case con Fakes (rapidos), 10% tests de adaptador con infraestructura real (lentos). Cuantos mas en la base, mas barato el feedback.' },
+  { topic: 'Testing', difficulty: 'hard',
+    q: 'Por que evitar Mock frameworks (jest.mock, Mockito) en tests de use case?',
+    a: 'Los mocks acoplan el test a la implementacion interna del use case. Si cambias como llama al repositorio, el test se rompe aunque el comportamiento sea correcto. Los Fakes solo verifican el resultado.' },
+  // ── DEPENDENCY INJECTION ──────────────────────────────────────
+  { topic: 'Dependency Injection', difficulty: 'medium',
+    q: 'Que es la Composition Root?',
+    a: 'El unico lugar del sistema donde se instancian y conectan todos los componentes. En nuestro proyecto es main.ts. Solo este archivo conoce las implementaciones concretas.' },
+  { topic: 'Dependency Injection', difficulty: 'hard',
+    q: 'Por que los services reciben interfaces y no clases concretas?',
+    a: 'Para ser independientes de la implementacion. CreateOrderService no sabe si el repositorio es SQL o memoria. Permite cambiar implementaciones, testear con fakes, y cumple el principio DIP.' },
+  { topic: 'Dependency Injection', difficulty: 'hard',
+    q: 'La regla de dependencia dice que las capas internas no deben depender de las externas. Como se invierte esta dependencia?',
+    a: 'El dominio define la interfaz (puerto de salida). La infraestructura implementa esa interfaz. En la Composition Root se inyecta la implementacion concreta. El dominio solo conoce su propia interfaz.' },
+  { topic: 'Dependency Injection', difficulty: 'medium',
+    q: 'Puede el dominio usar un contenedor de inyeccion de dependencias (NestJS, Inversify)?',
+    a: 'No directamente. Los contenedores pertenecen a la infraestructura. El dominio no debe depender de ninguna libreria. Solo la Composition Root y los adaptadores conocen el contenedor.' },
+  // ── FRONTEND HEXAGONAL ────────────────────────────────────────
+  { topic: 'Frontend Hexagonal', difficulty: 'easy',
+    q: 'En arquitectura hexagonal aplicada al frontend, que rol tienen los componentes (React/Vue)?',
+    a: 'Son adaptadores primarios (driving). Solo renderizan y dispatchen eventos — sin logica de negocio. Llaman a use cases y muestran el resultado. Si un componente contiene logica, algo esta mal.' },
+  { topic: 'Frontend Hexagonal', difficulty: 'medium',
+    q: 'Que rol tiene un hook de React (useXxx) en el hexagono frontend?',
+    a: 'Es el adaptador primario que conecta el ciclo de vida de React con el use case. Instancia el use case con sus dependencias (adapters), gestiona el estado local y expone al componente solo lo que necesita.' },
+  { topic: 'Frontend Hexagonal', difficulty: 'medium',
+    q: 'Que es el "dominio frontend" y que lo diferencia del dominio backend?',
+    a: 'El dominio frontend modela el comportamiento de la interfaz: FormSchema, state machines de UI (idle/loading/saving), reglas de formato. NO duplica el dominio backend — las reglas de negocio solo viven en el backend.' },
+  { topic: 'Frontend Hexagonal', difficulty: 'hard',
+    q: 'Que validaciones van en el frontend y cuales solo en el backend?',
+    a: 'Frontend: formato (email valido, campo requerido, longitud maxima) — mejora UX pero no reemplaza backend. Backend/Dominio: reglas de negocio (stock insuficiente, credito superado, estado invalido). Las reglas de negocio NUNCA van solo en frontend.' },
+  { topic: 'Frontend Hexagonal', difficulty: 'hard',
+    q: 'Que es el patron Schema Sharing y cuando se usa?',
+    a: 'Compartir schemas de formato (Zod) entre frontend y backend via un paquete contracts/ en monorepo. Solo se comparten reglas de formato, nunca reglas de negocio. Evita duplicar validaciones triviales y mantiene un unico contrato de DTOs.' },
+  { topic: 'Frontend Hexagonal', difficulty: 'hard',
+    q: 'Que es Metadata-Driven UI (FormSchema) y que ventaja tiene en un ERP?',
+    a: 'El Use Case devuelve datos + schema que describe como editarlos (tipo lookup para FKs, grid para 1:N, multiselect para M:N). El frontend es un renderer generico. Cambias controles o columnas en el Use Case sin tocar ningun componente.' },
+  { topic: 'Frontend Hexagonal', difficulty: 'medium',
+    q: 'Como llegan los errores de dominio del backend al frontend?',
+    a: 'El adapter HTTP traduce DomainError a un JSON estructurado con code, message y field. El frontend mapea el campo code a texto localizado. El frontend no contiene logica — solo presentacion del error.' },
+  // ── BPMN ──────────────────────────────────────────────────────
+  { topic: 'BPMN', difficulty: 'easy',
+    q: 'En que capa de la arquitectura hexagonal vive el motor BPMN (Camunda, Flowable)?',
+    a: 'En la capa de infraestructura. Es un orquestador de use cases. El dominio nunca importa nada de Camunda. Si cambias de Camunda a Flowable, el dominio y los use cases no cambian.' },
+  { topic: 'BPMN', difficulty: 'medium',
+    q: 'Que es un Service Task en BPMN y como se conecta con la arquitectura hexagonal?',
+    a: 'Un paso automatico del proceso. En hexagonal, el Service Task invoca un delegate (glue code en infraestructura) que extrae variables del proceso, llama al use case correspondiente y escribe el resultado como variable de proceso.' },
+  { topic: 'BPMN', difficulty: 'hard',
+    q: 'Cual es el anti-patron mas grave al usar BPMN con hexagonal?',
+    a: 'Poner logica de negocio en Script Tasks del XML BPMN (condiciones, calculos). La logica debe vivir en use cases y dominio. El BPMN solo orquesta el flujo — decide quien sigue, no que hace.' },
+  { topic: 'BPMN', difficulty: 'hard',
+    q: 'Como se define el ProcessPort y por que es importante?',
+    a: 'Es un puerto de salida en la capa de aplicacion. Define startProcess, completeUserTask, getActiveTasksForUser. El use case depende de esta interfaz, no de Camunda. Un CamundaProcessAdapter y un MockProcessAdapter implementan el mismo puerto.' },
+  { topic: 'BPMN', difficulty: 'hard',
+    q: 'Que conecta un User Task (BPMN) con el patron Metadata-Driven UI?',
+    a: 'El Use Case GetUserTaskFormUseCase consulta la tarea activa y el FormSchema correspondiente a su definitionKey. El frontend renderiza el DynamicForm segun el schema. Al enviar, CompleteUserTaskUseCase avanza el proceso.' },
+  { topic: 'BPMN', difficulty: 'medium',
+    q: 'Cuando usar BPMN en vez de una State Machine en la entidad de dominio?',
+    a: 'State Machine en dominio: flujos simples y automaticos sin humanos. BPMN: cuando hay pasos humanos (aprobaciones), el proceso dura dias/semanas, necesitas auditoria automatica del historico, o el flujo cambia frecuentemente sin redeploy.' },
+  // -- DATA LAKE -------------------------------------------------------
+  { topic: 'Data Lake', difficulty: 'easy',
+    q: 'Que es la arquitectura Medallion y cuantas capas tiene?',
+    a: 'Un patron de data lake con capas de calidad progresiva: Bronze (raw), Silver (cleaned), Gold (star schema). Opcionalmente Copper como parking lot entre Silver y Gold para registros que necesitan re-enriquecimiento.' },
+  { topic: 'Data Lake', difficulty: 'easy',
+    q: 'Que se almacena en la capa Bronze?',
+    a: 'Eventos de dominio crudos, exactamente como los emitio el agregado. Sin transformacion, sin limpieza. Append-only e inmutables. Son la red de seguridad: si Silver/Gold tienen un bug, se puede recomputar todo desde Bronze.' },
+  { topic: 'Data Lake', difficulty: 'medium',
+    q: 'Que operaciones se realizan en la capa Silver?',
+    a: 'Deduplicacion (detectar eventos duplicados), enriquecimiento (resolver IDs a nombres), normalizacion (monedas a EUR), validacion de schema, y etiquetado de tenant (tenantId obligatorio). Un registro Silver sin tenantId se rechaza siempre.' },
+  { topic: 'Data Lake', difficulty: 'medium',
+    q: 'Que es la capa Copper y cuando se usa?',
+    a: 'Un parking lot temporal para registros que pasan validacion basica pero no se pueden enriquecer completamente (servicio de clientes caido, tipo de cambio no disponible). Un job periodico reintenta la promocion. Tras N reintentos: dead letter.' },
+  { topic: 'Data Lake', difficulty: 'medium',
+    q: 'Que es un Star Schema y por que lo necesita Power BI?',
+    a: 'Un modelo con una tabla de hechos (Facts) central rodeada de tablas de dimensiones (Dimensions). Power BI Vertipaq comprime dimensiones y construye hash indexes automaticamente, pero solo si el schema tiene forma de estrella. Sin JOINs entre tablas grandes.' },
+  { topic: 'Data Lake', difficulty: 'hard',
+    q: 'Que es el "grain" de una tabla de hechos?',
+    a: 'El nivel mas atomico de detalle: que representa una fila. En FactOrderCreated, una fila = una orden creada. En FactOrderStatusChange, una fila = un cambio de estado. Definir el grain mal invalida todas las agregaciones.' },
+  { topic: 'Data Lake', difficulty: 'medium',
+    q: 'Que diferencia hay entre medidas aditivas y semi-aditivas?',
+    a: 'Aditivas: se pueden sumar por cualquier dimension (total_amount, item_count). Semi-aditivas: se pueden sumar por algunas pero no todas (minutes_since_creation se puede sumar entre clientes pero entre fechas es mejor AVG).' },
+  { topic: 'Data Lake', difficulty: 'hard',
+    q: 'Que es SCD Type 2 y por que importa para analytics?',
+    a: 'Slowly Changing Dimension Type 2: cada cambio en un atributo de dimension crea una nueva fila con valid_from/valid_to. Permite saber que segmento tenia un cliente cuando creo una orden en marzo, aunque ahora sea diferente.' },
+  { topic: 'Data Lake', difficulty: 'hard',
+    q: 'Que es una dimension degenerada?',
+    a: 'Una dimension que vive directamente en la tabla de hechos sin tabla propia porque no tiene atributos adicionales. Ejemplo: orderId en FactOrderStatusChange es solo un identificador de referencia, no necesita DimOrder.' },
+  { topic: 'Data Lake', difficulty: 'easy',
+    q: 'Que es RLS (Row-Level Security) en analitica multi-tenant?',
+    a: 'Cada fila de cada tabla tiene un tenant_id. Cada consulta se filtra automaticamente por el tenant del usuario. La Org A nunca ve datos de la Org B. Se aplica en tres niveles: puerto (TypeScript), base de datos (Postgres policies), y herramienta BI (Power BI roles).' },
+  { topic: 'Data Lake', difficulty: 'hard',
+    q: 'Por que RLS no puede ser un "lo anadimos despues"?',
+    a: 'Sin tenant_id desde Bronze, habria que reprocesar todos los eventos historicos para anadirlo. Si una query se ejecuta sin filtro de tenant, devuelve datos cross-tenant. El leak no se nota hasta que un cliente reporta ver numeros de otro.' },
+  { topic: 'Data Lake', difficulty: 'medium',
+    q: 'Que es una PromotionStrategy en el contexto hexagonal?',
+    a: 'Un puerto que define el contrato de transicion entre capas del medallion. evaluate(record) devuelve promoted (pasa), quarantined (rechazado irrecuperable), o parked (enviado a Copper para reintento). Cada regla tiene severidad: block, park, warn.' },
+  { topic: 'Data Lake', difficulty: 'hard',
+    q: 'Como conecta la capa analitica con la arquitectura hexagonal sin contaminar el dominio?',
+    a: 'Los Domain Events fluyen por el EventBus (puerto existente). Un BronzeIngester suscrito al bus persiste los eventos crudos. De ahi, Silver/Gold son puertos y adaptadores independientes. El Order aggregate no sabe que existe analytics.' },
+  { topic: 'Data Lake', difficulty: 'hard',
+    q: 'Que roles define RlsContext y que ve cada uno?',
+    a: 'org_viewer: solo su organizacion (WHERE tenant_id = ?). enterprise_viewer: todas las child orgs de su enterprise (WHERE tenant_id IN (...)). platform_admin: todo, sin filtro. El puerto FactRepository exige RlsContext en cada llamada.' },
+];
+
+const topics = [...new Set(cards.map(c => c.topic))];
+---
+
+<section id="flashcards" class="max-w-5xl mx-auto px-6 py-24 reveal">
+  <div class="text-center mb-10">
+    <span class="text-xs font-mono text-amber-400 uppercase tracking-widest">Repaso</span>
+    <h2 class="text-3xl font-bold text-white mt-3 mb-2">Flashcards</h2>
+    <p class="text-slate-400">{cards.length} tarjetas. Haz clic en la tarjeta para ver la respuesta.</p>
+  </div>
+
+  <!-- Filters -->
+  <div class="flex gap-2 flex-wrap mb-8" id="topic-filters">
+    <button class="filter-btn active px-3 py-1.5 rounded-full text-xs font-bold border border-slate-600 bg-slate-700 text-white transition-colors" data-topic="all">
+      Todos ({cards.length})
+    </button>
+    {topics.map(t => (
+      <button class="filter-btn px-3 py-1.5 rounded-full text-xs font-bold border border-slate-700 bg-slate-800 text-slate-400 hover:text-white transition-colors" data-topic={t}>
+        {t} ({cards.filter(c => c.topic === t).length})
+      </button>
+    ))}
+  </div>
+
+  <!-- Card -->
+  <div class="card-scene w-full" style="height: 260px;">
+    <div class="card-inner w-full h-full relative cursor-pointer" id="flashcard" onclick="flipCard()">
+      <div class="card-front absolute inset-0 bg-slate-800 border border-slate-700 rounded-2xl flex flex-col items-center justify-center p-8 text-center">
+        <div id="card-topic" class="text-xs font-bold uppercase tracking-widest text-slate-500 mb-2"></div>
+        <div id="card-difficulty" class="text-xs font-bold px-2 py-0.5 rounded-full mb-5"></div>
+        <h3 id="card-question" class="text-xl font-bold leading-snug max-w-lg"></h3>
+        <p class="text-slate-500 text-xs mt-6">Haz clic para ver la respuesta</p>
+      </div>
+      <div class="card-back absolute inset-0 bg-slate-800 border border-amber-400/40 rounded-2xl flex flex-col items-center justify-center p-8 text-center">
+        <p id="card-answer" class="text-slate-300 text-base leading-relaxed max-w-lg"></p>
+        <p class="text-slate-500 text-xs mt-6">Haz clic para continuar</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Navigation -->
+  <div class="flex items-center justify-center gap-4 mt-6">
+    <button id="btn-prev" onclick="prevCard()"
+      class="px-5 py-2 rounded-lg bg-slate-700 hover:bg-slate-600 text-sm font-semibold transition-colors disabled:opacity-30">
+      Anterior
+    </button>
+    <span id="card-counter" class="text-slate-400 text-sm min-w-[80px] text-center"></span>
+    <button id="btn-next" onclick="nextCard()"
+      class="px-5 py-2 rounded-lg bg-amber-400 hover:bg-amber-300 text-black text-sm font-semibold transition-colors">
+      Siguiente
+    </button>
+  </div>
+</section>
+
+<script define:vars={{ cards }}>
+  var filtered = cards.slice();
+  var current  = 0;
+  var flipped  = false;
+
+  var difficultyStyle = {
+    easy:   { bg: 'bg-green-900/40',  text: 'text-green-300',  label: 'Facil'  },
+    medium: { bg: 'bg-blue-900/40',   text: 'text-blue-300',   label: 'Medio'  },
+    hard:   { bg: 'bg-red-900/40',    text: 'text-red-300',    label: 'Dificil'},
+  };
+
+  function renderCard() {
+    var card = filtered[current];
+    if (!card) return;
+    var inner = document.getElementById('flashcard');
+    inner.classList.remove('is-flipped');
+    flipped = false;
+    document.getElementById('card-topic').textContent    = card.topic;
+    document.getElementById('card-question').textContent = card.q;
+    document.getElementById('card-answer').textContent   = card.a;
+    var d = difficultyStyle[card.difficulty];
+    var badge = document.getElementById('card-difficulty');
+    badge.textContent = d.label;
+    badge.className = 'text-xs font-bold px-3 py-0.5 rounded-full mb-5 ' + d.bg + ' ' + d.text;
+    document.getElementById('card-counter').textContent = (current + 1) + ' / ' + filtered.length;
+    document.getElementById('btn-prev').disabled = current === 0;
+    document.getElementById('btn-next').disabled = current === filtered.length - 1;
+  }
+
+  window.flipCard = function() {
+    var inner = document.getElementById('flashcard');
+    flipped = !flipped;
+    if (flipped) inner.classList.add('is-flipped');
+    else inner.classList.remove('is-flipped');
+  };
+  window.nextCard = function() { if (current < filtered.length - 1) { current++; renderCard(); } };
+  window.prevCard = function() { if (current > 0) { current--; renderCard(); } };
+
+  document.querySelectorAll('.filter-btn').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      var topic = btn.dataset.topic;
+      document.querySelectorAll('.filter-btn').forEach(function(b) {
+        b.classList.remove('active', 'bg-slate-700', 'text-white', 'border-slate-600');
+        b.classList.add('bg-slate-800', 'text-slate-400', 'border-slate-700');
+      });
+      btn.classList.add('active', 'bg-slate-700', 'text-white', 'border-slate-600');
+      btn.classList.remove('bg-slate-800', 'text-slate-400', 'border-slate-700');
+      filtered = topic === 'all' ? cards.slice() : cards.filter(function(c) { return c.topic === topic; });
+      current  = 0;
+      renderCard();
+    });
+  });
+
+  renderCard();
+</script>

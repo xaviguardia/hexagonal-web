@@ -1,0 +1,444 @@
+---
+// Data Lake & Analytics layer in Hexagonal Architecture
+---
+<section id="datalake" class="max-w-5xl mx-auto px-6 py-24 reveal">
+  <div class="text-center mb-16">
+    <span class="text-xs font-mono text-amber-400 uppercase tracking-widest">Avanzado</span>
+    <h2 class="text-3xl font-bold text-white mt-3 mb-2">Data Lake y Analytics</h2>
+    <p class="text-slate-400 max-w-2xl mx-auto">
+      Como transformar eventos de dominio en inteligencia de negocio usando la
+      arquitectura Medallion (Bronze / Silver / Gold) dentro del hexagono.
+    </p>
+  </div>
+
+  <!-- OLTP vs OLAP -->
+  <div class="mb-20">
+    <h3 class="text-xl font-bold text-amber-400 mb-6">OLTP vs OLAP: dos mundos incompatibles</h3>
+    <div class="grid md:grid-cols-2 gap-6">
+      <div class="bg-slate-800/50 border border-slate-700 rounded-xl p-6">
+        <h4 class="font-bold text-blue-400 mb-3">OLTP (Tu dominio actual)</h4>
+        <ul class="space-y-2 text-sm text-slate-300">
+          <li class="flex items-start gap-2"><span class="text-blue-400 mt-0.5">--</span> Optimizado para escribir un registro a la vez</li>
+          <li class="flex items-start gap-2"><span class="text-blue-400 mt-0.5">--</span> Estructura normalizada (sin duplicacion)</li>
+          <li class="flex items-start gap-2"><span class="text-blue-400 mt-0.5">--</span> Estado actual: "Cual es el status de order X?"</li>
+          <li class="flex items-start gap-2"><span class="text-blue-400 mt-0.5">--</span> Mutable: el status cambia con confirm/cancel</li>
+          <li class="flex items-start gap-2"><span class="text-blue-400 mt-0.5">--</span> Entidad-centrico: navega por ID</li>
+        </ul>
+      </div>
+      <div class="bg-slate-800/50 border border-amber-400/30 rounded-xl p-6">
+        <h4 class="font-bold text-amber-400 mb-3">OLAP (Lo que necesita negocio)</h4>
+        <ul class="space-y-2 text-sm text-slate-300">
+          <li class="flex items-start gap-2"><span class="text-amber-400 mt-0.5">--</span> Optimizado para leer millones de registros</li>
+          <li class="flex items-start gap-2"><span class="text-amber-400 mt-0.5">--</span> Estructura desnormalizada (pre-joined)</li>
+          <li class="flex items-start gap-2"><span class="text-amber-400 mt-0.5">--</span> Historico: "Cuantas ordenes se crearon este mes?"</li>
+          <li class="flex items-start gap-2"><span class="text-amber-400 mt-0.5">--</span> Inmutable: los hechos son permanentes</li>
+          <li class="flex items-start gap-2"><span class="text-amber-400 mt-0.5">--</span> Conjunto-centrico: agrega por dimensiones</li>
+        </ul>
+      </div>
+    </div>
+    <div class="mt-6 bg-slate-900 border border-slate-700 rounded-xl p-6">
+      <p class="text-slate-300 text-sm leading-relaxed">
+        <strong class="text-white">La clave:</strong> la arquitectura hexagonal ya tiene el mecanismo para resolver esto.
+        Los Domain Events son hechos inmutables sobre lo que paso en el negocio — exactamente lo que necesita
+        un modelo analitico. El EventBus (puerto de salida) ya publica eventos. Solo necesitas un nuevo
+        suscriptor que los transforme en datos analiticos. El dominio no cambia.
+      </p>
+    </div>
+  </div>
+
+  <!-- Medallion Architecture -->
+  <div class="mb-20">
+    <h3 class="text-xl font-bold text-amber-400 mb-6">Arquitectura Medallion: Bronze / Silver / Gold</h3>
+
+    <!-- Interactive SVG Diagram -->
+    <div class="bg-slate-900 border border-slate-700 rounded-xl p-8 mb-8">
+      <svg viewBox="0 0 800 320" class="w-full" style="max-height: 320px;">
+        <!-- Bronze -->
+        <rect x="20" y="40" width="160" height="80" rx="12" fill="#78350f" stroke="#b45309" stroke-width="2" class="cursor-pointer hover:fill-[#92400e] transition-colors" data-medal="bronze"/>
+        <text x="100" y="72" text-anchor="middle" fill="#fbbf24" font-size="14" font-weight="700">BRONZE</text>
+        <text x="100" y="92" text-anchor="middle" fill="#fbbf2480" font-size="10">Eventos crudos</text>
+        <text x="100" y="106" text-anchor="middle" fill="#fbbf2460" font-size="9">append-only, inmutables</text>
+
+        <!-- Gate 1 -->
+        <rect x="210" y="55" width="80" height="50" rx="6" fill="#1e1b4b" stroke="#7c3aed" stroke-width="1.5"/>
+        <text x="250" y="77" text-anchor="middle" fill="#a78bfa" font-size="9" font-weight="600">GATE 1</text>
+        <text x="250" y="92" text-anchor="middle" fill="#a78bfa80" font-size="8">Schema + Dedup</text>
+        <line x1="180" y1="80" x2="210" y2="80" stroke="#b45309" stroke-width="2" marker-end="url(#arr-medal)"/>
+
+        <!-- Silver -->
+        <rect x="320" y="40" width="160" height="80" rx="12" fill="#1e293b" stroke="#94a3b8" stroke-width="2" class="cursor-pointer hover:fill-[#334155] transition-colors" data-medal="silver"/>
+        <text x="400" y="72" text-anchor="middle" fill="#e2e8f0" font-size="14" font-weight="700">SILVER</text>
+        <text x="400" y="92" text-anchor="middle" fill="#e2e8f080" font-size="10">Limpio, enriquecido</text>
+        <text x="400" y="106" text-anchor="middle" fill="#e2e8f060" font-size="9">dedup + tenant tag</text>
+        <line x1="290" y1="80" x2="320" y2="80" stroke="#94a3b8" stroke-width="2" marker-end="url(#arr-medal)"/>
+
+        <!-- Gate 2 -->
+        <rect x="510" y="55" width="80" height="50" rx="6" fill="#1e1b4b" stroke="#7c3aed" stroke-width="1.5"/>
+        <text x="550" y="77" text-anchor="middle" fill="#a78bfa" font-size="9" font-weight="600">GATE 2</text>
+        <text x="550" y="92" text-anchor="middle" fill="#a78bfa80" font-size="8">Enrich + Integrity</text>
+        <line x1="480" y1="80" x2="510" y2="80" stroke="#94a3b8" stroke-width="2" marker-end="url(#arr-medal)"/>
+
+        <!-- Gold -->
+        <rect x="620" y="40" width="160" height="80" rx="12" fill="#422006" stroke="#eab308" stroke-width="2" class="cursor-pointer hover:fill-[#4d2f09] transition-colors" data-medal="gold"/>
+        <text x="700" y="72" text-anchor="middle" fill="#fde047" font-size="14" font-weight="700">GOLD</text>
+        <text x="700" y="92" text-anchor="middle" fill="#fde04780" font-size="10">Star Schema</text>
+        <text x="700" y="106" text-anchor="middle" fill="#fde04760" font-size="9">Facts + Dimensions</text>
+        <line x1="590" y1="80" x2="620" y2="80" stroke="#eab308" stroke-width="2" marker-end="url(#arr-medal)"/>
+
+        <!-- Copper (branch from Gate 2) -->
+        <rect x="470" y="200" width="160" height="70" rx="12" fill="#431407" stroke="#ea580c" stroke-width="1.5" class="cursor-pointer hover:fill-[#561b0a] transition-colors" data-medal="copper"/>
+        <text x="550" y="228" text-anchor="middle" fill="#fb923c" font-size="13" font-weight="700">COPPER</text>
+        <text x="550" y="248" text-anchor="middle" fill="#fb923c80" font-size="9">Parking lot (re-enrich)</text>
+        <line x1="550" y1="105" x2="550" y2="200" stroke="#ea580c" stroke-width="1.5" stroke-dasharray="6,3" marker-end="url(#arr-medal)"/>
+        <text x="560" y="155" fill="#ea580c" font-size="8">PARK</text>
+
+        <!-- Retry arrow from Copper back to Gate 2 -->
+        <path d="M630,235 C680,235 680,80 590,80" fill="none" stroke="#ea580c" stroke-width="1" stroke-dasharray="4,4" marker-end="url(#arr-medal)"/>
+        <text x="670" y="170" fill="#ea580c80" font-size="8">retry</text>
+
+        <!-- Quarantine from Gate 1 -->
+        <rect x="170" y="200" width="120" height="50" rx="8" fill="#450a0a" stroke="#dc2626" stroke-width="1"/>
+        <text x="230" y="225" text-anchor="middle" fill="#ef4444" font-size="9" font-weight="600">QUARANTINE</text>
+        <text x="230" y="238" text-anchor="middle" fill="#ef444480" font-size="8">Dead letter</text>
+        <line x1="250" y1="105" x2="230" y2="200" stroke="#dc2626" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arr-medal)"/>
+        <text x="225" y="155" fill="#dc262680" font-size="8">BLOCK</text>
+
+        <defs>
+          <marker id="arr-medal" markerWidth="8" markerHeight="8" refX="4" refY="4" orient="auto">
+            <path d="M0,0 L8,4 L0,8 Z" fill="#fbbf24"/>
+          </marker>
+        </defs>
+      </svg>
+    </div>
+
+    <!-- Medallion layer descriptions -->
+    <div class="grid md:grid-cols-2 gap-6">
+      <div class="bg-[#78350f]/20 border border-[#b45309]/40 rounded-xl p-6" id="desc-bronze">
+        <h4 class="font-bold text-amber-500 mb-2">Bronze -- Eventos crudos</h4>
+        <p class="text-sm text-slate-300 mb-3">Domain Events almacenados verbatim con metadata de ingestion. Sin transformacion, sin limpieza. Tu red de seguridad: si Silver/Gold tienen un bug, replay desde Bronze.</p>
+        <pre class="text-xs bg-slate-900/80 rounded-lg p-3 overflow-x-auto"><code class="text-amber-300" set:html={`BronzeEvent {
+  eventId: "evt-001"
+  eventName: "OrderCreated"
+  payload: { orderId, customerId, items }
+  metadata: {
+    tenantId: "org-7"       // RLS desde el inicio
+    sourceSystem: "order-api"
+    ingestedAt: "2026-04-14T10:30:01Z"
+  }
+}`} /></pre>
+      </div>
+      <div class="bg-slate-700/20 border border-slate-500/40 rounded-xl p-6" id="desc-silver">
+        <h4 class="font-bold text-slate-300 mb-2">Silver -- Limpio y enriquecido</h4>
+        <p class="text-sm text-slate-300 mb-3">Eventos deduplicados, enriquecidos (resolve IDs a nombres), moneda normalizada, tenant validado. Un Silver record sin tenantId se rechaza siempre.</p>
+        <pre class="text-xs bg-slate-900/80 rounded-lg p-3 overflow-x-auto"><code class="text-slate-300" set:html={`CleanedEvent {
+  orderId: "ord-1"
+  customerName: "Acme Corp"    // enriched
+  customerRegion: "EU"         // enriched
+  totalEur: 150.00             // normalized
+  tenantId: "org-7"            // mandatory
+}`} /></pre>
+      </div>
+      <div class="bg-[#431407]/20 border border-[#ea580c]/40 rounded-xl p-6" id="desc-copper">
+        <h4 class="font-bold text-orange-400 mb-2">Copper -- Parking lot</h4>
+        <p class="text-sm text-slate-300 mb-3">Registros que pasan validacion basica pero no se pueden enriquecer completamente (servicio de clientes caido, tipo de cambio no disponible). Un job periodico reintenta la promocion. Tras N reintentos: dead letter.</p>
+        <pre class="text-xs bg-slate-900/80 rounded-lg p-3 overflow-x-auto"><code class="text-orange-300" set:html={`CopperRecord {
+  event: CleanedEvent { ... }
+  retryCount: 2
+  maxRetries: 3
+  failedRules: ["customer_resolved"]
+  status: "pending" | "promoted" | "dead_letter"
+}`} /></pre>
+      </div>
+      <div class="bg-[#422006]/20 border border-[#eab308]/40 rounded-xl p-6" id="desc-gold">
+        <h4 class="font-bold text-yellow-400 mb-2">Gold -- Star Schema</h4>
+        <p class="text-sm text-slate-300 mb-3">Facts + Dimensions listas para Power BI. Pre-agregadas, desnormalizadas. Cada fact row tiene tenant_id para RLS. DimDate compartida, DimCustomer con SCD Type 2.</p>
+        <pre class="text-xs bg-slate-900/80 rounded-lg p-3 overflow-x-auto"><code class="text-yellow-300" set:html={`FactOrderCreated {
+  dateKey: 20260414        // -&gt; DimDate
+  customerKey: "cust-42-v1" // -&gt; DimCustomer (SCD2)
+  totalAmount: 150.00       // measure
+  tenantId: "org-7"         // RLS
+}`} /></pre>
+      </div>
+    </div>
+  </div>
+
+  <!-- Star Schema -->
+  <div class="mb-20">
+    <h3 class="text-xl font-bold text-amber-400 mb-6">Star Schema: Facts y Dimensions</h3>
+
+    <div class="bg-slate-900 border border-slate-700 rounded-xl p-8 mb-8">
+      <svg viewBox="0 0 700 400" class="w-full" style="max-height: 380px;">
+        <!-- DimDate (top) -->
+        <rect x="260" y="10" width="180" height="80" rx="10" fill="#0f172a" stroke="#3b82f6" stroke-width="1.5"/>
+        <text x="350" y="35" text-anchor="middle" fill="#60a5fa" font-size="12" font-weight="700">DimDate</text>
+        <text x="350" y="52" text-anchor="middle" fill="#60a5fa80" font-size="9">year, quarter, month</text>
+        <text x="350" y="66" text-anchor="middle" fill="#60a5fa80" font-size="9">week, day_of_week, is_weekend</text>
+        <text x="350" y="80" text-anchor="middle" fill="#60a5fa60" font-size="8">Compartida (sin RLS)</text>
+
+        <!-- DimCustomer (left) -->
+        <rect x="10" y="160" width="180" height="90" rx="10" fill="#0f172a" stroke="#8b5cf6" stroke-width="1.5"/>
+        <text x="100" y="185" text-anchor="middle" fill="#a78bfa" font-size="12" font-weight="700">DimCustomer</text>
+        <text x="100" y="202" text-anchor="middle" fill="#a78bfa80" font-size="9">name, region, segment</text>
+        <text x="100" y="216" text-anchor="middle" fill="#a78bfa80" font-size="9">valid_from, valid_to (SCD2)</text>
+        <text x="100" y="238" text-anchor="middle" fill="#a78bfa60" font-size="8">tenant_id (RLS)</text>
+
+        <!-- Fact (center) -->
+        <rect x="230" y="150" width="240" height="110" rx="12" fill="#1c1408" stroke="#eab308" stroke-width="2"/>
+        <text x="350" y="178" text-anchor="middle" fill="#fde047" font-size="13" font-weight="700">FactOrderCreated</text>
+        <text x="350" y="198" text-anchor="middle" fill="#fde04780" font-size="9">date_key (FK) | customer_key (FK)</text>
+        <text x="350" y="214" text-anchor="middle" fill="#fde04780" font-size="9">total_amount | item_count | order_count</text>
+        <text x="350" y="234" text-anchor="middle" fill="#fde04780" font-size="9">tenant_id (RLS) | source_event_id</text>
+        <text x="350" y="250" text-anchor="middle" fill="#fde04760" font-size="8">Grain: una fila = una orden creada</text>
+
+        <!-- FactStatusChange (bottom) -->
+        <rect x="230" y="310" width="240" height="80" rx="10" fill="#0f172a" stroke="#eab308" stroke-width="1.5"/>
+        <text x="350" y="335" text-anchor="middle" fill="#fde047" font-size="11" font-weight="600">FactOrderStatusChange</text>
+        <text x="350" y="352" text-anchor="middle" fill="#fde04780" font-size="9">order_id | from_status | to_status</text>
+        <text x="350" y="368" text-anchor="middle" fill="#fde04780" font-size="9">minutes_since_creation | tenant_id</text>
+        <text x="350" y="382" text-anchor="middle" fill="#fde04760" font-size="8">Grain: una fila = un cambio de estado</text>
+
+        <!-- Connectors -->
+        <line x1="350" y1="90" x2="350" y2="150" stroke="#3b82f6" stroke-width="1.5" marker-end="url(#arr-star)"/>
+        <line x1="190" y1="205" x2="230" y2="205" stroke="#8b5cf6" stroke-width="1.5" marker-end="url(#arr-star)"/>
+        <line x1="350" y1="260" x2="350" y2="310" stroke="#eab308" stroke-width="1" stroke-dasharray="4,3"/>
+
+        <!-- Power BI (right) -->
+        <rect x="510" y="170" width="170" height="70" rx="10" fill="#0f172a" stroke="#22c55e" stroke-width="1.5"/>
+        <text x="595" y="198" text-anchor="middle" fill="#4ade80" font-size="11" font-weight="700">Power BI</text>
+        <text x="595" y="215" text-anchor="middle" fill="#4ade8080" font-size="9">RLS: tenant_id = user()</text>
+        <text x="595" y="228" text-anchor="middle" fill="#4ade8060" font-size="8">Solo ve datos de su org</text>
+        <line x1="470" y1="205" x2="510" y2="205" stroke="#22c55e" stroke-width="1.5" marker-end="url(#arr-star)"/>
+
+        <defs>
+          <marker id="arr-star" markerWidth="8" markerHeight="8" refX="4" refY="4" orient="auto">
+            <path d="M0,1 L8,4 L0,7 Z" fill="#fbbf24"/>
+          </marker>
+        </defs>
+      </svg>
+    </div>
+
+    <!-- SCD Type 2 explanation -->
+    <div class="bg-slate-800/50 border border-slate-700 rounded-xl p-6">
+      <h4 class="font-bold text-white mb-3">SCD Type 2 -- Historial de dimensiones</h4>
+      <p class="text-sm text-slate-300 mb-4">
+        Si un cliente cambia de segmento ("Startup" a "Enterprise"), necesitas saber que segmento
+        tenia cuando creo cada orden. SCD Type 2 mantiene una fila por version:
+      </p>
+      <div class="overflow-x-auto">
+        <table class="text-xs w-full">
+          <thead>
+            <tr class="text-slate-400 border-b border-slate-700">
+              <th class="text-left py-2 px-3">customer_key</th>
+              <th class="text-left py-2 px-3">name</th>
+              <th class="text-left py-2 px-3">segment</th>
+              <th class="text-left py-2 px-3">valid_from</th>
+              <th class="text-left py-2 px-3">valid_to</th>
+              <th class="text-left py-2 px-3">is_current</th>
+            </tr>
+          </thead>
+          <tbody class="text-slate-300">
+            <tr class="border-b border-slate-800">
+              <td class="py-2 px-3 font-mono text-amber-400">cust-42-v1</td>
+              <td class="py-2 px-3">Acme Corp</td>
+              <td class="py-2 px-3">Startup</td>
+              <td class="py-2 px-3">2025-06-01</td>
+              <td class="py-2 px-3">2026-03-31</td>
+              <td class="py-2 px-3 text-red-400">false</td>
+            </tr>
+            <tr>
+              <td class="py-2 px-3 font-mono text-amber-400">cust-42-v2</td>
+              <td class="py-2 px-3">Acme Corp</td>
+              <td class="py-2 px-3">Enterprise</td>
+              <td class="py-2 px-3">2026-04-01</td>
+              <td class="py-2 px-3">9999-12-31</td>
+              <td class="py-2 px-3 text-green-400">true</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Promotion Strategies -->
+  <div class="mb-20">
+    <h3 class="text-xl font-bold text-amber-400 mb-6">Estrategias de Promocion</h3>
+    <p class="text-slate-400 text-sm mb-6">
+      Cada transicion entre capas tiene un gate con reglas tipadas. Cada regla tiene severidad:
+      <code class="text-red-400">block</code> (rechaza irrecuperablemente),
+      <code class="text-orange-400">park</code> (envia a Copper para reintento),
+      <code class="text-yellow-400">warn</code> (pasa pero registra el problema).
+    </p>
+
+    <div class="grid md:grid-cols-2 gap-6">
+      <div class="bg-slate-800/50 border border-slate-700 rounded-xl p-6">
+        <h4 class="font-bold text-purple-400 mb-3">Gate 1: Bronze a Silver</h4>
+        <ul class="space-y-2 text-sm text-slate-300">
+          <li><code class="text-red-400">block</code> tenant_present -- sin tenantId no pasa</li>
+          <li><code class="text-red-400">block</code> event_name_valid -- solo eventos conocidos</li>
+          <li><code class="text-red-400">block</code> timestamp_valid -- fecha parseable</li>
+          <li><code class="text-red-400">block</code> not_duplicate -- dedup por eventId</li>
+          <li><code class="text-yellow-400">warn</code> payload_not_empty -- payload vacio es sospechoso</li>
+        </ul>
+      </div>
+      <div class="bg-slate-800/50 border border-slate-700 rounded-xl p-6">
+        <h4 class="font-bold text-purple-400 mb-3">Gate 2: Silver a Gold</h4>
+        <ul class="space-y-2 text-sm text-slate-300">
+          <li><code class="text-red-400">block</code> tenant_present -- revalidacion</li>
+          <li><code class="text-orange-400">park</code> customer_resolved -- nombre != "Unknown"</li>
+          <li><code class="text-orange-400">park</code> region_resolved -- region != "Unknown"</li>
+          <li><code class="text-red-400">block</code> order_id_present -- FK requerida</li>
+          <li><code class="text-yellow-400">warn</code> measures_valid -- totalEur >= 0</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="mt-6 bg-slate-900 border border-slate-700 rounded-xl p-6">
+      <h4 class="font-bold text-white mb-2">En hexagonal: el PromotionStrategy es un puerto</h4>
+      <pre class="text-xs bg-slate-950 rounded-lg p-4 overflow-x-auto"><code class="text-green-300" set:html={`interface PromotionStrategy&lt;TInput, TOutput&gt; {
+  evaluate(record: TInput): Promise&lt;PromotionResult&lt;TOutput&gt;&gt;;
+}
+
+interface PromotionResult&lt;T&gt; {
+  status: 'promoted' | 'quarantined' | 'parked';
+  record?: T;
+  reason?: string;
+  retryable: boolean;
+  failedRules: string[];
+}`} /></pre>
+    </div>
+  </div>
+
+  <!-- RLS -->
+  <div class="mb-20">
+    <h3 class="text-xl font-bold text-amber-400 mb-6">Row-Level Security (RLS)</h3>
+    <p class="text-slate-400 text-sm mb-6">
+      En un SaaS multi-tenant, la Org A nunca debe ver datos de la Org B. RLS se aplica
+      en tres niveles (defensa en profundidad):
+    </p>
+
+    <div class="grid md:grid-cols-3 gap-4 mb-6">
+      <div class="bg-slate-800/50 border border-slate-700 rounded-xl p-5">
+        <h4 class="font-bold text-green-400 text-sm mb-2">1. Puerto (Application)</h4>
+        <p class="text-xs text-slate-300 mb-2">El contrato EXIGE tenantId. No se puede llamar sin el.</p>
+        <pre class="text-xs bg-slate-900/80 rounded p-2 overflow-x-auto"><code class="text-green-300" set:html={`interface FactRepository {
+  query(
+    rls: RlsContext, // obligatorio
+    ...
+  ): Promise&lt;...&gt;;
+}`} /></pre>
+      </div>
+      <div class="bg-slate-800/50 border border-slate-700 rounded-xl p-5">
+        <h4 class="font-bold text-blue-400 text-sm mb-2">2. Base de datos</h4>
+        <p class="text-xs text-slate-300 mb-2">Postgres RLS policies como ultima linea de defensa.</p>
+        <pre class="text-xs bg-slate-900/80 rounded p-2 overflow-x-auto"><code class="text-blue-300">CREATE POLICY tenant
+ON gold.facts
+USING (tenant_id =
+  current_setting(
+    'app.current_tenant'
+  ));</code></pre>
+      </div>
+      <div class="bg-slate-800/50 border border-slate-700 rounded-xl p-5">
+        <h4 class="font-bold text-purple-400 text-sm mb-2">3. Power BI</h4>
+        <p class="text-xs text-slate-300 mb-2">DAX filter automatico por rol del usuario.</p>
+        <pre class="text-xs bg-slate-900/80 rounded p-2 overflow-x-auto"><code class="text-purple-300">Role: OrgViewer
+Filter:
+  [tenant_id] =
+  USERNAME()</code></pre>
+      </div>
+    </div>
+
+    <div class="bg-slate-800/50 border border-amber-400/30 rounded-xl p-6">
+      <h4 class="font-bold text-white mb-2">RlsContext en el hexagono</h4>
+      <pre class="text-xs bg-slate-900/80 rounded-lg p-4 overflow-x-auto"><code class="text-amber-300" set:html={`interface RlsContext {
+  tenantId: string;
+  role: 'org_viewer' | 'enterprise_viewer' | 'platform_admin';
+  enterpriseOrgIds?: string[];  // enterprise_viewer ve sus child orgs
+}
+
+// org_viewer      --&gt; solo su org (WHERE tenant_id = ?)
+// enterprise_viewer --&gt; sus child orgs (WHERE tenant_id IN ?)
+// platform_admin  --&gt; todo (sin filtro)`} /></pre>
+    </div>
+  </div>
+
+  <!-- How it fits in Hexagonal -->
+  <div class="mb-10">
+    <h3 class="text-xl font-bold text-amber-400 mb-6">Encaje en arquitectura hexagonal</h3>
+    <div class="bg-slate-900 border border-slate-700 rounded-xl p-6">
+      <pre class="text-xs overflow-x-auto leading-relaxed"><code class="text-slate-300">src/
+  <span class="text-amber-400">domain/</span>                          # NO CAMBIA
+    model/Order.ts                  # Aggregate puro
+    events/OrderCreatedEvent.ts     # Domain Events (el puente)
+    ports/output.ports.ts           # EventBus, OrderRepository
+
+  <span class="text-blue-400">analytics/</span>                       # NUEVO -- capa analitica
+    <span class="text-amber-500">bronze/</span>
+      BronzeEvent.ts                # Value Object: evento crudo + metadata
+      BronzeIngester.ts             # App Service: Domain Event -> Bronze
+      ports/BronzeEventStore.ts     # Puerto de salida
+
+    <span class="text-slate-400">silver/</span>
+      CleanedEvent.ts               # Value Object: evento enriquecido
+      SilverEnricher.ts             # App Service: Bronze -> Silver
+      ports/CustomerEnrichmentPort.ts
+      ports/DeduplicationPort.ts
+
+    <span class="text-orange-400">copper/</span>
+      CopperStore.ts                # Puerto: parking lot
+      CopperRetryJob.ts             # Batch job: retry parked records
+
+    <span class="text-yellow-400">gold/</span>
+      dimensions/DimDate.ts         # Value Object
+      dimensions/DimCustomer.ts     # Value Object (SCD2)
+      facts/FactOrderCreated.ts     # Value Object
+      facts/FactOrderStatusChange.ts
+      GoldProjector.ts              # App Service: Silver -> Gold
+      ports/FactRepository.ts       # Puerto con RlsContext
+      ports/DimensionRepository.ts
+      ports/AnalyticsExportPort.ts
+
+    <span class="text-purple-400">promotion/</span>
+      PromotionStrategy.ts          # Contrato generico
+      BronzeToSilverStrategy.ts     # Reglas Gate 1
+      SilverToGoldStrategy.ts       # Reglas Gate 2
+
+    pipeline/AnalyticsPipeline.ts   # Orquestador end-to-end
+
+  <span class="text-violet-400">infrastructure/analytics/</span>        # Adaptadores
+    InMemoryBronzeEventStore.ts
+    InMemoryCustomerEnrichment.ts
+    InMemoryDeduplication.ts
+    InMemoryFactRepository.ts       # RLS enforcement
+    InMemoryDimensionRepository.ts
+    InMemoryCopperStore.ts
+    JsonAnalyticsExporter.ts        # CSV/JSON para Power BI</code></pre>
+    </div>
+    <p class="text-slate-400 text-sm mt-4">
+      El dominio operacional (Order, events, ports) no sabe que existe la capa analitica.
+      Los eventos fluyen por el EventBus existente. Cada capa del medallion tiene sus propios
+      puertos y adaptadores. La Composition Root conecta todo.
+    </p>
+  </div>
+</section>
+
+<script>
+  // Tooltip for medallion layers
+  var medalDescriptions = {
+    bronze: 'Bronze: eventos crudos del dominio, sin transformacion. Append-only.',
+    silver: 'Silver: datos limpios, deduplicados, enriquecidos. Tenant validado.',
+    copper: 'Copper: parking lot para registros que necesitan re-enriquecimiento.',
+    gold: 'Gold: star schema listo para Power BI. Facts + Dimensions con RLS.',
+  };
+  document.querySelectorAll('[data-medal]').forEach(function(el) {
+    el.addEventListener('mouseenter', function() {
+      var key = el.getAttribute('data-medal');
+      var desc = document.getElementById('desc-' + key);
+      if (desc) desc.classList.add('ring-2', 'ring-amber-400/50');
+    });
+    el.addEventListener('mouseleave', function() {
+      var key = el.getAttribute('data-medal');
+      var desc = document.getElementById('desc-' + key);
+      if (desc) desc.classList.remove('ring-2', 'ring-amber-400/50');
+    });
+  });
+</script>

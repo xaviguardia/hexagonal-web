@@ -1,0 +1,301 @@
+---
+// Helper spans
+const kw = (s) => `<span class="text-purple-400">${s}</span>`;
+const fn = (s) => `<span class="text-yellow-300">${s}</span>`;
+const tp = (s) => `<span class="text-cyan-300">${s}</span>`;
+const cm = (s) => `<span class="text-slate-500">${s}</span>`;
+const st = (s) => `<span class="text-emerald-300">${s}</span>`;
+const nm = (s) => `<span class="text-slate-200">${s}</span>`;
+const er = (s) => `<span class="text-red-400">${s}</span>`;
+const ok = (s) => `<span class="text-green-400">${s}</span>`;
+
+const steps = [
+  {
+    id: 'max-lines',
+    title: 'max-classes-per-file',
+    subtitle: 'Un archivo, multiples clases',
+    rule: 'ESLint: max-classes-per-file — maxima 1 clase por fichero',
+    problem: [
+      cm('// OrderServices.ts — 3 clases en 1 fichero'),
+      er('// ESLint: max-classes-per-file [error]'),
+      '',
+      `${kw('export class')} ${fn('CreateOrderService')} ${kw('implements')} ${tp('CreateOrderUseCase')} {`,
+      `  ${kw('async')} ${fn('execute')}(cmd) { ${cm('/* ... */') } }`,
+      `}`,
+      '',
+      `${kw('export class')} ${fn('GetOrderService')} ${kw('implements')} ${tp('GetOrderUseCase')} {`,
+      `  ${kw('async')} ${fn('execute')}(id) { ${cm('/* ... */') } }`,
+      `}`,
+      '',
+      `${kw('export class')} ${fn('CancelOrderService')} ${kw('implements')} ${tp('CancelOrderUseCase')} {`,
+      `  ${kw('async')} ${fn('execute')}(id) { ${cm('/* ... */') } }`,
+      `}`,
+    ].join('\n'),
+    solution: [
+      cm('// Cada use case en su propio fichero'),
+      ok('// application/'),
+      ok('//   CreateOrderService.ts'),
+      ok('//   GetOrderService.ts'),
+      ok('//   CancelOrderService.ts'),
+      '',
+      cm('// CreateOrderService.ts'),
+      `${kw('export class')} ${fn('CreateOrderService')} ${kw('implements')} ${tp('CreateOrderUseCase')} {`,
+      `  ${kw('constructor')}(`,
+      `    ${kw('private readonly')} ${nm('repo')}: ${tp('OrderRepository')},`,
+      `    ${kw('private readonly')} ${nm('notify')}: ${tp('NotificationPort')}`,
+      `  ) {}`,
+      '',
+      `  ${kw('async')} ${fn('execute')}(${nm('cmd')}: ${tp('CreateOrderCommand')}): ${tp('Promise<Order>')} {`,
+      `    ${kw('const')} ${nm('order')} = ${tp('Order')}.${fn('create')}(${fn('uuid')}(), ${nm('cmd')}.customerId, ${nm('cmd')}.items);`,
+      `    ${kw('await')} ${kw('this')}.${nm('repo')}.${fn('save')}(${nm('order')});`,
+      `    ${kw('await')} ${kw('this')}.${nm('notify')}.${fn('notifyOrderCreated')}(${nm('order')});`,
+      `    ${kw('return')} ${nm('order')};`,
+      `  }`,
+      `}`,
+    ].join('\n'),
+    pattern: 'Principio de Responsabilidad Unica + un fichero por concepto. Cada use case es independiente, testeable y desplegable por separado.',
+  },
+  {
+    id: 'max-params',
+    title: 'max-params',
+    subtitle: 'Demasiados parametros en un metodo',
+    rule: 'ESLint: max-params — maxima 3 parametros por funcion',
+    problem: [
+      cm('// OrderController.ts'),
+      er('// ESLint: max-params (4 > 3) [error]'),
+      '',
+      `${kw('async')} ${fn('createOrder')}(`,
+      `  ${nm('customerId')}: ${tp('string')},`,
+      `  ${nm('productId')}: ${tp('string')},`,
+      `  ${nm('quantity')}: ${tp('number')},`,
+      er(`  ${nm('shippingAddress')}: ${tp('string')}   `)+er('// <-- 4o param: error'),
+      `) {`,
+      `  ${kw('await')} ${kw('this')}.${nm('createOrder')}.${fn('execute')}(`,
+      `    ${nm('customerId')}, ${nm('productId')}, ${nm('quantity')}, ${nm('shippingAddress')}`,
+      `  );`,
+      `}`,
+    ].join('\n'),
+    solution: [
+      cm('// Emerge el patron: Command Object'),
+      '',
+      `${kw('interface')} ${tp('CreateOrderCommand')} {`,
+      `  ${nm('customerId')}: ${tp('string')};`,
+      `  ${nm('productId')}: ${tp('string')};`,
+      `  ${nm('quantity')}: ${tp('number')};`,
+      `  ${nm('shippingAddress')}: ${tp('string')};`,
+      `}`,
+      '',
+      cm('// Ahora el metodo tiene 1 solo parametro'),
+      `${kw('async')} ${fn('createOrder')}(${nm('command')}: ${tp('CreateOrderCommand')}) {`,
+      `  ${kw('await')} ${kw('this')}.${nm('createOrderUseCase')}.${fn('execute')}(${nm('command')});`,
+      `}`,
+      '',
+      cm('// Bonus: el Command puede validarse con class-validator'),
+      `${kw('class')} ${tp('CreateOrderCommand')} {`,
+      `  @${fn('IsUUID')}() ${nm('customerId')}: ${tp('string')};`,
+      `  @${fn('Min')}(1)  ${nm('quantity')}: ${tp('number')};`,
+      `}`,
+    ].join('\n'),
+    pattern: 'Command Object: encapsula los datos de entrada de un use case. Facilita validacion, serializacion y versionado de la API.',
+  },
+  {
+    id: 'domain-service',
+    title: 'Domain Service',
+    subtitle: 'Logica de negocio entre entidades',
+    rule: 'ESLint: max-lines — Order.ts supera 200 lineas porque calcula precios con logica de descuentos',
+    problem: [
+      cm('// Order.ts — entidad con demasiada responsabilidad'),
+      er('// ESLint: max-lines (240 > 200) [error]'),
+      '',
+      `${kw('class')} ${tp('Order')} {`,
+      `  ${fn('calculateTotal')}() {`,
+      `    ${cm('// 40 lineas calculando descuentos, impuestos,')}`,
+      `    ${cm('// cupones, limites por cliente...')}`,
+      `    ${cm('// Esta logica involucra PricingRules + CustomerTier')}`,
+      `    ${cm('// que NO son responsabilidad de Order')}`,
+      `  }`,
+      '',
+      `  ${fn('applyDiscount')}(${nm('coupon')}: ${tp('Coupon')}) { ${cm('/* ... */')} }`,
+      `  ${fn('applyTax')}(${nm('region')}: ${tp('Region')}) { ${cm('/* ... */')} }`,
+      `  ${fn('checkCustomerLimit')}(${nm('tier')}: ${tp('CustomerTier')}) { ${cm('/* ... */')} }`,
+      `}`,
+    ].join('\n'),
+    solution: [
+      cm('// Emerge el Domain Service: logica que no pertenece'),
+      cm('// a una sola entidad pero es pura regla de negocio'),
+      '',
+      cm('// domain/services/OrderPricingService.ts'),
+      `${kw('class')} ${tp('OrderPricingService')} {`,
+      `  ${fn('calculateTotal')}(`,
+      `    ${nm('order')}: ${tp('Order')},`,
+      `    ${nm('customer')}: ${tp('Customer')},`,
+      `    ${nm('rules')}: ${tp('PricingRules')}`,
+      `  ): ${tp('Money')} {`,
+      `    ${kw('const')} ${nm('base')} = ${nm('order')}.items.${fn('reduce')}((s, i) => s + i.price, 0);`,
+      `    ${kw('const')} ${nm('discount')} = ${nm('rules')}.${fn('discountFor')}(${nm('customer')}.tier);`,
+      `    ${kw('return')} ${kw('new')} ${tp('Money')}(${nm('base')} * (1 - ${nm('discount')}));`,
+      `  }`,
+      `}`,
+      '',
+      cm('// Order.ts queda limpia: solo identidad y estado'),
+      `${kw('class')} ${tp('Order')} {`,
+      `  ${fn('cancel')}() { ${kw('this')}.status = ${st('"cancelled"')}; }`,
+      `  ${fn('confirm')}() { ${kw('this')}.status = ${st('"confirmed"')}; }`,
+      `}`,
+    ].join('\n'),
+    pattern: 'Domain Service: logica de negocio que opera sobre multiples entidades o agregados. Vive en la capa de dominio, sin dependencias de infraestructura.',
+  },
+  {
+    id: 'specification',
+    title: 'Specification Pattern',
+    subtitle: 'Proliferacion de metodos findBy',
+    rule: 'ESLint: max-lines en OrderRepository — demasiados metodos findBy*',
+    problem: [
+      cm('// InMemoryOrderRepository.ts'),
+      er('// ESLint: max-lines [error] + metodos duplicados'),
+      '',
+      `${kw('class')} ${tp('InMemoryOrderRepository')} {`,
+      `  ${fn('findByCustomer')}(${nm('id')}: ${tp('string')}) { ${cm('/* ... */')} }`,
+      `  ${fn('findByStatus')}(${nm('s')}: ${tp('string')}) { ${cm('/* ... */')} }`,
+      `  ${fn('findByCustomerAndStatus')}(${nm('id')}, ${nm('s')}) { ${cm('/* ... */')} }`,
+      `  ${fn('findByDateRange')}(${nm('from')}, ${nm('to')}) { ${cm('/* ... */')} }`,
+      `  ${fn('findActiveByCustomer')}(${nm('id')}) { ${cm('/* ... */')} }`,
+      er('  // ... 8 metodos mas'),
+      `}`,
+    ].join('\n'),
+    solution: [
+      cm('// Emerge el Specification Pattern'),
+      '',
+      cm('// domain/specs/OrderSpecification.ts'),
+      `${kw('interface')} ${tp('Specification<T>')} {`,
+      `  ${fn('isSatisfiedBy')}(${nm('entity')}: ${tp('T')}): ${tp('boolean')};`,
+      `}`,
+      '',
+      `${kw('class')} ${tp('ActiveOrdersForCustomer')} ${kw('implements')} ${tp('Specification<Order>')} {`,
+      `  ${kw('constructor')}(${kw('private')} ${nm('customerId')}: ${tp('string')}) {}`,
+      `  ${fn('isSatisfiedBy')}(${nm('o')}: ${tp('Order')}) {`,
+      `    ${kw('return')} ${nm('o')}.customerId === ${kw('this')}.${nm('customerId')}`,
+      `        && ${nm('o')}.status !== ${st('"cancelled"')};`,
+      `  }`,
+      `}`,
+      '',
+      cm('// El repositorio queda con 1 metodo'),
+      `${kw('interface')} ${tp('OrderRepository')} {`,
+      `  ${fn('findAll')}(${nm('spec')}: ${tp('Specification<Order>')}): ${tp('Promise<Order[]>')};`,
+      `}`,
+      '',
+      cm('// Uso:'),
+      `${nm('repo')}.${fn('findAll')}(${kw('new')} ${tp('ActiveOrdersForCustomer')}(${nm('customerId')}))`,
+    ].join('\n'),
+    pattern: 'Specification: encapsula una regla de consulta como objeto. Combinable con AND/OR/NOT. El repositorio queda abierto a nuevos criterios sin modificarse.',
+  },
+];
+---
+
+<section id="refactoring" class="py-24 px-6 max-w-6xl mx-auto reveal">
+  <div class="text-center mb-16">
+    <span class="text-xs font-mono text-amber-400 uppercase tracking-widest">Linting en Accion</span>
+    <h2 class="text-3xl font-bold text-white mt-3 mb-4">Del error de linting al patron correcto</h2>
+    <p class="text-slate-400 max-w-2xl mx-auto">
+      El linter no solo detecta problemas de estilo. Cuando aplicas reglas estrictas sobre clases grandes
+      o demasiados parametros, la arquitectura hexagonal responde con patrones concretos.
+    </p>
+  </div>
+
+  <!-- Step selector -->
+  <div class="flex flex-wrap gap-3 justify-center mb-12">
+    {steps.map((s, i) => (
+      <button
+        class="refactor-tab px-4 py-2 rounded-lg text-sm font-mono border transition-all"
+        data-tab={s.id}
+        data-index={i}
+        class:list={[
+          i === 0
+            ? 'bg-amber-500/20 border-amber-500/50 text-amber-300'
+            : 'bg-slate-800 border-slate-700 text-slate-400 hover:border-slate-500'
+        ]}
+      >
+        {s.title}
+      </button>
+    ))}
+  </div>
+
+  <!-- Panels -->
+  {steps.map((s, i) => (
+    <div class="refactor-panel" data-panel={s.id} style={i !== 0 ? 'display:none' : ''}>
+      <div class="mb-6 flex items-start gap-4 flex-wrap">
+        <div class="flex-1 min-w-64">
+          <h3 class="text-white font-bold text-lg">{s.subtitle}</h3>
+          <p class="text-red-400/80 text-sm font-mono mt-1">{s.rule}</p>
+        </div>
+      </div>
+
+      <div class="grid md:grid-cols-2 gap-6">
+        <!-- Problema -->
+        <div>
+          <div class="flex items-center gap-2 mb-3">
+            <span class="w-2 h-2 rounded-full bg-red-500"></span>
+            <span class="text-red-400 text-sm font-semibold uppercase tracking-wide">Problema</span>
+          </div>
+          <div class="bg-slate-950 rounded-xl border border-red-900/40 overflow-hidden">
+            <div class="flex items-center gap-2 px-4 py-2 bg-slate-900 border-b border-red-900/40">
+              <span class="w-3 h-3 rounded-full bg-red-500/70"></span>
+              <span class="w-3 h-3 rounded-full bg-yellow-500/40"></span>
+              <span class="w-3 h-3 rounded-full bg-green-500/40"></span>
+              <span class="text-slate-500 text-xs font-mono ml-2">lint error</span>
+            </div>
+            <pre class="p-4 text-sm font-mono leading-relaxed overflow-x-auto"><code set:html={s.problem} /></pre>
+          </div>
+        </div>
+
+        <!-- Solucion -->
+        <div>
+          <div class="flex items-center gap-2 mb-3">
+            <span class="w-2 h-2 rounded-full bg-green-500"></span>
+            <span class="text-green-400 text-sm font-semibold uppercase tracking-wide">Patron emergente</span>
+          </div>
+          <div class="bg-slate-950 rounded-xl border border-green-900/40 overflow-hidden">
+            <div class="flex items-center gap-2 px-4 py-2 bg-slate-900 border-b border-green-900/40">
+              <span class="w-3 h-3 rounded-full bg-red-500/40"></span>
+              <span class="w-3 h-3 rounded-full bg-yellow-500/40"></span>
+              <span class="w-3 h-3 rounded-full bg-green-500/70"></span>
+              <span class="text-slate-500 text-xs font-mono ml-2">refactored</span>
+            </div>
+            <pre class="p-4 text-sm font-mono leading-relaxed overflow-x-auto"><code set:html={s.solution} /></pre>
+          </div>
+        </div>
+      </div>
+
+      <!-- Patron explicado -->
+      <div class="mt-6 bg-amber-500/10 border border-amber-500/30 rounded-xl p-5">
+        <p class="text-amber-200 text-sm leading-relaxed">
+          <span class="font-semibold text-amber-400">Patron: </span>{s.pattern}
+        </p>
+      </div>
+    </div>
+  ))}
+</section>
+
+<script>
+  var tabs = document.querySelectorAll('.refactor-tab');
+  var panels = document.querySelectorAll('.refactor-panel');
+
+  tabs.forEach(function(tab) {
+    tab.addEventListener('click', function() {
+      var target = tab.getAttribute('data-tab');
+
+      tabs.forEach(function(t) {
+        t.className = 'refactor-tab px-4 py-2 rounded-lg text-sm font-mono border transition-all bg-slate-800 border-slate-700 text-slate-400 hover:border-slate-500';
+      });
+      tab.className = 'refactor-tab px-4 py-2 rounded-lg text-sm font-mono border transition-all bg-amber-500/20 border-amber-500/50 text-amber-300';
+
+      panels.forEach(function(p) {
+        if (p.getAttribute('data-panel') === target) {
+          p.style.display = '';
+        } else {
+          p.style.display = 'none';
+        }
+      });
+    });
+  });
+</script>

@@ -1,0 +1,348 @@
+---
+const kw = (s) => `<span class="text-purple-400">${s}</span>`;
+const fn = (s) => `<span class="text-yellow-300">${s}</span>`;
+const tp = (s) => `<span class="text-cyan-300">${s}</span>`;
+const cm = (s) => `<span class="text-slate-500">${s}</span>`;
+const st = (s) => `<span class="text-emerald-300">${s}</span>`;
+const nm = (s) => `<span class="text-slate-200">${s}</span>`;
+const er = (s) => `<span class="text-red-400">${s}</span>`;
+const ok = (s) => `<span class="text-green-400">${s}</span>`;
+
+const patterns = [
+  {
+    id: 'value-object',
+    title: 'Value Object',
+    badge: 'vs Primitive Obsession',
+    description: 'Encapsular un primitivo en una clase con validacion y semantica propia. Un email no es un string: tiene formato, se puede comparar, y nunca puede ser invalido si existe.',
+    problem: [
+      er('// Primitive Obsession: string por todas partes'),
+      `${kw('function')} ${fn('createOrder')}(`,
+      `  ${nm('customerId')}: ${tp('string')},`,
+      er(`  ${nm('email')}: ${tp('string')},    // puede ser "no-es-un-email"`),
+      er(`  ${nm('price')}: ${tp('number')},     // puede ser -50 o NaN`),
+      er(`  ${nm('currency')}: ${tp('string')}   // puede ser "PESETAS"`),
+      `) { ${cm('/* sin validacion en punto de entrada */')} }`,
+      '',
+      er('// El mismo string pasa por 10 capas sin ser validado'),
+      er('// No hay forma de distinguir customerId de productId'),
+    ].join('\n'),
+    solution: [
+      ok('// Value Objects: cada concepto tiene su tipo'),
+      '',
+      `${kw('class')} ${tp('Email')} {`,
+      `  ${kw('private constructor')}(${kw('readonly')} ${nm('value')}: ${tp('string')}) {}`,
+      '',
+      `  ${kw('static')} ${fn('create')}(${nm('raw')}: ${tp('string')}): ${tp('Email')} {`,
+      `    ${kw('if')} (!/${st('^[^@]+@[^@]+$/')}.${fn('test')}(${nm('raw')}))`,
+      `      ${kw('throw new')} ${tp('Error')}(${st('`Email invalido: ${raw}`')});`,
+      `    ${kw('return')} ${kw('new')} ${tp('Email')}(${nm('raw')});`,
+      `  }`,
+      '',
+      `  ${fn('equals')}(${nm('other')}: ${tp('Email')}) { ${kw('return')} ${kw('this')}.${nm('value')} === ${nm('other')}.${nm('value')}; }`,
+      `}`,
+      '',
+      `${kw('class')} ${tp('Money')} {`,
+      `  ${kw('private constructor')}(${kw('readonly')} ${nm('amount')}: ${tp('number')}, ${kw('readonly')} ${nm('currency')}: ${tp('string')}) {}`,
+      `  ${kw('static')} ${fn('of')}(${nm('amount')}: ${tp('number')}, ${nm('currency')}: ${tp('string')}) {`,
+      `    ${kw('if')} (${nm('amount')} < 0) ${kw('throw new')} ${tp('Error')}(${st('"Importe negativo"')});`,
+      `    ${kw('return')} ${kw('new')} ${tp('Money')}(${nm('amount')}, ${nm('currency')});`,
+      `  }`,
+      `  ${fn('add')}(${nm('other')}: ${tp('Money')}) {`,
+      `    ${kw('if')} (${kw('this')}.${nm('currency')} !== ${nm('other')}.${nm('currency')}) ${kw('throw new')} ${tp('Error')}(${st('"Divisas distintas"')});`,
+      `    ${kw('return')} ${tp('Money')}.${fn('of')}(${kw('this')}.${nm('amount')} + ${nm('other')}.${nm('amount')}, ${kw('this')}.${nm('currency')});`,
+      `  }`,
+      `}`,
+      '',
+      cm('// Ahora el compilador distingue Email de CustomerId'),
+      `${kw('function')} ${fn('createOrder')}(${nm('customerId')}: ${tp('CustomerId')}, ${nm('email')}: ${tp('Email')}, ${nm('price')}: ${tp('Money')}) {}`,
+    ].join('\n'),
+    rule: 'Los Value Objects son inmutables, no tienen identidad (dos Money(100, EUR) son iguales), y se comparan por valor. Nunca por referencia.',
+  },
+  {
+    id: 'aggregate',
+    title: 'Aggregate Root',
+    badge: 'Frontera de consistencia',
+    description: 'Define que entidades forman una unidad de consistencia y que la raiz es el unico punto de acceso externo. El repositorio solo persiste y recupera agregados completos.',
+    problem: [
+      er('// Sin Aggregate Root: modificacion directa de entidades internas'),
+      '',
+      `${kw('const')} ${nm('order')} = ${kw('await')} ${nm('orderRepo')}.${fn('findById')}(${nm('id')});`,
+      er('// Modificar OrderItem directamente, saltando las reglas de Order'),
+      `${nm('order')}.items[0].quantity = 99;`,
+      er('// La Order no sabe que cambio. Invariantes violados.'),
+      er('// order.total no se recalcula. Inconsistencia.'),
+      '',
+      cm('// Tambien: repositorios para entidades internas'),
+      er('const item = await orderItemRepo.findById(itemId); // INCORRECTO'),
+    ].join('\n'),
+    solution: [
+      ok('// Aggregate Root: Order controla sus Items'),
+      '',
+      `${kw('class')} ${tp('Order')} { ${cm('// <-- Aggregate Root')}`,
+      `  ${kw('private')} ${nm('items')}: ${tp('OrderItem')}[] = [];`,
+      '',
+      `  ${fn('addItem')}(${nm('productId')}: ${tp('ProductId')}, ${nm('qty')}: ${tp('number')}) {`,
+      `    ${kw('if')} (${kw('this')}.status !== ${st('"draft"')}) ${kw('throw new')} ${tp('Error')}(${st('"Order ya confirmada"')});`,
+      `    ${kw('const')} ${nm('existing')} = ${kw('this')}.${nm('items')}.${fn('find')}(${nm('i')} => ${nm('i')}.productId.${fn('equals')}(${nm('productId')}));`,
+      `    ${kw('if')} (${nm('existing')}) { ${nm('existing')}.${fn('increaseQty')}(${nm('qty')}); ${kw('return')}; }`,
+      `    ${kw('this')}.${nm('items')}.${fn('push')}(${kw('new')} ${tp('OrderItem')}(${nm('productId')}, ${nm('qty')}));`,
+      `  }`,
+      '',
+      `  ${fn('confirm')}() {`,
+      `    ${kw('if')} (${kw('this')}.${nm('items')}.length === 0) ${kw('throw new')} ${tp('Error')}(${st('"Sin items"')});`,
+      `    ${kw('this')}.status = ${st('"confirmed"')};`,
+      ok('    this.domainEvents.push(new OrderConfirmedEvent(this.id));'),
+      `  }`,
+      `}`,
+      '',
+      cm('// El repositorio persiste/recupera Order completa (con sus Items)'),
+      `${kw('interface')} ${tp('OrderRepository')} {`,
+      `  ${fn('findById')}(${nm('id')}: ${tp('OrderId')}): ${tp('Promise<Order | null>')};`,
+      `  ${fn('save')}(${nm('order')}: ${tp('Order')}): ${tp('Promise<void>')};`,
+      `}`,
+    ].join('\n'),
+    rule: 'Regla de acceso: el exterior solo puede tener referencias al Aggregate Root, nunca a sus entidades internas. Un repositorio por agregado, no por entidad.',
+  },
+  {
+    id: 'domain-events',
+    title: 'Domain Events',
+    badge: 'Que paso en el dominio',
+    description: 'Las entidades emiten eventos que describen algo que ocurrio. El use case los recoge tras el save y los despacha. Base del Outbox Pattern y de la comunicacion entre bounded contexts.',
+    problem: [
+      er('// Sin Domain Events: el use case sabe demasiado'),
+      '',
+      `${kw('class')} ${tp('ConfirmOrderService')} {`,
+      `  ${kw('async')} ${fn('execute')}(${nm('orderId')}: ${tp('string')}) {`,
+      `    ${kw('const')} ${nm('order')} = ${kw('await')} ${kw('this')}.${nm('repo')}.${fn('findById')}(${nm('orderId')});`,
+      `    ${nm('order')}.${fn('confirm')}();`,
+      `    ${kw('await')} ${kw('this')}.${nm('repo')}.${fn('save')}(${nm('order')});`,
+      er('    // El use case decide que side effects ocurren'),
+      er('    // Acopla el servicio a email, stock, analytics...'),
+      `    ${kw('await')} ${kw('this')}.${nm('email')}.${fn('sendConfirmation')}(${nm('order')});`,
+      `    ${kw('await')} ${kw('this')}.${nm('stock')}.${fn('reserve')}(${nm('order')}.items);`,
+      `    ${kw('await')} ${kw('this')}.${nm('analytics')}.${fn('track')}(${st('"order_confirmed"')}, ${nm('order')});`,
+      `  }`,
+      `}`,
+    ].join('\n'),
+    solution: [
+      ok('// Con Domain Events: el dominio declara que paso'),
+      '',
+      cm('// domain/events/OrderConfirmedEvent.ts'),
+      `${kw('class')} ${tp('OrderConfirmedEvent')} {`,
+      `  ${kw('readonly')} occurredAt = ${kw('new')} ${tp('Date')}();`,
+      `  ${kw('constructor')}(${kw('readonly')} ${nm('orderId')}: ${tp('string')}, ${kw('readonly')} ${nm('total')}: ${tp('Money')}) {}`,
+      `}`,
+      '',
+      cm('// Order.ts — emite el evento internamente'),
+      `${fn('confirm')}() {`,
+      `  ${kw('if')} (${kw('this')}.status !== ${st('"draft"')}) ${kw('throw new')} ${tp('Error')}(${st('"No se puede confirmar"')});`,
+      `  ${kw('this')}.status = ${st('"confirmed"')};`,
+      ok(`  this.domainEvents.push(new OrderConfirmedEvent(this.id, this.total));`),
+      `}`,
+      '',
+      cm('// Use case: solo orquesta, no decide side effects'),
+      `${kw('async')} ${fn('execute')}(${nm('orderId')}: ${tp('string')}) {`,
+      `  ${kw('const')} ${nm('order')} = ${kw('await')} ${kw('this')}.${nm('repo')}.${fn('findById')}(${nm('orderId')});`,
+      `  ${nm('order')}.${fn('confirm')}();`,
+      `  ${kw('await')} ${kw('this')}.${nm('repo')}.${fn('save')}(${nm('order')});`,
+      ok('  await this.eventBus.publishAll(order.pullDomainEvents());'),
+      `}`,
+      '',
+      cm('// Handlers suscritos al evento reaccionan de forma independiente'),
+      `${kw('on')}(${tp('OrderConfirmedEvent')}) => ${nm('emailService')}.${fn('sendConfirmation')}()`,
+      `${kw('on')}(${tp('OrderConfirmedEvent')}) => ${nm('stockService')}.${fn('reserve')}()`,
+    ].join('\n'),
+    rule: 'Los eventos describen algo que YA ocurrio (pasado). Cada handler es independiente: se puede anadir uno nuevo sin tocar el use case ni el dominio.',
+  },
+  {
+    id: 'factory',
+    title: 'Factory',
+    badge: 'Creacion compleja',
+    description: 'Cuando crear un agregado requiere logica que supera un simple constructor. Valida invariantes de creacion, puede resolver dependencias y mantiene la entidad en estado valido desde el primer momento.',
+    problem: [
+      er('// Creacion compleja dispersa: cada caller repite la logica'),
+      '',
+      `${cm('// En el controller:')}`,
+      `${kw('const')} ${nm('order')} = ${kw('new')} ${tp('Order')}();`,
+      `${nm('order')}.id = ${fn('uuid')}();`,
+      `${nm('order')}.customerId = ${nm('cmd')}.customerId;`,
+      `${nm('order')}.status = ${st('"draft"')};`,
+      `${nm('order')}.createdAt = ${kw('new')} ${tp('Date')}();`,
+      er('// Logica de negocio en la capa de infraestructura'),
+      er('// Si cambia la creacion, hay que buscar todos los sitios'),
+      '',
+      `${cm('// En el test:')}`,
+      `${kw('const')} ${nm('order')} = ${kw('new')} ${tp('Order')}(); ${cm('// incompleto, invalido')}`,
+    ].join('\n'),
+    solution: [
+      ok('// Factory Method en la propia entidad'),
+      '',
+      `${kw('class')} ${tp('Order')} {`,
+      `  ${kw('private constructor')}(`,
+      `    ${kw('readonly')} ${nm('id')}: ${tp('OrderId')},`,
+      `    ${kw('readonly')} ${nm('customerId')}: ${tp('CustomerId')},`,
+      `    ${kw('private')} ${nm('status')}: ${tp('OrderStatus')},`,
+      `    ${kw('readonly')} ${nm('createdAt')}: ${tp('Date')},`,
+      `  ) {}`,
+      '',
+      ok('  // Factory Method: unico punto de creacion'),
+      `  ${kw('static')} ${fn('create')}(${nm('id')}: ${tp('OrderId')}, ${nm('customerId')}: ${tp('CustomerId')}): ${tp('Order')} {`,
+      `    ${kw('if')} (!${nm('customerId')}) ${kw('throw new')} ${tp('Error')}(${st('"CustomerId requerido"')});`,
+      `    ${kw('const')} ${nm('order')} = ${kw('new')} ${tp('Order')}(${nm('id')}, ${nm('customerId')}, ${st('"draft"')}, ${kw('new')} ${tp('Date')}());`,
+      ok('    order.domainEvents.push(new OrderCreatedEvent(order.id));'),
+      `    ${kw('return')} ${nm('order')};`,
+      `  }`,
+      '',
+      ok('  // Reconstitution: recrea desde persistencia sin emitir evento'),
+      `  ${kw('static')} ${fn('reconstitute')}(${nm('data')}: ${tp('OrderData')}): ${tp('Order')} {`,
+      `    ${kw('return')} ${kw('new')} ${tp('Order')}(${nm('data')}.id, ${nm('data')}.customerId, ${nm('data')}.status, ${nm('data')}.createdAt);`,
+      `  }`,
+      `}`,
+    ].join('\n'),
+    rule: 'Distingue create() (crea nuevo, emite evento) de reconstitute() (recarga desde BD, sin evento). El repositorio usa reconstitute al cargar desde persistencia.',
+  },
+  {
+    id: 'domain-service-pattern',
+    title: 'Domain Service',
+    badge: 'Logica entre entidades',
+    description: 'Logica de negocio pura que no pertenece a ninguna entidad concreta porque involucra a varias. Vive en el dominio, no tiene estado, y no depende de infraestructura.',
+    problem: [
+      er('// Logica de pricing metida en Order (viola SRP)'),
+      cm('// Order.ts supera 200 lineas, linter se queja'),
+      '',
+      `${kw('class')} ${tp('Order')} {`,
+      er('  calculateTotal(customer: Customer, rules: PricingRules) {'),
+      er('    // 50 lineas que involucran Customer.tier,'),
+      er('    // PricingRules.discounts, Tax.rates...'),
+      er('    // Order no deberia conocer PricingRules'),
+      `  }`,
+      `}`,
+    ].join('\n'),
+    solution: [
+      ok('// Domain Service: logica pura de negocio sin estado'),
+      '',
+      cm('// domain/services/OrderPricingService.ts'),
+      `${kw('class')} ${tp('OrderPricingService')} {`,
+      cm('  // Sin constructor, sin dependencias de infraestructura'),
+      '',
+      `  ${fn('calculateTotal')}(`,
+      `    ${nm('order')}: ${tp('Order')},`,
+      `    ${nm('customer')}: ${tp('Customer')},`,
+      `    ${nm('rules')}: ${tp('PricingRules')}`,
+      `  ): ${tp('Money')} {`,
+      `    ${kw('const')} ${nm('subtotal')} = ${nm('order')}.items`,
+      `      .${fn('reduce')}((${nm('sum')}, ${nm('item')}) => ${nm('sum')}.${fn('add')}(${nm('item')}.price.${fn('multiply')}(${nm('item')}.qty)), ${tp('Money')}.${fn('zero')}());`,
+      `    ${kw('const')} ${nm('discount')} = ${nm('rules')}.${fn('discountFor')}(${nm('customer')}.tier);`,
+      `    ${kw('const')} ${nm('tax')} = ${nm('rules')}.${fn('taxFor')}(${nm('order')}.shippingAddress.country);`,
+      `    ${kw('return')} ${nm('subtotal')}.${fn('multiply')}(1 - ${nm('discount')}).${fn('multiply')}(1 + ${nm('tax')});`,
+      `  }`,
+      `}`,
+      '',
+      cm('// Order queda limpia: solo identidad, estado y sus invariantes'),
+      `${kw('class')} ${tp('Order')} {`,
+      `  ${fn('confirm')}() { ${cm('/* solo cambia estado */')} }`,
+      `  ${fn('cancel')}()  { ${cm('/* solo cambia estado */')} }`,
+      `}`,
+    ].join('\n'),
+    rule: 'Si la logica necesita dos entidades, va en un Domain Service. Si la logica necesita infraestructura (BD, API), va en un Application Service o en un puerto de salida.',
+  },
+];
+---
+
+<section id="dominio" class="py-24 px-6 max-w-6xl mx-auto reveal">
+  <div class="text-center mb-16">
+    <span class="text-xs font-mono text-emerald-400 uppercase tracking-widest">Capa de Dominio</span>
+    <h2 class="text-3xl font-bold text-white mt-3 mb-4">Patrones tacticos de dominio</h2>
+    <p class="text-slate-400 max-w-2xl mx-auto">
+      La capa de dominio es el corazon del sistema. Estos patrones mantienen las reglas de negocio
+      aisladas, expresivas y testeables sin necesidad de base de datos ni frameworks.
+    </p>
+  </div>
+
+  <!-- Tabs -->
+  <div class="flex flex-wrap gap-3 justify-center mb-12">
+    {patterns.map((p, i) => (
+      <button
+        class="dom-tab px-4 py-2 rounded-lg text-sm font-mono border transition-all"
+        data-tab={p.id}
+        class:list={[
+          i === 0
+            ? 'bg-emerald-500/20 border-emerald-500/50 text-emerald-300'
+            : 'bg-slate-800 border-slate-700 text-slate-400 hover:border-slate-500'
+        ]}
+      >
+        {p.title}
+      </button>
+    ))}
+  </div>
+
+  {patterns.map((p, i) => (
+    <div class="dom-panel" data-panel={p.id} style={i !== 0 ? 'display:none' : ''}>
+      <div class="mb-6 flex items-start gap-4 flex-wrap">
+        <div class="flex-1 min-w-64">
+          <div class="flex items-center gap-3 mb-2">
+            <h3 class="text-white font-bold text-lg">{p.title}</h3>
+            <span class="text-xs px-2 py-1 rounded-full bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 font-mono">{p.badge}</span>
+          </div>
+          <p class="text-slate-400 text-sm leading-relaxed">{p.description}</p>
+        </div>
+      </div>
+
+      <div class="grid md:grid-cols-2 gap-6">
+        <div>
+          <div class="flex items-center gap-2 mb-3">
+            <span class="w-2 h-2 rounded-full bg-red-500"></span>
+            <span class="text-red-400 text-sm font-semibold uppercase tracking-wide">Sin el patron</span>
+          </div>
+          <div class="bg-slate-950 rounded-xl border border-red-900/40 overflow-hidden">
+            <div class="flex items-center gap-2 px-4 py-2 bg-slate-900 border-b border-red-900/40">
+              <span class="w-3 h-3 rounded-full bg-red-500/70"></span>
+              <span class="w-3 h-3 rounded-full bg-yellow-500/40"></span>
+              <span class="w-3 h-3 rounded-full bg-green-500/40"></span>
+              <span class="text-slate-500 text-xs font-mono ml-2">problema</span>
+            </div>
+            <pre class="p-4 text-sm font-mono leading-relaxed overflow-x-auto"><code set:html={p.problem} /></pre>
+          </div>
+        </div>
+        <div>
+          <div class="flex items-center gap-2 mb-3">
+            <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+            <span class="text-emerald-400 text-sm font-semibold uppercase tracking-wide">Con {p.title}</span>
+          </div>
+          <div class="bg-slate-950 rounded-xl border border-emerald-900/40 overflow-hidden">
+            <div class="flex items-center gap-2 px-4 py-2 bg-slate-900 border-b border-emerald-900/40">
+              <span class="w-3 h-3 rounded-full bg-red-500/40"></span>
+              <span class="w-3 h-3 rounded-full bg-yellow-500/40"></span>
+              <span class="w-3 h-3 rounded-full bg-emerald-500/70"></span>
+              <span class="text-slate-500 text-xs font-mono ml-2">refactorizado</span>
+            </div>
+            <pre class="p-4 text-sm font-mono leading-relaxed overflow-x-auto"><code set:html={p.solution} /></pre>
+          </div>
+        </div>
+      </div>
+
+      <div class="mt-6 bg-emerald-500/10 border border-emerald-500/30 rounded-xl p-5">
+        <p class="text-emerald-200 text-sm leading-relaxed">
+          <span class="font-semibold text-emerald-400">Regla: </span>{p.rule}
+        </p>
+      </div>
+    </div>
+  ))}
+</section>
+
+<script>
+  var tabs = document.querySelectorAll('.dom-tab');
+  var panels = document.querySelectorAll('.dom-panel');
+  tabs.forEach(function(tab) {
+    tab.addEventListener('click', function() {
+      var target = tab.getAttribute('data-tab');
+      tabs.forEach(function(t) {
+        t.className = 'dom-tab px-4 py-2 rounded-lg text-sm font-mono border transition-all bg-slate-800 border-slate-700 text-slate-400 hover:border-slate-500';
+      });
+      tab.className = 'dom-tab px-4 py-2 rounded-lg text-sm font-mono border transition-all bg-emerald-500/20 border-emerald-500/50 text-emerald-300';
+      panels.forEach(function(p) {
+        p.style.display = p.getAttribute('data-panel') === target ? '' : 'none';
+      });
+    });
+  });
+</script>

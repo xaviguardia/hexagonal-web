@@ -1,0 +1,92 @@
+---
+const layers = [
+  {
+    id: 'domain',
+    label: 'DOMINIO',
+    border: 'border-t-amber-400',
+    badge: 'bg-amber-100 text-amber-900',
+    title: 'El nucleo del sistema',
+    desc: 'Contiene la logica de negocio pura. No importa ningun framework, ninguna libreria externa.',
+    items: [
+      'Entidades (Order, User, Product...)',
+      'Value Objects (Money, Address...)',
+      'Reglas de negocio e invariantes',
+      'Definicion de los Puertos (interfaces)',
+    ],
+    rule: 'No importa nada externo. Cero dependencias.',
+    ruleColor: 'text-amber-400',
+  },
+  {
+    id: 'app',
+    label: 'APLICACION',
+    border: 'border-t-blue-400',
+    badge: 'bg-blue-100 text-blue-900',
+    title: 'Casos de uso',
+    desc: 'Orquesta el dominio. Implementa los puertos de entrada. Delega persistencia y notificaciones a los puertos de salida.',
+    items: [
+      'CreateOrderService',
+      'GetOrderService',
+      'CancelOrderService',
+      'No contiene logica de negocio',
+    ],
+    rule: 'Solo coordina. La logica esta en el dominio.',
+    ruleColor: 'text-blue-400',
+  },
+  {
+    id: 'infra',
+    label: 'INFRAESTRUCTURA',
+    border: 'border-t-purple-400',
+    badge: 'bg-purple-100 text-purple-900',
+    title: 'Adaptadores',
+    desc: 'Implementa los puertos. Traduce entre el mundo exterior (HTTP, SQL, APIs) y el lenguaje del dominio.',
+    items: [
+      'OrderController (Express/HTTP)',
+      'PostgresOrderRepository',
+      'SendGridNotificationAdapter',
+      'InMemoryOrderRepository (tests)',
+    ],
+    rule: 'Intercambiable sin tocar el dominio.',
+    ruleColor: 'text-purple-400',
+  },
+];
+---
+
+<section id="capas" class="max-w-5xl mx-auto px-6 py-24 reveal">
+  <h2 class="text-3xl font-extrabold mb-2 tracking-tight">Las 3 Capas</h2>
+  <p class="text-slate-400 mb-12 text-lg">Cada capa tiene una responsabilidad clara y unica.</p>
+
+  <div class="grid md:grid-cols-3 gap-6">
+    {layers.map(l => (
+      <div class={`bg-slate-800/60 border border-slate-700 border-t-4 ${l.border} rounded-xl p-6 hover:-translate-y-1 transition-transform cursor-default`}>
+        <span class={`inline-block px-3 py-1 rounded-full text-xs font-bold ${l.badge} mb-4`}>
+          {l.label}
+        </span>
+        <h3 class="font-bold text-lg mb-2">{l.title}</h3>
+        <p class="text-slate-400 text-sm mb-4 leading-relaxed">{l.desc}</p>
+        <ul class="text-slate-400 text-sm space-y-1.5 mb-5">
+          {l.items.map(item => (
+            <li class="flex items-start gap-2">
+              <span class="mt-1.5 w-1.5 h-1.5 rounded-full bg-slate-600 shrink-0"></span>
+              {item}
+            </li>
+          ))}
+        </ul>
+        <div class={`text-xs font-semibold ${l.ruleColor} border-t border-slate-700 pt-4`}>
+          {l.rule}
+        </div>
+      </div>
+    ))}
+  </div>
+
+  <div class="mt-10 bg-slate-800/40 border border-slate-700 rounded-xl p-6">
+    <p class="text-sm text-slate-400 text-center mb-4 font-semibold uppercase tracking-widest text-xs">Direccion de las dependencias</p>
+    <div class="flex items-center justify-center gap-4 flex-wrap text-sm">
+      <span class="text-purple-300 font-mono font-semibold">Infraestructura</span>
+      <span class="text-slate-500">— depende de —</span>
+      <span class="text-blue-300 font-mono font-semibold">Aplicacion</span>
+      <span class="text-slate-500">— depende de —</span>
+      <span class="text-amber-300 font-mono font-semibold">Dominio</span>
+    </div>
+    <p class="text-center text-slate-500 text-xs mt-3">El Dominio no depende de nadie. Es el centro.</p>
+  </div>
+</section>
