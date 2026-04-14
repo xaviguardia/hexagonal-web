@@ -5,20 +5,20 @@ const layers = [
     label: 'DOMINIO',
     border: 'border-t-amber-400',
     badge: 'bg-amber-100 text-amber-900',
-    title: 'El nucleo del sistema',
-    desc: 'Contiene la logica de negocio pura. No importa ningun framework, ninguna libreria externa.',
+    title: 'El núcleo del sistema',
+    desc: 'Contiene la lógica de negocio pura. No importa ningún framework, ninguna librería externa.',
     items: [
       'Entidades (Order, User, Product...)',
       'Value Objects (Money, Address...)',
       'Reglas de negocio e invariantes',
-      'Definicion de los Puertos (interfaces)',
+      'Definición de los Puertos (interfaces)',
     ],
     rule: 'No importa nada externo. Cero dependencias.',
     ruleColor: 'text-amber-400',
   },
   {
     id: 'app',
-    label: 'APLICACION',
+    label: 'APLICACIÓN',
     border: 'border-t-blue-400',
     badge: 'bg-blue-100 text-blue-900',
     title: 'Casos de uso',
@@ -27,9 +27,9 @@ const layers = [
       'CreateOrderService',
       'GetOrderService',
       'CancelOrderService',
-      'No contiene logica de negocio',
+      'No contiene lógica de negocio',
     ],
-    rule: 'Solo coordina. La logica esta en el dominio.',
+    rule: 'Solo coordina. La lógica está en el dominio.',
     ruleColor: 'text-blue-400',
   },
   {
@@ -53,7 +53,7 @@ const layers = [
 
 <section id="capas" class="max-w-5xl mx-auto px-6 py-24 reveal">
   <h2 class="text-3xl font-extrabold mb-2 tracking-tight">Las 3 Capas</h2>
-  <p class="text-slate-400 mb-12 text-lg">Cada capa tiene una responsabilidad clara y unica.</p>
+  <p class="text-slate-400 mb-12 text-lg">Cada capa tiene una responsabilidad clara y única.</p>
 
   <div class="grid md:grid-cols-3 gap-6">
     {layers.map(l => (
@@ -79,11 +79,11 @@ const layers = [
   </div>
 
   <div class="mt-10 bg-slate-800/40 border border-slate-700 rounded-xl p-6">
-    <p class="text-sm text-slate-400 text-center mb-4 font-semibold uppercase tracking-widest text-xs">Direccion de las dependencias</p>
+    <p class="text-sm text-slate-400 text-center mb-4 font-semibold uppercase tracking-widest text-xs">Dirección de las dependencias</p>
     <div class="flex items-center justify-center gap-4 flex-wrap text-sm">
       <span class="text-purple-300 font-mono font-semibold">Infraestructura</span>
       <span class="text-slate-500">— depende de —</span>
-      <span class="text-blue-300 font-mono font-semibold">Aplicacion</span>
+      <span class="text-blue-300 font-mono font-semibold">Aplicación</span>
       <span class="text-slate-500">— depende de —</span>
       <span class="text-amber-300 font-mono font-semibold">Dominio</span>
     </div>

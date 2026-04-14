@@ -49,7 +49,7 @@ const adapters = [
       `  }`,
       `}`,
     ].join('\n'),
-    rule: 'La regla de dependencia: los adaptadores dependen del dominio, nunca al reves. El dominio define los puertos (interfaces), la infraestructura los implementa.',
+    rule: 'La regla de dependencia: los adaptadores dependen del dominio, nunca al revés. El dominio define los puertos (interfaces), la infraestructura los implementa.',
   },
   {
     id: 'acl',
@@ -93,7 +93,7 @@ const adapters = [
     id: 'gateway',
     title: 'Gateway',
     badge: 'APIs externas complejas',
-    description: 'Un adaptador especializado para servicios externos con autenticacion, reintentos, paginacion y mapeo de errores. El dominio recibe un contrato simple; el Gateway gestiona toda la complejidad.',
+    description: 'Un adaptador especializado para servicios externos con autenticación, reintentos, paginación y mapeo de errores. El dominio recibe un contrato simple; el Gateway gestiona toda la complejidad.',
     code: [
       cm('// domain/ports/output.ports.ts — contrato simple'),
       `${kw('interface')} ${tp('InventoryPort')} {`,
@@ -127,13 +127,13 @@ const adapters = [
       `  }`,
       `}`,
     ].join('\n'),
-    rule: 'El Gateway encapsula: autenticacion, reintentos con backoff, mapeo de errores a excepciones del dominio, logging de llamadas externas. Todo invisible para el dominio.',
+    rule: 'El Gateway encapsula: autenticación, reintentos con backoff, mapeo de errores a excepciones del dominio, logging de llamadas externas. Todo invisible para el dominio.',
   },
   {
     id: 'circuit-breaker',
     title: 'Circuit Breaker',
     badge: 'Resiliencia',
-    description: 'Si un servicio externo falla repetidamente, el Circuit Breaker abre el circuito y devuelve un fallback rapido. Evita acumular timeouts y protege el sistema cuando un dependiente esta caido.',
+    description: 'Si un servicio externo falla repetidamente, el Circuit Breaker abre el circuito y devuelve un fallback rápido. Evita acumular timeouts y protege el sistema cuando un dependiente está caído.',
     code: [
       cm('// infrastructure/adapters/ResilientInventoryAdapter.ts'),
       `${kw('type')} ${tp('State')} = ${st('"closed"')} | ${st('"open"')} | ${st('"half-open"')};`,
@@ -172,12 +172,12 @@ const adapters = [
       `    ${kw('try')} {`,
       `      ${kw('return')} ${kw('await')} ${kw('this')}.${nm('cb')}.${fn('execute')}(() => ${kw('this')}.${nm('gateway')}.${fn('getStock')}(${nm('productId')}));`,
       `    } ${kw('catch')} {`,
-      ok('      return 0; // fallback: asumir sin stock si el servicio esta caido'),
+      ok('      return 0; // fallback: asumir sin stock si el servicio está caído'),
       `    }`,
       `  }`,
       `}`,
     ].join('\n'),
-    rule: 'El Circuit Breaker es transparente para el dominio. Tres estados: Closed (normal), Open (falla rapida), Half-Open (prueba si recupero). La logica de fallback va en el adaptador.',
+    rule: 'El Circuit Breaker es transparente para el dominio. Tres estados: Closed (normal), Open (falla rápida), Half-Open (prueba si recuperó). La lógica de fallback va en el adaptador.',
   },
 ];
 ---
@@ -185,10 +185,10 @@ const adapters = [
 <section id="infraestructura" class="py-24 px-6 max-w-6xl mx-auto reveal">
   <div class="text-center mb-16">
     <span class="text-xs font-mono text-orange-400 uppercase tracking-widest">Capa de Infraestructura</span>
-    <h2 class="text-3xl font-bold text-white mt-3 mb-4">Adaptadores e integraciones</h2>
+    <h2 class="text-3xl font-bold text-white mt-3 mb-4">Adaptadores e integraciónes</h2>
     <p class="text-slate-400 max-w-2xl mx-auto">
-      Los adaptadores son la capa que conecta el mundo real con el dominio. Aqui vive todo lo que puede cambiar:
-      bases de datos, APIs externas, mensajeria, caches.
+      Los adaptadores son la capa que conecta el mundo real con el dominio. Aquí vive todo lo que puede cambiar:
+      bases de datos, APIs externas, mensajería, caches.
     </p>
   </div>
 

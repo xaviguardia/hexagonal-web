@@ -13,8 +13,8 @@ const steps = [
   {
     id: 'max-lines',
     title: 'max-classes-per-file',
-    subtitle: 'Un archivo, multiples clases',
-    rule: 'ESLint: max-classes-per-file — maxima 1 clase por fichero',
+    subtitle: 'Un archivo, múltiples clases',
+    rule: 'ESLint: max-classes-per-file — máxima 1 clase por fichero',
     problem: [
       cm('// OrderServices.ts — 3 clases en 1 fichero'),
       er('// ESLint: max-classes-per-file [error]'),
@@ -53,13 +53,13 @@ const steps = [
       `  }`,
       `}`,
     ].join('\n'),
-    pattern: 'Principio de Responsabilidad Unica + un fichero por concepto. Cada use case es independiente, testeable y desplegable por separado.',
+    pattern: 'Principio de Responsabilidad Única + un fichero por concepto. Cada use case es independiente, testeable y desplegable por separado.',
   },
   {
     id: 'max-params',
     title: 'max-params',
-    subtitle: 'Demasiados parametros en un metodo',
-    rule: 'ESLint: max-params — maxima 3 parametros por funcion',
+    subtitle: 'Demasíados parámetros en un método',
+    rule: 'ESLint: max-params — máxima 3 parámetros por función',
     problem: [
       cm('// OrderController.ts'),
       er('// ESLint: max-params (4 > 3) [error]'),
@@ -76,7 +76,7 @@ const steps = [
       `}`,
     ].join('\n'),
     solution: [
-      cm('// Emerge el patron: Command Object'),
+      cm('// Emerge el patrón: Command Object'),
       '',
       `${kw('interface')} ${tp('CreateOrderCommand')} {`,
       `  ${nm('customerId')}: ${tp('string')};`,
@@ -85,7 +85,7 @@ const steps = [
       `  ${nm('shippingAddress')}: ${tp('string')};`,
       `}`,
       '',
-      cm('// Ahora el metodo tiene 1 solo parametro'),
+      cm('// Ahora el método tiene 1 solo parámetro'),
       `${kw('async')} ${fn('createOrder')}(${nm('command')}: ${tp('CreateOrderCommand')}) {`,
       `  ${kw('await')} ${kw('this')}.${nm('createOrderUseCase')}.${fn('execute')}(${nm('command')});`,
       `}`,
@@ -96,22 +96,22 @@ const steps = [
       `  @${fn('Min')}(1)  ${nm('quantity')}: ${tp('number')};`,
       `}`,
     ].join('\n'),
-    pattern: 'Command Object: encapsula los datos de entrada de un use case. Facilita validacion, serializacion y versionado de la API.',
+    pattern: 'Command Object: encapsula los datos de entrada de un use case. Facilita validación, serialización y versionado de la API.',
   },
   {
     id: 'domain-service',
     title: 'Domain Service',
-    subtitle: 'Logica de negocio entre entidades',
-    rule: 'ESLint: max-lines — Order.ts supera 200 lineas porque calcula precios con logica de descuentos',
+    subtitle: 'Lógica de negocio entre entidades',
+    rule: 'ESLint: max-lines — Order.ts supera 200 líneas porque calcula precios con lógica de descuentos',
     problem: [
-      cm('// Order.ts — entidad con demasiada responsabilidad'),
+      cm('// Order.ts — entidad con demasíada responsabilidad'),
       er('// ESLint: max-lines (240 > 200) [error]'),
       '',
       `${kw('class')} ${tp('Order')} {`,
       `  ${fn('calculateTotal')}() {`,
-      `    ${cm('// 40 lineas calculando descuentos, impuestos,')}`,
+      `    ${cm('// 40 líneas calculando descuentos, impuestos,')}`,
       `    ${cm('// cupones, limites por cliente...')}`,
-      `    ${cm('// Esta logica involucra PricingRules + CustomerTier')}`,
+      `    ${cm('// Esta lógica involucra PricingRules + CustomerTier')}`,
       `    ${cm('// que NO son responsabilidad de Order')}`,
       `  }`,
       '',
@@ -121,7 +121,7 @@ const steps = [
       `}`,
     ].join('\n'),
     solution: [
-      cm('// Emerge el Domain Service: logica que no pertenece'),
+      cm('// Emerge el Domain Service: lógica que no pertenece'),
       cm('// a una sola entidad pero es pura regla de negocio'),
       '',
       cm('// domain/services/OrderPricingService.ts'),
@@ -143,16 +143,16 @@ const steps = [
       `  ${fn('confirm')}() { ${kw('this')}.status = ${st('"confirmed"')}; }`,
       `}`,
     ].join('\n'),
-    pattern: 'Domain Service: logica de negocio que opera sobre multiples entidades o agregados. Vive en la capa de dominio, sin dependencias de infraestructura.',
+    pattern: 'Domain Service: lógica de negocio que opera sobre múltiples entidades o agregados. Vive en la capa de dominio, sin dependencias de infraestructura.',
   },
   {
     id: 'specification',
     title: 'Specification Pattern',
-    subtitle: 'Proliferacion de metodos findBy',
-    rule: 'ESLint: max-lines en OrderRepository — demasiados metodos findBy*',
+    subtitle: 'Proliferación de métodos findBy',
+    rule: 'ESLint: max-lines en OrderRepository — demasíados métodos findBy*',
     problem: [
       cm('// InMemoryOrderRepository.ts'),
-      er('// ESLint: max-lines [error] + metodos duplicados'),
+      er('// ESLint: max-lines [error] + métodos duplicados'),
       '',
       `${kw('class')} ${tp('InMemoryOrderRepository')} {`,
       `  ${fn('findByCustomer')}(${nm('id')}: ${tp('string')}) { ${cm('/* ... */')} }`,
@@ -160,7 +160,7 @@ const steps = [
       `  ${fn('findByCustomerAndStatus')}(${nm('id')}, ${nm('s')}) { ${cm('/* ... */')} }`,
       `  ${fn('findByDateRange')}(${nm('from')}, ${nm('to')}) { ${cm('/* ... */')} }`,
       `  ${fn('findActiveByCustomer')}(${nm('id')}) { ${cm('/* ... */')} }`,
-      er('  // ... 8 metodos mas'),
+      er('  // ... 8 métodos mas'),
       `}`,
     ].join('\n'),
     solution: [
@@ -179,7 +179,7 @@ const steps = [
       `  }`,
       `}`,
       '',
-      cm('// El repositorio queda con 1 metodo'),
+      cm('// El repositorio queda con 1 método'),
       `${kw('interface')} ${tp('OrderRepository')} {`,
       `  ${fn('findAll')}(${nm('spec')}: ${tp('Specification<Order>')}): ${tp('Promise<Order[]>')};`,
       `}`,
@@ -194,11 +194,11 @@ const steps = [
 
 <section id="refactoring" class="py-24 px-6 max-w-6xl mx-auto reveal">
   <div class="text-center mb-16">
-    <span class="text-xs font-mono text-amber-400 uppercase tracking-widest">Linting en Accion</span>
-    <h2 class="text-3xl font-bold text-white mt-3 mb-4">Del error de linting al patron correcto</h2>
+    <span class="text-xs font-mono text-amber-400 uppercase tracking-widest">Linting en Acción</span>
+    <h2 class="text-3xl font-bold text-white mt-3 mb-4">Del error de linting al patrón correcto</h2>
     <p class="text-slate-400 max-w-2xl mx-auto">
       El linter no solo detecta problemas de estilo. Cuando aplicas reglas estrictas sobre clases grandes
-      o demasiados parametros, la arquitectura hexagonal responde con patrones concretos.
+      o demasíados parámetros, la arquitectura hexagonal responde con patrónes concretos.
     </p>
   </div>
 
@@ -248,11 +248,11 @@ const steps = [
           </div>
         </div>
 
-        <!-- Solucion -->
+        <!-- Solución -->
         <div>
           <div class="flex items-center gap-2 mb-3">
             <span class="w-2 h-2 rounded-full bg-green-500"></span>
-            <span class="text-green-400 text-sm font-semibold uppercase tracking-wide">Patron emergente</span>
+            <span class="text-green-400 text-sm font-semibold uppercase tracking-wide">Patrón emergente</span>
           </div>
           <div class="bg-slate-950 rounded-xl border border-green-900/40 overflow-hidden">
             <div class="flex items-center gap-2 px-4 py-2 bg-slate-900 border-b border-green-900/40">
@@ -266,10 +266,10 @@ const steps = [
         </div>
       </div>
 
-      <!-- Patron explicado -->
+      <!-- Patrón explicado -->
       <div class="mt-6 bg-amber-500/10 border border-amber-500/30 rounded-xl p-5">
         <p class="text-amber-200 text-sm leading-relaxed">
-          <span class="font-semibold text-amber-400">Patron: </span>{s.pattern}
+          <span class="font-semibold text-amber-400">Patrón: </span>{s.pattern}
         </p>
       </div>
     </div>

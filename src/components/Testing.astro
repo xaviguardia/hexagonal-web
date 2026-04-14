@@ -10,10 +10,10 @@ const ok = (s) => `<span class="text-green-400">${s}</span>`;
 
 const tabs = [
   {
-    id: 'jerarquia',
-    title: 'Jerarquia de Tests',
-    badge: 'Piramide de tests',
-    description: 'La arquitectura hexagonal define naturalmente tres niveles de test con costes y velocidades distintas. Cuantos mas tests en la base, mas rapido y barato el feedback.',
+    id: 'jerarquía',
+    title: 'Jerarquía de Tests',
+    badge: 'Pirámide de tests',
+    description: 'La arquitectura hexagonal define naturalmente tres niveles de test con costes y velocidades distintas. Cuántos más tests en la base, más rápido y barato el feedback.',
     code: [
       cm('// NIVEL 1 — Tests de Dominio (puros, sin mocks)'),
       cm('// Velocidad: milisegundos. Sin BD, sin red, sin frameworks.'),
@@ -56,7 +56,7 @@ const tabs = [
     id: 'test-doubles',
     title: 'Fake vs Mock vs Stub',
     badge: 'Test doubles en puertos',
-    description: 'Los puertos (interfaces) permiten sustituir la infraestructura real en tests. Pero hay tres tipos de sustituto con propositos distintos, y confundirlos lleva a tests fragiles.',
+    description: 'Los puertos (interfaces) permiten sustituir la infraestructura real en tests. Pero hay tres tipos de sustituto con propósitos distintos, y confundirlos lleva a tests frágiles.',
     code: [
       cm('// STUB: devuelve datos predefinidos, no verifica llamadas'),
       `${kw('class')} ${tp('StubOrderRepository')} ${kw('implements')} ${tp('OrderRepository')} {`,
@@ -66,7 +66,7 @@ const tabs = [
       `  ${kw('async')} ${fn('save')}(${nm('order')}) { }  ${cm('// no hace nada')}`,
       `}`,
       '',
-      cm('// FAKE: implementacion real pero simplificada (en memoria)'),
+      cm('// FAKE: implementación real pero simplificada (en memoria)'),
       `${kw('class')} ${tp('InMemoryOrderRepository')} ${kw('implements')} ${tp('OrderRepository')} {`,
       `  ${kw('private')} ${nm('store')} = ${kw('new')} ${tp('Map')}();`,
       `  ${kw('async')} ${fn('findById')}(${nm('id')}) { ${kw('return')} ${kw('this')}.${nm('store')}.${fn('get')}(${nm('id')}) ?? ${kw('null')}; }`,
@@ -88,7 +88,7 @@ const tabs = [
       ok('expect(spy.notifiedOrders).toHaveLength(1);'),
       ok('expect(spy.notifiedOrders[0].id).toBe(orderId);'),
     ].join('\n'),
-    rule: 'Usa Fake (InMemory) para la mayoria de tests de use case. Usa Spy cuando necesitas verificar que se llamo a un puerto con datos concretos. Evita Mock frameworks — acoplan el test a la implementacion.',
+    rule: 'Usa Fake (InMemory) para la mayoría de tests de use case. Usa Spy cuándo necesitas verificar que se llamo a un puerto con datos concretos. Evita Mock frameworks — acoplan el test a la implementación.',
   },
   {
     id: 'contract',
@@ -118,7 +118,7 @@ const tabs = [
       `  }`,
       `}`,
       '',
-      cm('// Test del Fake — rapidisimo'),
+      cm('// Test del Fake — rapidísimo'),
       `${kw('class')} ${tp('InMemoryRepositoryTest')} ${kw('extends')} ${tp('OrderRepositoryContract')} {`,
       `  ${fn('createSut')}() { ${kw('return')} ${kw('new')} ${tp('InMemoryOrderRepository')}(); }`,
       `}`,
@@ -128,13 +128,13 @@ const tabs = [
       `  ${fn('createSut')}() { ${kw('return')} ${kw('new')} ${tp('PgOrderRepository')}(${nm('testDb')}); }`,
       `}`,
     ].join('\n'),
-    rule: 'Si el InMemoryRepository pasa los contract tests y el PgRepository tambien los pasa, cualquier use case que funcione con uno funcionara con el otro. Sin sorpresas en produccion.',
+    rule: 'Si el InMemoryRepository pasa los contract tests y el PgRepository también los pasa, cualquier use case que funcióne con uno funcionara con el otro. Sin sorpresas en producción.',
   },
   {
     id: 'fitness',
     title: 'Fitness Functions',
     badge: 'Regla de dependencia',
-    description: 'Tests automatizados que verifican que la arquitectura no se esta degradando. Detectan violaciones de la regla de dependencia antes de que lleguen a main.',
+    description: 'Tests automatizados que verifican que la arquitectura no se está degradando. Detectan violaciones de la regla de dependencia antes de que lleguen a main.',
     code: [
       cm('// dependency-cruiser — .dependency-cruiser.js'),
       `${kw('module')}.${nm('exports')} = {`,
@@ -179,7 +179,7 @@ const tabs = [
     <span class="text-xs font-mono text-sky-400 uppercase tracking-widest">Testing</span>
     <h2 class="text-3xl font-bold text-white mt-3 mb-4">Estrategia de tests en hexagonal</h2>
     <p class="text-slate-400 max-w-2xl mx-auto">
-      La arquitectura hexagonal hace que testear sea natural. Los puertos son los puntos de sustitucion.
+      La arquitectura hexagonal hace que testear sea natural. Los puertos son los puntos de sustitución.
       El dominio se testa sin infraestructura. Los adaptadores se validan con contratos.
     </p>
   </div>

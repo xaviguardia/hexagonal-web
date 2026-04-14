@@ -13,7 +13,7 @@ const patterns = [
     id: 'value-object',
     title: 'Value Object',
     badge: 'vs Primitive Obsession',
-    description: 'Encapsular un primitivo en una clase con validacion y semantica propia. Un email no es un string: tiene formato, se puede comparar, y nunca puede ser invalido si existe.',
+    description: 'Encapsular un primitivo en una clase con validación y semántica propia. Un email no es un string: tiene formato, se puede comparar, y nunca puede ser inválido si existe.',
     problem: [
       er('// Primitive Obsession: string por todas partes'),
       `${kw('function')} ${fn('createOrder')}(`,
@@ -21,7 +21,7 @@ const patterns = [
       er(`  ${nm('email')}: ${tp('string')},    // puede ser "no-es-un-email"`),
       er(`  ${nm('price')}: ${tp('number')},     // puede ser -50 o NaN`),
       er(`  ${nm('currency')}: ${tp('string')}   // puede ser "PESETAS"`),
-      `) { ${cm('/* sin validacion en punto de entrada */')} }`,
+      `) { ${cm('/* sin validación en punto de entrada */')} }`,
       '',
       er('// El mismo string pasa por 10 capas sin ser validado'),
       er('// No hay forma de distinguir customerId de productId'),
@@ -34,7 +34,7 @@ const patterns = [
       '',
       `  ${kw('static')} ${fn('create')}(${nm('raw')}: ${tp('string')}): ${tp('Email')} {`,
       `    ${kw('if')} (!/${st('^[^@]+@[^@]+$/')}.${fn('test')}(${nm('raw')}))`,
-      `      ${kw('throw new')} ${tp('Error')}(${st('`Email invalido: ${raw}`')});`,
+      `      ${kw('throw new')} ${tp('Error')}(${st('`Email inválido: ${raw}`')});`,
       `    ${kw('return')} ${kw('new')} ${tp('Email')}(${nm('raw')});`,
       `  }`,
       '',
@@ -62,9 +62,9 @@ const patterns = [
     id: 'aggregate',
     title: 'Aggregate Root',
     badge: 'Frontera de consistencia',
-    description: 'Define que entidades forman una unidad de consistencia y que la raiz es el unico punto de acceso externo. El repositorio solo persiste y recupera agregados completos.',
+    description: 'Define que entidades forman una unidad de consistencia y que la raíz es el único punto de acceso externo. El repositorio solo persiste y recupera agregados completos.',
     problem: [
-      er('// Sin Aggregate Root: modificacion directa de entidades internas'),
+      er('// Sin Aggregate Root: modificación directa de entidades internas'),
       '',
       `${kw('const')} ${nm('order')} = ${kw('await')} ${nm('orderRepo')}.${fn('findById')}(${nm('id')});`,
       er('// Modificar OrderItem directamente, saltando las reglas de Order'),
@@ -72,7 +72,7 @@ const patterns = [
       er('// La Order no sabe que cambio. Invariantes violados.'),
       er('// order.total no se recalcula. Inconsistencia.'),
       '',
-      cm('// Tambien: repositorios para entidades internas'),
+      cm('// También: repositorios para entidades internas'),
       er('const item = await orderItemRepo.findById(itemId); // INCORRECTO'),
     ].join('\n'),
     solution: [
@@ -106,10 +106,10 @@ const patterns = [
   {
     id: 'domain-events',
     title: 'Domain Events',
-    badge: 'Que paso en el dominio',
-    description: 'Las entidades emiten eventos que describen algo que ocurrio. El use case los recoge tras el save y los despacha. Base del Outbox Pattern y de la comunicacion entre bounded contexts.',
+    badge: 'Qué pasó en el dominio',
+    description: 'Las entidades emiten eventos que describen algo que ocurrió. El use case los recoge tras el save y los despacha. Base del Outbox Pattern y de la comunicación entre bounded contexts.',
     problem: [
-      er('// Sin Domain Events: el use case sabe demasiado'),
+      er('// Sin Domain Events: el use case sabe demasíado'),
       '',
       `${kw('class')} ${tp('ConfirmOrderService')} {`,
       `  ${kw('async')} ${fn('execute')}(${nm('orderId')}: ${tp('string')}) {`,
@@ -125,7 +125,7 @@ const patterns = [
       `}`,
     ].join('\n'),
     solution: [
-      ok('// Con Domain Events: el dominio declara que paso'),
+      ok('// Con Domain Events: el dominio declara qué pasó'),
       '',
       cm('// domain/events/OrderConfirmedEvent.ts'),
       `${kw('class')} ${tp('OrderConfirmedEvent')} {`,
@@ -148,19 +148,19 @@ const patterns = [
       ok('  await this.eventBus.publishAll(order.pullDomainEvents());'),
       `}`,
       '',
-      cm('// Handlers suscritos al evento reaccionan de forma independiente'),
+      cm('// Handlers suscritos al evento reacciónan de forma independiente'),
       `${kw('on')}(${tp('OrderConfirmedEvent')}) => ${nm('emailService')}.${fn('sendConfirmation')}()`,
       `${kw('on')}(${tp('OrderConfirmedEvent')}) => ${nm('stockService')}.${fn('reserve')}()`,
     ].join('\n'),
-    rule: 'Los eventos describen algo que YA ocurrio (pasado). Cada handler es independiente: se puede anadir uno nuevo sin tocar el use case ni el dominio.',
+    rule: 'Los eventos describen algo que YA ocurrió (pasado). Cada handler es independiente: se puede añadir uno nuevo sin tocar el use case ni el dominio.',
   },
   {
     id: 'factory',
     title: 'Factory',
     badge: 'Creacion compleja',
-    description: 'Cuando crear un agregado requiere logica que supera un simple constructor. Valida invariantes de creacion, puede resolver dependencias y mantiene la entidad en estado valido desde el primer momento.',
+    description: 'Cuando crear un agregado requiere lógica que supera un simple constructor. Valida invariantes de creación, puede resolver dependencias y mantiene la entidad en estado válido desde el primer momento.',
     problem: [
-      er('// Creacion compleja dispersa: cada caller repite la logica'),
+      er('// Creacion compleja dispersa: cada caller repite la lógica'),
       '',
       `${cm('// En el controller:')}`,
       `${kw('const')} ${nm('order')} = ${kw('new')} ${tp('Order')}();`,
@@ -168,11 +168,11 @@ const patterns = [
       `${nm('order')}.customerId = ${nm('cmd')}.customerId;`,
       `${nm('order')}.status = ${st('"draft"')};`,
       `${nm('order')}.createdAt = ${kw('new')} ${tp('Date')}();`,
-      er('// Logica de negocio en la capa de infraestructura'),
-      er('// Si cambia la creacion, hay que buscar todos los sitios'),
+      er('// Lógica de negocio en la capa de infraestructura'),
+      er('// Si cambia la creación, hay que buscar todos los sitios'),
       '',
       `${cm('// En el test:')}`,
-      `${kw('const')} ${nm('order')} = ${kw('new')} ${tp('Order')}(); ${cm('// incompleto, invalido')}`,
+      `${kw('const')} ${nm('order')} = ${kw('new')} ${tp('Order')}(); ${cm('// incompleto, inválido')}`,
     ].join('\n'),
     solution: [
       ok('// Factory Method en la propia entidad'),
@@ -185,7 +185,7 @@ const patterns = [
       `    ${kw('readonly')} ${nm('createdAt')}: ${tp('Date')},`,
       `  ) {}`,
       '',
-      ok('  // Factory Method: unico punto de creacion'),
+      ok('  // Factory Method: único punto de creación'),
       `  ${kw('static')} ${fn('create')}(${nm('id')}: ${tp('OrderId')}, ${nm('customerId')}: ${tp('CustomerId')}): ${tp('Order')} {`,
       `    ${kw('if')} (!${nm('customerId')}) ${kw('throw new')} ${tp('Error')}(${st('"CustomerId requerido"')});`,
       `    ${kw('const')} ${nm('order')} = ${kw('new')} ${tp('Order')}(${nm('id')}, ${nm('customerId')}, ${st('"draft"')}, ${kw('new')} ${tp('Date')}());`,
@@ -204,22 +204,22 @@ const patterns = [
   {
     id: 'domain-service-pattern',
     title: 'Domain Service',
-    badge: 'Logica entre entidades',
-    description: 'Logica de negocio pura que no pertenece a ninguna entidad concreta porque involucra a varias. Vive en el dominio, no tiene estado, y no depende de infraestructura.',
+    badge: 'Lógica entre entidades',
+    description: 'Lógica de negocio pura que no pertenece a ninguna entidad concreta porque involucra a varias. Vive en el dominio, no tiene estado, y no depende de infraestructura.',
     problem: [
-      er('// Logica de pricing metida en Order (viola SRP)'),
-      cm('// Order.ts supera 200 lineas, linter se queja'),
+      er('// Lógica de pricing metida en Order (viola SRP)'),
+      cm('// Order.ts supera 200 líneas, linter se queja'),
       '',
       `${kw('class')} ${tp('Order')} {`,
       er('  calculateTotal(customer: Customer, rules: PricingRules) {'),
-      er('    // 50 lineas que involucran Customer.tier,'),
+      er('    // 50 líneas que involucran Customer.tier,'),
       er('    // PricingRules.discounts, Tax.rates...'),
-      er('    // Order no deberia conocer PricingRules'),
+      er('    // Order no debería conocer PricingRules'),
       `  }`,
       `}`,
     ].join('\n'),
     solution: [
-      ok('// Domain Service: logica pura de negocio sin estado'),
+      ok('// Domain Service: lógica pura de negocio sin estado'),
       '',
       cm('// domain/services/OrderPricingService.ts'),
       `${kw('class')} ${tp('OrderPricingService')} {`,
@@ -244,7 +244,7 @@ const patterns = [
       `  ${fn('cancel')}()  { ${cm('/* solo cambia estado */')} }`,
       `}`,
     ].join('\n'),
-    rule: 'Si la logica necesita dos entidades, va en un Domain Service. Si la logica necesita infraestructura (BD, API), va en un Application Service o en un puerto de salida.',
+    rule: 'Si la lógica necesita dos entidades, va en un Domain Service. Si la lógica necesita infraestructura (BD, API), va en un Application Service o en un puerto de salida.',
   },
 ];
 ---
@@ -252,9 +252,9 @@ const patterns = [
 <section id="dominio" class="py-24 px-6 max-w-6xl mx-auto reveal">
   <div class="text-center mb-16">
     <span class="text-xs font-mono text-emerald-400 uppercase tracking-widest">Capa de Dominio</span>
-    <h2 class="text-3xl font-bold text-white mt-3 mb-4">Patrones tacticos de dominio</h2>
+    <h2 class="text-3xl font-bold text-white mt-3 mb-4">Patrónes tácticos de dominio</h2>
     <p class="text-slate-400 max-w-2xl mx-auto">
-      La capa de dominio es el corazon del sistema. Estos patrones mantienen las reglas de negocio
+      La capa de dominio es el corazón del sistema. Estos patrónes mantienen las reglas de negocio
       aisladas, expresivas y testeables sin necesidad de base de datos ni frameworks.
     </p>
   </div>
@@ -292,7 +292,7 @@ const patterns = [
         <div>
           <div class="flex items-center gap-2 mb-3">
             <span class="w-2 h-2 rounded-full bg-red-500"></span>
-            <span class="text-red-400 text-sm font-semibold uppercase tracking-wide">Sin el patron</span>
+            <span class="text-red-400 text-sm font-semibold uppercase tracking-wide">Sin el patrón</span>
           </div>
           <div class="bg-slate-950 rounded-xl border border-red-900/40 overflow-hidden">
             <div class="flex items-center gap-2 px-4 py-2 bg-slate-900 border-b border-red-900/40">

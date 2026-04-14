@@ -8,12 +8,12 @@ const rows = [
   { concept: 'Command / Query', layer: 'app', where: 'src/application/', example: 'CreateOrderCommand', note: 'DTO de entrada al Use Case' },
   { concept: 'Adaptador entrada', layer: 'infra', where: 'src/infrastructure/driving/', example: 'OrderController', note: 'HTTP, CLI, tests — llama a Use Cases' },
   { concept: 'Adaptador salida', layer: 'infra', where: 'src/infrastructure/driven/', example: 'InMemoryOrderRepository', note: 'BD, email, APIs — implementa puertos salida' },
-  { concept: 'Composition Root', layer: 'infra', where: 'src/main.ts', example: 'main.ts', note: 'Unico lugar que conecta todo' },
+  { concept: 'Composition Root', layer: 'infra', where: 'src/main.ts', example: 'main.ts', note: 'Único lugar que conecta todo' },
 ];
 
 const layerLabel: Record<string, string> = {
   domain: 'Dominio',
-  app:    'Aplicacion',
+  app:    'Aplicación',
   infra:  'Infraestructura',
 };
 const layerClass: Record<string, string> = {
@@ -33,7 +33,7 @@ const layerClass: Record<string, string> = {
         <tr class="border-b border-slate-700 bg-slate-900/60">
           <th class="text-left px-5 py-3 text-xs uppercase tracking-widest text-slate-500 font-semibold">Concepto</th>
           <th class="text-left px-5 py-3 text-xs uppercase tracking-widest text-slate-500 font-semibold">Capa</th>
-          <th class="text-left px-5 py-3 text-xs uppercase tracking-widest text-slate-500 font-semibold">Ubicacion</th>
+          <th class="text-left px-5 py-3 text-xs uppercase tracking-widest text-slate-500 font-semibold">Ubicación</th>
           <th class="text-left px-5 py-3 text-xs uppercase tracking-widest text-slate-500 font-semibold">Ejemplo</th>
           <th class="text-left px-5 py-3 text-xs uppercase tracking-widest text-slate-500 font-semibold">Nota</th>
         </tr>

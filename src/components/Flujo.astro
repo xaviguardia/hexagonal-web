@@ -13,34 +13,34 @@ const steps = [
     title: 'El adaptador llama al puerto de entrada',
     desc: 'OrderController llama a',
     code: 'createOrderUseCase.execute(command)',
-    desc2: '. Solo conoce la interfaz, no la implementacion.',
-    layerBadge: 'Infraestructura → Aplicacion',
+    desc2: '. Solo conoce la interfaz, no la implementación.',
+    layerBadge: 'Infraestructura → Aplicación',
   },
   {
-    num: 3, layer: 'app', label: 'Aplicacion',
+    num: 3, layer: 'app', label: 'Aplicación',
     title: 'Use Case orquesta el flujo',
-    desc: 'CreateOrderService recibe el command. Delega la creacion al dominio con',
+    desc: 'CreateOrderService recibe el command. Delega la creación al dominio con',
     code: 'Order.create(...)',
-    layerBadge: 'Aplicacion',
+    layerBadge: 'Aplicación',
   },
   {
     num: 4, layer: 'domain', label: 'Dominio',
-    title: 'El dominio ejecuta la logica de negocio',
+    title: 'El dominio ejecuta la lógica de negocio',
     desc: 'Order.create valida: debe haber items, cantidades positivas, etc. Si algo falla, lanza un error. Si no, crea la entidad.',
     code: '',
     layerBadge: 'Dominio',
   },
   {
-    num: 5, layer: 'app', label: 'Aplicacion',
+    num: 5, layer: 'app', label: 'Aplicación',
     title: 'El Use Case persiste y notifica',
     desc: 'Llama a',
     code: 'orderRepository.save(order)',
-    desc2: ' y luego a notificationPort. Ambos son puertos — no sabe quien los implementa.',
-    layerBadge: 'Aplicacion',
+    desc2: ' y luego a notificationPort. Ambos son puertos — no sabe quién los implementa.',
+    layerBadge: 'Aplicación',
   },
   {
     num: 6, layer: 'infra', label: 'Infraestructura',
-    title: 'Los adaptadores de salida actuan',
+    title: 'Los adaptadores de salida actúan',
     desc: 'InMemoryOrderRepository guarda el pedido. ConsoleNotificationAdapter imprime el log.',
     code: '',
     layerBadge: 'Infraestructura',
@@ -50,7 +50,7 @@ const steps = [
     title: 'El adaptador devuelve la respuesta HTTP',
     desc: 'OrderController recibe la Order y devuelve',
     code: 'res.status(201).json(order)',
-    desc2: '. El dominio nunca supo que habia un HTTP de por medio.',
+    desc2: '. El dominio nunca supo que había un HTTP de por medio.',
     layerBadge: 'Infraestructura',
   },
 ];
@@ -63,8 +63,8 @@ const layerColors: Record<string, string> = {
 ---
 
 <section id="flujo" class="max-w-5xl mx-auto px-6 py-24 reveal">
-  <h2 class="text-3xl font-extrabold mb-2 tracking-tight">Flujo de una Peticion</h2>
-  <p class="text-slate-400 mb-10 text-lg">Sigue el recorrido de POST /api/orders a traves de todas las capas.</p>
+  <h2 class="text-3xl font-extrabold mb-2 tracking-tight">Flujo de una Petición</h2>
+  <p class="text-slate-400 mb-10 text-lg">Sigue el recorrido de POST /api/orders a través de todas las capas.</p>
 
   <div class="bg-slate-800/40 border border-slate-700 rounded-xl p-6 md:p-8">
 

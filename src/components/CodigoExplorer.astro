@@ -24,7 +24,7 @@ const groups: Group[] = [
         path: 'src/domain/model/Order.ts',
         concept: { label: 'Capa de Dominio', href: '#dominio' },
         code: [
-          cm('// Entidad raiz del agregado. Sin imports externos.'),
+          cm('// Entidad raíz del agregado. Sin imports externos.'),
           `${kw('import')} { ${tp('DomainEvent')} } ${kw('from')} ${st("'../events/DomainEvent'")};`,
           `${kw('import')} { ${tp('OrderId')} }    ${kw('from')} ${st("'../value-objects/OrderId'")};`,
           '',
@@ -105,7 +105,7 @@ const groups: Group[] = [
         path: 'src/domain/errors/DomainError.ts',
         concept: { label: 'Dominio: errores', href: '#dominio' },
         code: [
-          cm('// Error semantico del dominio — diferente a un error tecnico'),
+          cm('// Error semántico del dominio — diferente a un error técnico'),
           `${kw('export class')} ${tp('DomainError')} ${kw('extends')} ${tp('Error')} {`,
           `  ${kw('constructor')}(message${op(':')} ${tp('string')}) {`,
           `    ${kw('super')}(message);`,
@@ -133,7 +133,7 @@ const groups: Group[] = [
         path: 'src/domain/events/OrderEvents.ts',
         concept: { label: 'Dominio: Domain Events', href: '#dominio' },
         code: [
-          cm('// Domain Event — algo que ocurrio en el negocio (pasado, inmutable)'),
+          cm('// Domain Event — algo que ocurrió en el negocio (pasado, inmutable)'),
           `${kw('export interface')} ${tp('DomainEvent')} {`,
           `  ${kw('readonly')} eventName${op(':')}  ${tp('string')};`,
           `  ${kw('readonly')} occurredOn${op(':')} ${tp('Date')};`,
@@ -153,7 +153,7 @@ const groups: Group[] = [
           `  ${fn('publish')}(events${op(':')} ${tp('DomainEvent')}[])${op(':')} ${tp('Promise')}&lt;${kw('void')}&gt;;`,
           `}`,
           '',
-          cm('// Patron en el use case: guardar + publicar atomicamente'),
+          cm('// Patrón en el use case: guardar + publicar atómicamente'),
           `${kw('const')} events = order.${fn('pullDomainEvents')}();`,
           `${kw('await')} ${kw('this')}.repo.${fn('save')}(order);`,
           `${kw('await')} ${kw('this')}.eventBus.${fn('publish')}(events);`,
@@ -189,7 +189,7 @@ const groups: Group[] = [
   },
   {
     id: 'aplicacion',
-    label: 'Aplicacion',
+    label: 'Aplicación',
     colorClass: 'text-blue-400',
     dotClass: 'bg-blue-400',
     files: [
@@ -207,7 +207,7 @@ const groups: Group[] = [
           `  ) {}`,
           '',
           `  ${kw('async')} ${fn('execute')}(cmd${op(':')} ${tp('CreateOrderCommand')})${op(':')} ${tp('Promise')}&lt;${tp('OrderId')}&gt; {`,
-          `    ${cm('// 1. Logica de negocio en el dominio')}`,
+          `    ${cm('// 1. Lógica de negocio en el dominio')}`,
           `    ${kw('const')} id    = ${tp('OrderId')}.${fn('generate')}();`,
           `    ${kw('const')} order = ${tp('Order')}.${fn('create')}(id, cmd.customerId, cmd.items);`,
           '',
@@ -228,7 +228,7 @@ const groups: Group[] = [
         path: 'src/application/command-bus/CommandBus.ts',
         concept: { label: 'Use Cases: Command Bus', href: '#use-cases' },
         code: [
-          cm('// Command Bus con cadena de middlewares (logging, validacion, tracing)'),
+          cm('// Command Bus con cadena de middlewares (logging, validación, tracing)'),
           `${kw('type')} ${tp('Handler')}&lt;T, R&gt; = (cmd${op(':')} T) => ${tp('Promise')}&lt;R&gt;;`,
           `${kw('type')} ${tp('Middleware')}      = (cmd${op(':')} ${kw('unknown')}, next${op(':')} () => ${tp('Promise')}&lt;${kw('unknown')}&gt;) => ${tp('Promise')}&lt;${kw('unknown')}&gt;;`,
           '',
@@ -286,7 +286,7 @@ const groups: Group[] = [
           `}`,
           '',
           cm('// Write side: Order (dominio rico) | Read side: OrderReadModel (DTO plano)'),
-          cm('// Cada lado puede tener su propia base de datos o proyeccion'),
+          cm('// Cada lado puede tener su propia base de datos o proyección'),
         ].join('\n'),
       },
     ],
@@ -462,7 +462,7 @@ const groups: Group[] = [
         path: 'src/domain/ports/output/ProcessPort.ts',
         concept: { label: 'BPMN en Hexagonal', href: '#bpmn' },
         code: [
-          cm('// Puerto de salida para orquestacion de procesos'),
+          cm('// Puerto de salida para orquestación de procesos'),
           cm('// El dominio ve solo esta interfaz — no sabe si hay BPMN'),
           `${kw('export interface')} ${tp('ProcessContext')} {`,
           `  [key${op(':')} ${tp('string')}]${op(':')} ${kw('unknown')};`,
@@ -524,7 +524,7 @@ const groups: Group[] = [
         path: 'src/domain/metadata/FieldMeta.ts',
         concept: { label: 'Metadata-Driven UI', href: '#frontend-hexagonal' },
         code: [
-          cm('// El backend describe como debe renderizarse cada campo'),
+          cm('// El backend describe cómo debe renderizarse cada campo'),
           `${kw('export type')} ${tp('FieldType')} =`,
           `  | ${st('"text"')} | ${st('"number"')} | ${st('"date"')}`,
           `  | ${st('"select"')} | ${st('"lookup"')} | ${st('"grid"')} | ${st('"multiselect"')};`,
@@ -544,9 +544,9 @@ const groups: Group[] = [
           `  fields${op(':')} ${tp('FieldMeta')}[];`,
           `}`,
           '',
-          cm('// FK con lookup → boton de busqueda'),
+          cm('// FK con lookup → botón de búsqueda'),
           cm('// tipo grid    → tabla editable inline'),
-          cm('// required     → validacion frontend + backend'),
+          cm('// required     → validación frontend + backend'),
         ].join('\n'),
       },
       {
@@ -604,7 +604,7 @@ const groups: Group[] = [
           `}`,
           '',
           cm('// OtelTracingAdapter implementa TracingPort con @opentelemetry/api'),
-          cm('// ConsoleTracingAdapter para tests (no llama a ningun exportador)'),
+          cm('// ConsoleTracingAdapter para tests (no llama a ningún exportador)'),
         ].join('\n'),
       },
       {
@@ -613,7 +613,7 @@ const groups: Group[] = [
         path: 'src/application/decorators/TracedUseCase.ts',
         concept: { label: 'Observabilidad: OTEL', href: '#observabilidad' },
         code: [
-          cm('// Decorator funcional: cualquier use case + tracing automatico'),
+          cm('// Decorator funcional: cualquier use case + tracing automático'),
           `${kw('export function')} ${fn('withTracing')}&lt;I, O&gt;(`,
           `  uc${op(':')}       { ${fn('execute')}(i${op(':')} I)${op(':')} ${tp('Promise')}&lt;O&gt; },`,
           `  tracing${op(':')} ${tp('TracingPort')},`,
@@ -758,7 +758,7 @@ const groups: Group[] = [
           `  ) {}`,
           '',
           `  ${kw('async')} ${fn('process')}(raw${op(':')} ${tp('BronzeEvent')})${op(':')} ${tp('Promise')}&lt;${tp('CleanedEvent')} | ${kw('null')}&gt; {`,
-          `    ${cm('// 1. Deduplicacion por eventId')}`,
+          `    ${cm('// 1. Deduplicación por eventId')}`,
           `    ${kw('if')} (${kw('await')} ${kw('this')}.dedup.${fn('exists')}(raw.eventId)) ${kw('return null')};`,
           '',
           `    ${cm('// 2. Enriquecimiento — resolver IDs a nombres')}`,
@@ -784,7 +784,7 @@ const groups: Group[] = [
         path: 'src/analytics/promotion/PromotionStrategy.ts',
         concept: { label: 'Data Lake: Gates', href: '#datalake' },
         code: [
-          cm('// Puerto generico — cada gate implementa sus reglas de promocion'),
+          cm('// Puerto genérico — cada gate implementa sus reglas de promoción'),
           `${kw('export interface')} ${tp('PromotionStrategy')}&lt;TIn, TOut&gt; {`,
           `  ${fn('evaluate')}(record${op(':')} TIn)${op(':')} ${tp('Promise')}&lt;${tp('PromotionResult')}&lt;TOut&gt;&gt;;`,
           `}`,
@@ -811,7 +811,7 @@ const groups: Group[] = [
         path: 'src/analytics/copper/CopperRetryJob.ts',
         concept: { label: 'Data Lake: Copper', href: '#datalake' },
         code: [
-          cm('// Batch job — reintenta promocion de registros parked en Copper'),
+          cm('// Batch job — reintenta promoción de registros parked en Copper'),
           `${kw('export class')} ${tp('CopperRetryJob')} {`,
           `  ${kw('constructor')}(`,
           `    ${kw('private readonly')} store${op(':')}    ${tp('CopperStore')},`,
@@ -922,15 +922,15 @@ const allFiles = groups.flatMap(g => g.files.map(f => ({ ...f, groupId: g.id }))
 ---
 
 <section id="codigo" class="max-w-7xl mx-auto px-6 py-24 reveal">
-  <h2 class="text-3xl font-extrabold mb-2 tracking-tight">Explorador de Codigo</h2>
+  <h2 class="text-3xl font-extrabold mb-2 tracking-tight">Explorador de Código</h2>
   <p class="text-slate-400 mb-8 text-lg">
-    Cada archivo esta vinculado al concepto que ilustra. Selecciona un archivo en el arbol para ver su rol dentro de la arquitectura.
+    Cada archivo está vinculado al concepto que ilustra. Selecciona un archivo en el árbol para ver su rol dentro de la arquitectura.
   </p>
 
-  <div class="flex flex-col lg:flex-row bg-slate-900 border border-slate-700 rounded-xl overflow-hidden" style="min-height: 560px;">
+  <div class="flex flex-col md:flex-row bg-slate-900 border border-slate-700 rounded-xl overflow-hidden" style="min-height: 560px;">
 
     <!-- Left: file tree -->
-    <div class="lg:w-60 xl:w-64 shrink-0 border-b lg:border-b-0 lg:border-r border-slate-700 bg-slate-950/60 overflow-y-auto">
+    <div class="md:w-52 lg:w-60 xl:w-64 shrink-0 border-b md:border-b-0 md:border-r border-slate-700 bg-slate-950/60 overflow-y-auto">
       <div class="px-4 py-3 border-b border-slate-700/50">
         <span class="text-xs font-semibold text-slate-500 uppercase tracking-widest">Archivos</span>
       </div>

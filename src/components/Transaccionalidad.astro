@@ -12,12 +12,12 @@ const patterns = [
   {
     id: 'unit-of-work',
     title: 'Unit of Work',
-    badge: 'Transaccion local',
+    badge: 'Transacción local',
     scope: 'Una base de datos',
-    description: 'Cuando un use case debe guardar multiples agregados de forma atomica. Si falla uno, todo se revierte. El Unit of Work agrupa las operaciones en una sola transaccion sin que el dominio sepa nada de commits.',
+    description: 'Cuando un use case debe guardar múltiples agregados de forma atómica. Si falla uno, todo se revierte. El Unit of Work agrupa las operaciones en una sola transacción sin que el dominio sepa nada de commits.',
     problem: [
       er('// PROBLEMA: dos saves independientes'),
-      cm('// Si el segundo falla, el primero ya se ejecuto'),
+      cm('// Si el segundo falla, el primero ya se ejecutó'),
       '',
       `${kw('class')} ${tp('ConfirmOrderService')} {`,
       `  ${kw('async')} ${fn('execute')}(${nm('orderId')}: ${tp('string')}) {`,
@@ -49,7 +49,7 @@ const patterns = [
       `      ${nm('order')}.${fn('confirm')}();`,
       `      ${kw('await')} ${kw('this')}.${nm('uow')}.${nm('orders')}.${fn('save')}(${nm('order')});`,
       `      ${kw('await')} ${kw('this')}.${nm('uow')}.${nm('stock')}.${fn('reduce')}(${nm('order')}.items);`,
-      ok('      await this.uow.commit(); // atomico'),
+      ok('      await this.uow.commit(); // atómico'),
       `    } ${kw('catch')} (${nm('e')}) {`,
       `      ${kw('await')} ${kw('this')}.${nm('uow')}.${fn('rollback')}();`,
       `      ${kw('throw')} ${nm('e')};`,
@@ -57,7 +57,7 @@ const patterns = [
       `  }`,
       `}`,
     ].join('\n'),
-    insight: 'UnitOfWork es un puerto de salida mas. El adaptador (PgUnitOfWork) maneja la transaccion real con BEGIN/COMMIT/ROLLBACK. En tests, el adaptador en memoria simplemente ejecuta todo sin transaccion real.',
+    insight: 'UnitOfWork es un puerto de salida más. El adaptador (PgUnitOfWork) maneja la transacción real con BEGIN/COMMIT/ROLLBACK. En tests, el adaptador en memoria simplemente ejecuta todo sin transacción real.',
     diagram: [
       { label: 'Application Service', color: 'bg-amber-500/20 border-amber-500/40 text-amber-300' },
       { label: 'Unit of Work (puerto)', color: 'bg-blue-500/20 border-blue-500/40 text-blue-300' },
@@ -69,18 +69,18 @@ const patterns = [
   {
     id: 'outbox',
     title: 'Outbox Pattern',
-    badge: 'Eventos + BD atomicos',
+    badge: 'Eventos + BD atómicos',
     scope: 'BD + Message Broker',
-    description: 'Guardar la orden en BD y publicar el evento en Kafka/RabbitMQ en la misma operacion atomica. El Outbox evita el "doble write" donde la orden se guarda pero el evento no se publica (o viceversa).',
+    description: 'Guardar la orden en BD y publicar el evento en Kafka/RabbitMQ en la misma operación atómica. El Outbox evita el "doble write" donde la orden se guarda pero el evento no se publica (o viceversa).',
     problem: [
-      er('// PROBLEMA: doble write no atomico'),
-      cm('// Si falla la publicacion del evento: inconsistencia'),
+      er('// PROBLEMA: doble write no atómico'),
+      cm('// Si falla la publicación del evento: inconsistencia'),
       '',
       `${kw('class')} ${tp('CreateOrderService')} {`,
       `  ${kw('async')} ${fn('execute')}(${nm('cmd')}) {`,
       `    ${kw('const')} ${nm('order')} = ${tp('Order')}.${fn('create')}(${nm('cmd')});`,
       `    ${kw('await')} ${kw('this')}.${nm('repo')}.${fn('save')}(${nm('order')});`,
-      er('    // La BD esta OK pero Kafka puede fallar aqui'),
+      er('    // La BD está OK pero Kafka puede fallar aqui'),
       `    ${kw('await')} ${kw('this')}.${nm('eventBus')}.${fn('publish')}(${kw('new')} ${tp('OrderCreatedEvent')}(${nm('order')}));`,
       er('    // Resultado: orden guardada, evento perdido'),
       `  }`,
@@ -89,14 +89,14 @@ const patterns = [
     solution: [
       ok('// SOLUCION: Outbox — evento guardado en la misma BD'),
       '',
-      cm('// La orden y el evento se guardan en la misma transaccion'),
+      cm('// La orden y el evento se guardan en la misma transacción'),
       `${kw('class')} ${tp('CreateOrderService')} {`,
       `  ${kw('async')} ${fn('execute')}(${nm('cmd')}) {`,
       `    ${kw('const')} ${nm('order')} = ${tp('Order')}.${fn('create')}(${nm('cmd')});`,
       '',
       `    ${kw('await')} ${kw('this')}.${nm('uow')}.${fn('begin')}();`,
       `    ${kw('await')} ${kw('this')}.${nm('uow')}.${nm('orders')}.${fn('save')}(${nm('order')});`,
-      ok('    // Evento va a tabla "outbox", misma transaccion'),
+      ok('    // Evento va a tabla "outbox", misma transacción'),
       `    ${kw('await')} ${kw('this')}.${nm('uow')}.${nm('outbox')}.${fn('store')}({`,
       `      type: ${st('"OrderCreated"')}, payload: ${nm('order')}`,
       `    });`,
@@ -123,10 +123,10 @@ const patterns = [
     id: 'saga',
     title: 'Saga Pattern',
     badge: 'Transacciones distribuidas',
-    scope: 'Multiples servicios',
-    description: 'Cuando una operacion de negocio cruza varios microservicios. No existe transaccion ACID distribuida. La Saga coordina una secuencia de transacciones locales con compensaciones si algo falla.',
+    scope: 'Múltiples servicios',
+    description: 'Cuando una operación de negocio cruza varios microservicios. No existe transacción ACID distribuida. La Saga coordina una secuencia de transacciones locales con compensaciones si algo falla.',
     problem: [
-      er('// PROBLEMA: transaccion distribuida imposible'),
+      er('// PROBLEMA: transacción distribuida imposible'),
       cm('// Confirmar pedido requiere: OrderService + PaymentService + InventoryService'),
       '',
       er('// No existe BEGIN/COMMIT que abarque 3 bases de datos distintas'),
@@ -137,7 +137,7 @@ const patterns = [
       `    ${kw('await')} ${kw('this')}.${nm('orderService')}.${fn('confirm')}(${nm('orderId')});`,
       er('    await this.paymentService.charge(orderId); // puede fallar'),
       er('    await this.inventoryService.reserve(orderId); // o este'),
-      er('    // No hay forma de deshacer todo de forma atomica'),
+      er('    // No hay forma de deshacer todo de forma atómica'),
       `  }`,
       `}`,
     ].join('\n'),
@@ -156,11 +156,11 @@ const patterns = [
       `${cm('// 3. InventoryService escucha PaymentProcessed')}`,
       `${kw('on')}(${tp('PaymentProcessedEvent')}) => ${fn('reserve')}() => ${fn('emit')}(${kw('new')} ${tp('OrderReadyEvent')})`,
       '',
-      cm('// Compensacion: si Inventory falla'),
+      cm('// Compensación: si Inventory falla'),
       `${kw('on')}(${tp('InventoryFailedEvent')}) => ${nm('paymentService')}.${fn('refund')}()`,
       `                          => ${nm('orderService')}.${fn('cancel')}()`,
       '',
-      ok('// Cada servicio tiene transaccion local + Outbox Pattern'),
+      ok('// Cada servicio tiene transacción local + Outbox Pattern'),
       ok('// La consistencia es eventual, no inmediata'),
     ].join('\n'),
     insight: 'En hexagonal, los eventos de dominio son el mecanismo. Cada servicio expone puertos de entrada para sus comandos y puertos de salida para publicar eventos. La Saga es la coreografia entre esos puertos.',
@@ -177,11 +177,11 @@ const patterns = [
 
 <section id="transaccionalidad" class="py-24 px-6 max-w-6xl mx-auto reveal">
   <div class="text-center mb-16">
-    <span class="text-xs font-mono text-purple-400 uppercase tracking-widest">Transaccionalidad</span>
-    <h2 class="text-3xl font-bold text-white mt-3 mb-4">Patrones de consistencia</h2>
+    <span class="text-xs font-mono text-purple-400 uppercase tracking-widest">Transacciónalidad</span>
+    <h2 class="text-3xl font-bold text-white mt-3 mb-4">Patrónes de consistencia</h2>
     <p class="text-slate-400 max-w-2xl mx-auto">
-      La arquitectura hexagonal define puertos para la consistencia transaccional.
-      Segun el alcance de la operacion, el patron es diferente.
+      La arquitectura hexagonal define puertos para la consistencia transacciónal.
+      Según el alcance de la operación, el patrón es diferente.
     </p>
   </div>
 
@@ -234,7 +234,7 @@ const patterns = [
         <div>
           <div class="flex items-center gap-2 mb-3">
             <span class="w-2 h-2 rounded-full bg-red-500"></span>
-            <span class="text-red-400 text-sm font-semibold uppercase tracking-wide">Sin patron</span>
+            <span class="text-red-400 text-sm font-semibold uppercase tracking-wide">Sin patrón</span>
           </div>
           <div class="bg-slate-950 rounded-xl border border-red-900/40 overflow-hidden">
             <div class="flex items-center gap-2 px-4 py-2 bg-slate-900 border-b border-red-900/40">
@@ -276,7 +276,7 @@ const patterns = [
     <table class="w-full text-sm">
       <thead>
         <tr class="border-b border-slate-800">
-          <th class="text-left py-3 pr-6 text-slate-400 font-medium">Patron</th>
+          <th class="text-left py-3 pr-6 text-slate-400 font-medium">Patrón</th>
           <th class="text-left py-3 pr-6 text-slate-400 font-medium">Alcance</th>
           <th class="text-left py-3 pr-6 text-slate-400 font-medium">Consistencia</th>
           <th class="text-left py-3 text-slate-400 font-medium">Complejidad</th>
@@ -297,8 +297,8 @@ const patterns = [
         </tr>
         <tr>
           <td class="py-3 pr-6 text-blue-400 font-mono">Saga</td>
-          <td class="py-3 pr-6 text-slate-300">Multiples servicios</td>
-          <td class="py-3 pr-6 text-orange-400">Eventual + compensacion</td>
+          <td class="py-3 pr-6 text-slate-300">Múltiples servicios</td>
+          <td class="py-3 pr-6 text-orange-400">Eventual + compensación</td>
           <td class="py-3 text-slate-400">Alta</td>
         </tr>
       </tbody>

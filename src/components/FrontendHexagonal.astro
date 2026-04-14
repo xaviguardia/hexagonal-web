@@ -11,7 +11,7 @@ const ok = (s) => `<span class="text-green-400">${s}</span>`;
 const tabs = [
   {
     id: 'fe-hexagon',
-    label: 'Hexagono Frontend',
+    label: 'Hexágono Frontend',
   },
   {
     id: 'validaciones',
@@ -25,7 +25,7 @@ const tabs = [
 
 const hookCode = [
   cm('// PRIMARY ADAPTER — el hook conecta React con el use case'),
-  cm('// No contiene logica, solo ciclo de vida'),
+  cm('// No contiene lógica, solo ciclo de vida'),
   `${kw('function')} ${fn('usePedidoForm')}(${nm('id')}) {`,
   `  ${kw('const')} [${nm('state')}, ${nm('setState')}] = ${fn('useState')}(${kw('null')});`,
   `  ${kw('const')} [${nm('errors')}, ${nm('setErrors')}] = ${fn('useState')}({});`,
@@ -48,7 +48,7 @@ const hookCode = [
   `  ${kw('return')} { ${nm('state')}, ${nm('errors')}, ${fn('save')} };`,
   `}`,
   ``,
-  cm('// COMPONENTE — solo renderiza, sin logica'),
+  cm('// COMPONENTE — solo renderiza, sin lógica'),
   `${kw('function')} ${fn('PedidoEditPage')}({ ${nm('id')} }) {`,
   `  ${kw('const')} { ${nm('state')}, ${nm('errors')}, ${fn('save')} } = ${fn('usePedidoForm')}(${nm('id')});`,
   `  ${kw('if')} (!${nm('state')}) ${kw('return')} <${tp('Spinner')} />;`,
@@ -89,7 +89,7 @@ const useCaseCode = [
 ].join('\n');
 
 const validacionesCode = [
-  cm('// FRONTEND: validacion de formato/UX solamente'),
+  cm('// FRONTEND: validación de formato/UX solamente'),
   cm('// Zod schema compartido con el backend (paquete contracts/)'),
   `${kw('const')} ${nm('PedidoSchema')} = ${nm('z')}.${fn('object')}({`,
   `  ${nm('clienteId')}: ${nm('z')}.${fn('string')}().${fn('uuid')}(),`,
@@ -126,7 +126,7 @@ const validacionesCode = [
 
 const metadataCode = [
   cm('// Use Case como Form Configuration Provider'),
-  cm('// Decide que control usar segun el contexto'),
+  cm('// Decide qué control usar según el contexto'),
   `${kw('class')} ${tp('GetPedidoSchemaUseCase')} {`,
   `  ${fn('execute')}(${nm('context')}: ${st("'alta'")} | ${st("'edicion'")}): ${tp('FormSchema')} {`,
   `    ${kw('return')} {`,
@@ -142,7 +142,7 @@ const metadataCode = [
   `        },`,
   `        {`,
   `          ${nm('name')}: ${st("'lineas'")}, ${nm('type')}: ${st("'grid'")},`,
-  `          ${nm('label')}: ${st("'Lineas de pedido'")},`,
+  `          ${nm('label')}: ${st("'Líneas de pedido'")},`,
   `          ${nm('relation')}: {`,
   `            ${nm('columns')}: [`,
   `              { ${nm('name')}: ${st("'articuloId'")}, ${nm('type')}: ${st("'lookup'")}, ${nm('relation')}: { ${nm('entity')}: ${st("'articulos'")} } },`,
@@ -161,7 +161,7 @@ const metadataCode = [
   `  }`,
   `}`,
   ``,
-  cm('// FRONTEND: renderer generico, no hardcodea campos'),
+  cm('// FRONTEND: renderer genérico, no hardcodea campos'),
   `${kw('function')} ${fn('renderField')}(${nm('meta')}, ${nm('value')}) {`,
   `  ${kw('switch')} (${nm('meta')}.${nm('type')}) {`,
   `    ${kw('case')} ${st("'lookup'")}:      ${kw('return')} <${tp('LookupField')}     ${nm('meta')}={${nm('meta')}} ${nm('value')}={${nm('value')}} />;`,
@@ -175,10 +175,10 @@ const metadataCode = [
 
 <section id="frontend-hexagonal" class="py-20 px-6 max-w-6xl mx-auto reveal">
   <div class="text-center mb-12">
-    <span class="text-xs font-mono text-purple-400 uppercase tracking-widest">Aplicacion real</span>
+    <span class="text-xs font-mono text-purple-400 uppercase tracking-widest">Aplicación real</span>
     <h2 class="text-3xl font-bold text-white mt-2">Frontend Hexagonal</h2>
     <p class="text-slate-400 mt-3 max-w-2xl mx-auto">
-      El frontend tiene su propio hexagono. Los componentes son adapters primarios, los hooks son use cases, y fetch es un adapter secundario.
+      El frontend tiene su propio hexágono. Los componentes son adapters primarios, los hooks son use cases, y fetch es un adapter secundario.
     </p>
   </div>
 
@@ -194,7 +194,7 @@ const metadataCode = [
     ))}
   </div>
 
-  <!-- Tab: Hexagono Frontend -->
+  <!-- Tab: Hexágono Frontend -->
   <div id="fe-hexagon" class="fe-panel">
     <div class="grid lg:grid-cols-2 gap-8 items-start">
       <!-- Diagrama -->
@@ -202,7 +202,7 @@ const metadataCode = [
         <div class="rounded-lg border border-purple-500/30 bg-purple-500/5 p-4">
           <div class="text-xs font-mono text-purple-400 mb-2 uppercase">Primary Adapters (Driving)</div>
           <div class="text-sm text-slate-300">Componentes React/Vue/Angular</div>
-          <div class="text-xs text-slate-500 mt-1">Solo renderizan y dispatchen — sin logica</div>
+          <div class="text-xs text-slate-500 mt-1">Solo renderizan y dispatchen — sin lógica</div>
         </div>
         <div class="flex justify-center text-slate-600">↓ llaman a</div>
         <div class="rounded-lg border border-cyan-500/30 bg-cyan-500/5 p-4">
@@ -223,7 +223,7 @@ const metadataCode = [
           <div class="text-xs text-slate-500 mt-1">Intercambiables sin tocar use cases</div>
         </div>
       </div>
-      <!-- Codigo -->
+      <!-- Código -->
       <div>
         <div class="text-xs font-mono text-slate-500 mb-2">Hook como adapter + Use Case puro</div>
         <pre class="bg-slate-950 rounded-lg p-4 text-xs font-mono overflow-x-auto border border-slate-800"><code set:html={hookCode} /></pre>
@@ -256,35 +256,35 @@ const metadataCode = [
   <div id="validaciones" class="fe-panel hidden">
     <div class="grid lg:grid-cols-2 gap-8 items-start">
       <div class="space-y-4">
-        <h3 class="text-lg font-semibold text-white">Donde vive cada validacion</h3>
+        <h3 class="text-lg font-semibold text-white">Dónde vive cada validación</h3>
         <div class="space-y-3">
           <div class="p-4 rounded-lg bg-slate-800/50 border border-slate-700">
             <div class="flex items-center justify-between mb-1">
               <span class="text-sm font-semibold text-purple-300">Frontend (UX)</span>
               <span class="text-xs text-slate-500">Zod / HTML5</span>
             </div>
-            <p class="text-xs text-slate-400">Formato, campos requeridos, longitud maxima. Mejora experiencia pero NUNCA reemplaza backend.</p>
+            <p class="text-xs text-slate-400">Formato, campos requeridos, longitud máxima. Mejora experiencia pero NUNCA reemplaza backend.</p>
           </div>
           <div class="p-4 rounded-lg bg-slate-800/50 border border-slate-700">
             <div class="flex items-center justify-between mb-1">
-              <span class="text-sm font-semibold text-cyan-300">Use Case (Aplicacion)</span>
+              <span class="text-sm font-semibold text-cyan-300">Use Case (Aplicación)</span>
               <span class="text-xs text-slate-500">Precondiciones</span>
             </div>
-            <p class="text-xs text-slate-400">Permisos del usuario, existencia de entidades relacionadas, contexto de operacion.</p>
+            <p class="text-xs text-slate-400">Permisos del usuario, existencia de entidades relacionadas, contexto de operación.</p>
           </div>
           <div class="p-4 rounded-lg bg-slate-800/50 border border-emerald-500/30">
             <div class="flex items-center justify-between mb-1">
               <span class="text-sm font-semibold text-emerald-300">Dominio — fuente de verdad</span>
               <span class="text-xs text-emerald-600">UNICO punto</span>
             </div>
-            <p class="text-xs text-slate-400">Invariantes de negocio: "pedido sin lineas", "credito superado", "stock insuficiente". Solo aqui.</p>
+            <p class="text-xs text-slate-400">Invariantes de negocio: "pedido sin líneas", "crédito superado", "stock insuficiente". Solo aquí.</p>
           </div>
           <div class="p-4 rounded-lg bg-slate-800/50 border border-slate-700">
             <div class="flex items-center justify-between mb-1">
               <span class="text-sm font-semibold text-amber-300">DB Constraints</span>
               <span class="text-xs text-slate-500">Ultima defensa</span>
             </div>
-            <p class="text-xs text-slate-400">UNIQUE, NOT NULL, FK. No depender de esto — es el ultimo recurso.</p>
+            <p class="text-xs text-slate-400">UNIQUE, NOT NULL, FK. No depender de esto — es el último recurso.</p>
           </div>
         </div>
 
@@ -294,7 +294,7 @@ const metadataCode = [
         </div>
       </div>
       <div>
-        <div class="text-xs font-mono text-slate-500 mb-2">Patron completo de validaciones</div>
+        <div class="text-xs font-mono text-slate-500 mb-2">Patrón completo de validaciones</div>
         <pre class="bg-slate-950 rounded-lg p-4 text-xs font-mono overflow-x-auto border border-slate-800"><code set:html={validacionesCode} /></pre>
       </div>
     </div>
@@ -303,7 +303,7 @@ const metadataCode = [
       <table class="w-full text-sm">
         <thead>
           <tr class="border-b border-slate-700">
-            <th class="text-left py-2 px-3 text-slate-400 font-normal">Validacion</th>
+            <th class="text-left py-2 px-3 text-slate-400 font-normal">Validación</th>
             <th class="text-left py-2 px-3 text-slate-400 font-normal">Capa</th>
             <th class="text-left py-2 px-3 text-slate-400 font-normal">Ejemplo</th>
           </tr>
@@ -324,14 +324,14 @@ const metadataCode = [
     <div class="grid lg:grid-cols-2 gap-8 items-start">
       <div class="space-y-4">
         <h3 class="text-lg font-semibold text-white">FormSchema: el Use Case como configurador de formularios</h3>
-        <p class="text-slate-400 text-sm">En un ERP, el Use Case devuelve no solo datos sino tambien <strong class="text-white">como editarlos</strong>. El frontend es un renderer generico que interpreta el schema.</p>
+        <p class="text-slate-400 text-sm">En un ERP, el Use Case devuelve no solo datos sino también <strong class="text-white">cómo editarlos</strong>. El frontend es un renderer genérico que interpreta el schema.</p>
 
         <div class="space-y-2">
-          <div class="text-xs font-mono text-slate-500 uppercase mb-2">Tipos de control segun semantica</div>
+          <div class="text-xs font-mono text-slate-500 uppercase mb-2">Tipos de control según semántica</div>
           <div class="grid grid-cols-2 gap-2">
             <div class="p-3 rounded bg-slate-800/50 border border-slate-700">
               <div class="text-xs font-mono text-purple-300">FK</div>
-              <div class="text-xs text-slate-400 mt-1">→ lookup con busqueda</div>
+              <div class="text-xs text-slate-400 mt-1">→ lookup con búsqueda</div>
             </div>
             <div class="p-3 rounded bg-slate-800/50 border border-slate-700">
               <div class="text-xs font-mono text-purple-300">1:N</div>
@@ -342,7 +342,7 @@ const metadataCode = [
               <div class="text-xs text-slate-400 mt-1">→ multiselect</div>
             </div>
             <div class="p-3 rounded bg-slate-800/50 border border-slate-700">
-              <div class="text-xs font-mono text-purple-300">enum pequeno</div>
+              <div class="text-xs font-mono text-purple-300">enum pequeño</div>
               <div class="text-xs text-slate-400 mt-1">→ select / radio</div>
             </div>
             <div class="p-3 rounded bg-slate-800/50 border border-slate-700">
@@ -358,7 +358,7 @@ const metadataCode = [
 
         <div class="p-4 rounded-lg bg-emerald-500/10 border border-emerald-500/30">
           <div class="text-sm font-semibold text-emerald-300 mb-1">Beneficio clave</div>
-          <p class="text-xs text-slate-400">Cambias el tipo de control en el Use Case sin tocar ningun componente. Cambias React por Vue sin tocar ningun Use Case. Las decisiones de presentacion no contaminan el dominio.</p>
+          <p class="text-xs text-slate-400">Cambias el tipo de control en el Use Case sin tocar ningún componente. Cambias React por Vue sin tocar ningún Use Case. Las decisiones de presentación no contaminan el dominio.</p>
         </div>
       </div>
       <div>

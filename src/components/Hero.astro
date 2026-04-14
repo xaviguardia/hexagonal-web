@@ -5,7 +5,7 @@
   bg-[radial-gradient(ellipse_at_50%_0%,#1e293b_0%,#0f172a_70%)] relative overflow-hidden">
 
   <!-- Animated Hexagon SVG -->
-  <div class="w-80 h-80 mb-10 relative">
+  <div class="w-48 h-48 sm:w-64 sm:h-64 md:w-80 md:h-80 mb-10 relative">
     <svg viewBox="0 0 320 320" class="w-full h-full">
       <!-- Pulse ring -->
       <polygon class="hex-pulse" points="160,12 295,87 295,237 160,312 25,237 25,87"
@@ -31,9 +31,9 @@
 
       <!-- Labels -->
       <text x="160" y="155" text-anchor="middle" fill="#fbbf24" font-size="11" font-weight="700" class="pointer-events-none">DOMINIO</text>
-      <text x="160" y="170" text-anchor="middle" fill="#fbbf2480" font-size="9" class="pointer-events-none">Logica de negocio</text>
+      <text x="160" y="170" text-anchor="middle" fill="#fbbf2480" font-size="9" class="pointer-events-none">Lógica de negocio</text>
 
-      <text x="160" y="245" text-anchor="middle" fill="#93c5fd" font-size="9" font-weight="600" class="pointer-events-none">APLICACION</text>
+      <text x="160" y="245" text-anchor="middle" fill="#93c5fd" font-size="9" font-weight="600" class="pointer-events-none">APLICACIÓN</text>
       <text x="55"  y="175" text-anchor="middle" fill="#93c5fd80" font-size="8" class="pointer-events-none">Use Cases</text>
 
       <text x="160" y="295" text-anchor="middle" fill="#c4b5fd" font-size="9" font-weight="600" class="pointer-events-none">INFRAESTRUCTURA</text>
@@ -65,33 +65,33 @@
     </div>
   </div>
 
-  <h1 class="text-5xl md:text-6xl font-extrabold tracking-tight mb-4
+  <h1 class="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-extrabold tracking-tight mb-4
     bg-gradient-to-br from-white via-white to-amber-400 bg-clip-text text-transparent">
     Arquitectura Hexagonal
   </h1>
   <p class="text-slate-400 text-lg max-w-xl mb-8">
-    Ports &amp; Adapters. Aprende a disenar software donde el negocio manda
-    y la infraestructura se adapta, no al reves.
+    Ports &amp; Adapters. Aprende a diseñar software donde el negocio manda
+    y la infraestructura se adapta, no al revés.
   </p>
   <div class="flex gap-3 flex-wrap justify-center">
     <a href="#concepto" class="px-6 py-3 rounded-full bg-amber-400 text-black font-semibold hover:bg-amber-300 transition-colors">
       Empezar
     </a>
     <a href="#codigo" class="px-6 py-3 rounded-full border border-slate-600 text-slate-300 hover:bg-slate-800 transition-colors font-semibold">
-      Ver codigo
+      Ver código
     </a>
     <a href="https://github.com/xaviguardia/hexagonal-architecture" target="_blank" rel="noopener noreferrer"
       class="px-6 py-3 rounded-full border border-slate-600 text-slate-300 hover:bg-slate-800 transition-colors font-semibold inline-flex items-center gap-2">
       <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
-      Implementacion
+      Implementación
     </a>
   </div>
 </section>
 
 <script>
   const tooltips: Record<string, string> = {
-    domain: 'Dominio — logica de negocio pura, sin dependencias externas',
-    app:    'Aplicacion — casos de uso, orquestacion',
+    domain: 'Dominio — lógica de negocio pura, sin dependencias externas',
+    app:    'Aplicación — casos de uso, orquestación',
     infra:  'Infraestructura — HTTP, base de datos, adaptadores',
   };
   const tip = document.getElementById('hex-tooltip')!;

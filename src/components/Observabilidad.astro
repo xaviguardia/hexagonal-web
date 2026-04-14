@@ -7,7 +7,7 @@
     <h2 class="text-3xl font-bold text-white mt-3 mb-2">Observabilidad con OpenTelemetry</h2>
     <p class="text-slate-400 max-w-2xl mx-auto">
       Como instrumentar una arquitectura hexagonal sin contaminar el dominio.
-      Trazas, metricas y logs fluyen por puertos — el negocio nunca sabe que existe OTEL.
+      Trazas, métricas y logs fluyen por puertos — el negocio nunca sabe que existe OTEL.
     </p>
   </div>
 
@@ -96,7 +96,7 @@ interface TracingPort {
     <h3 class="text-xl font-bold text-orange-400 mb-6">Decorator: tracing transparente</h3>
     <p class="text-slate-400 text-sm mb-6">
       En vez de instrumentar cada use case manualmente, un decorator funcional envuelve cualquier
-      use case y le agrega tracing automaticamente. El use case original no cambia.
+      use case y le agrega tracing automáticamente. El use case original no cambia.
     </p>
 
     <div class="bg-slate-900 border border-slate-700 rounded-xl p-6 mb-6">
@@ -150,7 +150,7 @@ const controller = new OrderController(traced);`} /></pre>
     <div class="grid md:grid-cols-3 gap-4">
       <div class="bg-slate-800/50 border border-slate-700 rounded-xl p-5">
         <h4 class="font-bold text-blue-400 text-sm mb-2">Traces (trazas)</h4>
-        <p class="text-xs text-slate-300 mb-3">Flujo completo de una request a traves de use cases, repositorios y servicios externos.</p>
+        <p class="text-xs text-slate-300 mb-3">Flujo completo de una request a través de use cases, repositorios y servicios externos.</p>
         <div class="text-xs text-slate-400 space-y-1">
           <div class="flex items-center gap-2">
             <span class="w-2 h-2 rounded-full bg-blue-400"></span>
@@ -167,8 +167,8 @@ const controller = new OrderController(traced);`} /></pre>
         </div>
       </div>
       <div class="bg-slate-800/50 border border-slate-700 rounded-xl p-5">
-        <h4 class="font-bold text-green-400 text-sm mb-2">Metrics (metricas)</h4>
-        <p class="text-xs text-slate-300 mb-3">Contadores y histogramas de negocio: ordenes creadas, latencia por use case, errores por tipo.</p>
+        <h4 class="font-bold text-green-400 text-sm mb-2">Metrics (métricas)</h4>
+        <p class="text-xs text-slate-300 mb-3">Contadores y histogramas de negocio: órdenes creadas, latencia por use case, errores por tipo.</p>
         <div class="text-xs text-slate-400 space-y-1">
           <div class="flex items-center gap-2">
             <span class="w-2 h-2 rounded-full bg-green-400"></span>
@@ -186,7 +186,7 @@ const controller = new OrderController(traced);`} /></pre>
       </div>
       <div class="bg-slate-800/50 border border-slate-700 rounded-xl p-5">
         <h4 class="font-bold text-amber-400 text-sm mb-2">Logs (estructurados)</h4>
-        <p class="text-xs text-slate-300 mb-3">Logs JSON con correlacion de trace_id para conectar logs con trazas en Grafana/Kibana.</p>
+        <p class="text-xs text-slate-300 mb-3">Logs JSON con correlación de trace_id para conectar logs con trazas en Grafana/Kibana.</p>
         <div class="text-xs text-slate-400 space-y-1">
           <div class="flex items-center gap-2">
             <span class="w-2 h-2 rounded-full bg-amber-400"></span>
@@ -208,7 +208,7 @@ const controller = new OrderController(traced);`} /></pre>
   <!-- Diagram -->
   <div class="mb-20">
     <h3 class="text-xl font-bold text-orange-400 mb-6">Flujo de una traza</h3>
-    <div class="bg-slate-900 border border-slate-700 rounded-xl p-8">
+    <div class="bg-slate-900 border border-slate-700 rounded-xl p-8 overflow-x-auto">
       <svg viewBox="0 0 750 200" class="w-full" style="max-height: 200px;">
         <!-- HTTP Request -->
         <rect x="10" y="70" width="110" height="60" rx="8" fill="#0f172a" stroke="#3b82f6" stroke-width="1.5"/>
@@ -258,7 +258,7 @@ const controller = new OrderController(traced);`} /></pre>
     <h3 class="text-xl font-bold text-orange-400 mb-6">Testing sin OTEL</h3>
     <p class="text-slate-400 text-sm mb-6">
       Gracias al puerto, en tests usas un adaptador falso que no exporta nada.
-      Los tests son rapidos y no necesitan un OTEL Collector corriendo.
+      Los tests son rápidos y no necesitan un OTEL Collector corriendo.
     </p>
     <div class="bg-slate-900 border border-slate-700 rounded-xl p-6">
       <pre class="text-xs overflow-x-auto"><code class="text-teal-300" set:html={`class FakeTracingAdapter implements TracingPort {

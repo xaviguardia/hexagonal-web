@@ -2,15 +2,15 @@
 // Concepto section
 ---
 <section id="concepto" class="max-w-5xl mx-auto px-6 py-24 reveal">
-  <h2 class="text-3xl font-extrabold mb-2 tracking-tight">Que es la Arquitectura Hexagonal</h2>
-  <p class="text-slate-400 mb-12 text-lg">Creada por Alistair Cockburn en 2005. Tambien llamada Ports &amp; Adapters.</p>
+  <h2 class="text-3xl font-extrabold mb-2 tracking-tight">Qué es la Arquitectura Hexagonal</h2>
+  <p class="text-slate-400 mb-12 text-lg">Creada por Alistair Cockburn en 2005. También llamada Ports &amp; Adapters.</p>
 
   <div class="grid md:grid-cols-2 gap-8 mb-14">
     <!-- Problema -->
     <div class="bg-slate-800/50 border border-slate-700 rounded-xl p-6">
       <div class="text-xs font-bold uppercase tracking-widest text-red-400 mb-3">El problema</div>
       <p class="text-slate-300 text-sm leading-relaxed mb-4">
-        En una arquitectura clasica en capas, el dominio depende de la base de datos, del framework HTTP
+        En una arquitectura clásica en capas, el dominio depende de la base de datos, del framework HTTP
         y de librerías externas. Cambiar la BD o el framework rompe el negocio.
       </p>
       <div class="bg-slate-900 rounded-lg p-4 text-xs font-mono text-slate-400">
@@ -22,12 +22,12 @@
       </div>
     </div>
 
-    <!-- Solucion -->
+    <!-- Solución -->
     <div class="bg-slate-800/50 border border-slate-700 rounded-xl p-6">
-      <div class="text-xs font-bold uppercase tracking-widest text-green-400 mb-3">La solucion</div>
+      <div class="text-xs font-bold uppercase tracking-widest text-green-400 mb-3">La solución</div>
       <p class="text-slate-300 text-sm leading-relaxed mb-4">
         El dominio define lo que necesita mediante <strong class="text-white">interfaces (puertos)</strong>.
-        La infraestructura las implementa. El dominio nunca sabe quien esta al otro lado.
+        La infraestructura las implementa. El dominio nunca sabe quién está al otro lado.
       </p>
       <div class="bg-slate-900 rounded-lg p-4 text-xs font-mono text-slate-400">
         <div class="text-purple-400">HTTP Adapter</div>
@@ -44,8 +44,8 @@
   <!-- Principio clave -->
   <div class="bg-amber-400/5 border border-amber-400/30 rounded-xl p-6">
     <p class="text-amber-300 font-semibold text-center text-lg">
-      "El negocio define las reglas. La infraestructura se adapta. Nunca al reves."
+      "El negocio define las reglas. La infraestructura se adapta. Nunca al revés."
     </p>
-    <p class="text-slate-400 text-sm text-center mt-2">— Principio de Inversion de Dependencias (DIP)</p>
+    <p class="text-slate-400 text-sm text-center mt-2">— Principio de Inversión de Dependencias (DIP)</p>
   </div>
 </section>
